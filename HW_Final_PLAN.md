@@ -242,8 +242,8 @@ this game unchanged, which is the only place in the eleven where game flavour co
   that default changes or the field gets pointed at the right root per build.
 - A **new, empty** `TilePrefabMap.asset`. Mario's is a table of GUID references to Mario's prefabs and
   every one of them would dangle. Copying the folder would bring a silently broken asset across.
-- One world unit must equal one tile, whatever Pixels Per Unit Stage 3 settles on, because
-  `TilePlacerWindow` draws its cell cursor as a 1-unit cube and places on integer coordinates.
+- One world unit must equal one tile, because `TilePlacerWindow` draws its cell cursor as a 1-unit
+  cube and places on integer coordinates. Step 4 settles that as 48px sprites at PPU 48.
 
 #### Step 3 — The stage list, and what each stage needs `[x]`
 
@@ -483,10 +483,26 @@ Two notes for Stage 3 that came out of looking:
 - The original's tokens are card suits, which is why the transcript says "אם אני לוקח את הקלף יהלום
   או כוכב" (00:37:05). Requirement 7.2 says לב, עלה and כוכב. The heart exists on `29903.png`; the
   other two need sourcing from elsewhere.
-- **Pixels Per Unit 16 for every sprite, whatever its size.** The source is 16x16 (00:28:40), and
-  `TilePlacerWindow` draws a 1-unit cell cursor and places on integer coordinates, so one tile has to
-  be one world unit. At PPU 16 a 16px tile is 1 unit and a 32px animal-with-rider is 2, which is what
-  is wanted. Normalising sizes with per-sprite PPU would break the grid.
+- **Sprites are stored at 48px per grid cell and Pixels Per Unit is 48 for every one of them.** The
+  source art is drawn on a 16px grid, upscaled 3x with nearest-neighbour, so one cell is stored as
+  48x48 and is one world unit. A creature 16x24 stores as 48x72 and occupies 1 by 1.5 units; an
+  animal with its rider at 32x32 stores as 96x96 and occupies 2 by 2. `TilePlacerWindow` draws a
+  1-unit cell cursor and places on integer coordinates, so one cell has to be one world unit, and
+  normalising every sprite to one unit with a per-sprite PPU would break that grid.
+
+  **The 16 was measured, not assumed.** It was first written down as "the source art is 16x16", from
+  a single transcript line (00:28:40) and NES convention, and repeated three times before anyone
+  checked. Flood-filling the non-background regions of three sheets gives: `208311.png` enemies at a
+  median 16x21, most commonly 16x16 then 16x24 and 16x20; `123.png` player and animals at a median
+  28x32, most commonly 16x32 and 32x32; `29903.png` at a median 29x27. Widths cluster on 16 and 32
+  with nothing between them. So 16 is the grid unit and sprites are multiples of it - a tile is one
+  cell, the player is 1x2, an animal with its rider is 2x2. Saying "the art is 16x16" would have had
+  Stage 3 cutting the player in half.
+
+  Peleg's call, against a first draft that kept the art at 16px and set PPU 16. The two render
+  identically; 48 wins on workflow, because cutting from a 3x-upscaled sheet is far more forgiving
+  than cutting 16px cells, and it keeps the number this project family has used since Exercise 1.
+  The 16 now appears nowhere as a setting - it only describes the source material.
 
 Roughly 59 sprites: 7 player on foot, 9 riding, 12 enemies, 6 projectiles, 8 collectibles, 2 egg, 3
 hazards, 8 tiles, 4 UI. All-static would be about 40, so the animation scope costs 19 extra cuts —
@@ -605,8 +621,15 @@ worst spot is worth predicting rather than discovering.
 - Cut them out of the sheets. The instructor demonstrated Paint.NET for this.
 - Most of the sheets have opaque backgrounds, so a repeatable way to key them out is worth finding
   once and reusing, instead of doing it by hand per sprite.
-- Import at a consistent size with Pixels Per Unit set per `CONVENTIONS.md`. The source art is 16x16,
-  which is smaller than the 48px this project family has used so far.
+- Import at Pixels Per Unit 48, per `CONVENTIONS.md`. The art sits on a 16px grid and is upscaled 3x
+  first, so one grid cell is stored as 48px, like every earlier exercise's tiles.
+- Key the background out at native resolution first, so the colour match is exact, then upscale the
+  whole sheet, then cut on a 48px grid. Three operations per sheet rather than per sprite.
+- Sprites are not all one cell. Expect 16x16 for tiles and the smallest enemies, 16x24 and 16x32 for
+  most enemies, 16x32 for the player, and about 32x32 for an animal with its rider - so cut to the
+  sprite's own extent on the grid rather than to a fixed box.
+- Roughly 59 sprites, per Stage 1 Step 4: 7 player on foot, 9 riding, 12 enemies, 6 projectiles, 8
+  collectibles, 2 egg, 3 hazards, 8 tiles, 4 UI.
 
 ### Stage 4 — The level pipeline `[ ]`
 

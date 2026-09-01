@@ -67,15 +67,18 @@ next exercise leaves it, `README.md` and `.gitignore` behind. Copy all four by h
 
 ## Naming and hierarchy
 
-Sprites live at `Assets/Sprites/Sprite_X.png`. The source art is NES 16x16, upscaled 3x with
-nearest-neighbour - any smoothing turns pixel art to mush - so a tile is stored as 48x48. Pixels Per
-Unit is 48 for every sprite, whatever its dimensions. A 16px source dimension is then exactly one
+Sprites live at `Assets/Sprites/Sprite_X.png`. The source art is drawn on a 16px grid and sprites
+span one cell or several: a tile and the smallest enemies are 16x16, most enemies are 16x16 to 16x32,
+the player is 16x32, and an animal with its rider is about 32x32. All of it is upscaled 3x with
+nearest-neighbour - any smoothing turns pixel art to mush - so one grid cell is stored as 48px.
+Pixels Per Unit is 48 for every sprite, whatever its dimensions. A 16px source dimension is then exactly one
 world unit: a tile is 1x1, an animal with its rider is 2x2, and a creature 16 wide by 24 tall ends
 up 1 by 1.5. Setting PPU per sprite to normalise every sprite to one unit would break the tile grid,
 which `TilePlacerWindow` draws as a 1-unit cell cursor and places on integer coordinates.
 
-Cut the sheets per sheet, not per sprite: key out the background at native resolution first, so the
-colour match is exact, then upscale the whole sheet, then cut 48px cells.
+Cut per sheet, not per sprite: key out the background at native resolution first, so the colour match
+is exact, then upscale the whole sheet, then cut on a 48px grid. A sprite spans one cell, two or six
+depending on what it is, so the grid is the guide rather than the cut size.
 
 Prefabs for objects placed in the level take the `Sprite_` prefix. Prefabs for things spawned at
 runtime don't.
