@@ -48,7 +48,7 @@ Builder, Factory, MVC, Async & Tasks, Template**, with SOLID throughout.
 | 3          | Sprites                                                     |
 | 4          | The level pipeline, and a scratch level to test it          |
 | 5          | Re-read the plan before any game code                       |
-| 6 to 19    | Game development. Defined in Stage 1, Step 3                 |
+| 6 to 19    | Game development. One section each; the reasoning is Stage 1, Step 3 |
 | 20         | Final testing, comments and log check                        |
 | 21         | Two video scripts                                            |
 
@@ -189,6 +189,10 @@ easier there, it exports to a Tiled JSON file, and every edit after that happens
 tools because re-exporting from Tiled is tiring. Tiled is therefore `[good]` and stays in the picture,
 as a tool that is pleasant to use rather than anything the exercise asks for.
 
+**Reversed in Stage 4.** Tiled is out, and levels are painted in `Tools > Tile Placer` instead. The
+file format stays Tiled's so the choice costs nothing to reverse, and the reasoning is in the
+Decisions Log. Everything else in this step still holds.
+
 **Level 2 needs no format change.** `TiledMap` is width, height and a flat row-major `data` array, and
 `LevelWindow.PlaceLayer` turns an index into a cell with `column = i % width` and
 `row = (height - 1) - (i / width)`. Nothing in it assumes a wide level. Level 1 is 30x20 and level 2
@@ -264,198 +268,10 @@ Three things go in as givens rather than being rediscovered:
   at all. Lesson 5's own `EnemySpawner.cs` is `await Task.Delay(interval, cancellationToken)` in a loop,
   sitting deliberately beside `PlayerInvincible.cs`, which uses a coroutine for a gameplay timer.
 
-The fourteen items from Step 1 become stages 6 to 19, which makes N = 21.
-
-##### Stage 6 — The level, and the player moving in it
-
-1. Scene skeleton: `Level_1` and `Level_2` roots, `SceneContext` with `GameInstaller`, `LogSettings`.
-1. The eleven files from Step 2 brought across, plus a `TilePrefabMap` asset holding the first few
-   tiles.
-1. A scratch level 1 — enough ground to walk on, built through the normal Tiled-then-tools path so the
-   pipeline is proven early.
-1. Player movement on the arrow keys.
-1. Player jump on `Space`, height varying with how long it is held.
-1. Attack on `Z`, writing a log line and nothing else.
-
-**What it needs: nothing from the seven, deliberately.** There is no logic here worth extracting from a
-MonoBehaviour — reading input and pushing a `Rigidbody2D` is exactly what a MonoBehaviour is for, and an
-`IInputService` injected into the player would be textbook DI with nothing behind it, since this game
-never swaps input implementations and there are no tests to fake one for. The installer exists from this
-stage and starts nearly empty. Saying that out loud at the defense is stronger than pretending
-otherwise.
-
-##### Stage 7 — Camera
-
-1. Follow the player, clamped so the view never leaves the level (11.4).
-1. An inspector toggle between following and framing the whole level, the second for testing.
-
-Exercise 3 has a `CameraFollow.cs`, but it is gameplay code rather than tooling and it has neither the
-clamp nor the toggle, so this is written fresh.
-
-##### Stage 8 — State model and game flow
-
-1. `SessionState` (פסילות, fruit count), `CarriedState` (weapon, animal), `LevelState` (כוח, which
-   enemies are dead, which collectibles are taken, player position). Plain C# classes behind interfaces.
-1. `GameFlow` with the real operations: `StartGame`, `StartLevel`, `LoseStrike`, `CompleteLevel`,
-   `GameOver`. Driven by a debug key for now.
-1. `IResettable`, and a reset that walks everything registered.
-1. Events for `StrikeLost`, `GameOver` and `LevelComplete`, raised here and listened to later.
-
-**What it needs: DI, and one interface that carries the whole stage.** `IResettable` is the design: a
-collectible, an enemy, the player and the כוח model each register, and the reset walks the list. A full
-reset restores everything; a partial reset restores everything except enemies, per 3.4 and 3.5. Adding a
-new resettable kind later touches no reset code, which is the open/closed answer.
-
-**A pattern deliberately rejected here.** Full and partial reset look like a Template Method with two
-subclasses, and it would be one boolean of real difference. A flag on one method is simpler and honest;
-a base class and two subclasses for one branch is pattern-for-its-own-sake and exactly what the SOLID
-check would find. Worth saying at the defense that it was considered and dropped.
-
-##### Stage 9 — כוח and its bar
-
-1. `PowerModel` — current, maximum 16, level start 11, drain 1 per 2 seconds.
-1. `PowerController` — ticks the drain, applies fruit, caps at maximum, raises "empty".
-1. `PowerView` — the bar.
-1. Empty raises `LoseStrike` through the flow's event rather than by calling it directly.
-
-**What it needs: MVC**, in the same shape as Exercise 2's coin counter with its `ICoinsModel` and
-`ICoinsView`, which he has already seen and accepted. The controller is a plain C# class ticked through
-Zenject's `ITickable`, so no MonoBehaviour is involved at all — which is the Clean Architecture line the
-course keeps making, demonstrated rather than asserted.
-
-##### Stage 10 — Popups and restart
-
-1. Game Over popup with a restart button.
-1. Restart: session cleared, carried cleared, back to level 1, no scene load.
-1. The פסילות display.
-
-**What it needs: Async, second home.** `await popup.ShowAsync(...)` returns which button was pressed. A
-coroutine cannot return a value — it needs a callback or a shared field — and a `TaskCompletionSource`
-bridging a button click to an `await` is short enough to read on screen in the code video. Different
-justification from the respawn timer, so the two uses give two answers rather than one repeated twice.
-
-This stage is placed early on purpose: it is the first point the whole loop can run end to end — die,
-lose a פסילה, level resets, die twice more, game over, popup, restart, session clears — which proves the
-no-scene-reload architecture before any content is built on it.
-
-##### Stage 11 — Fruit and the counter
-
-1. `Fruit_1` and `Fruit_2`, adding 1 and 2 כוח.
-1. The fruit counter, and a פסילה at every multiple of 20 (4.7).
-1. The counter display.
-
-**What it needs: the collectible base, and MVC again.** Eight things in this game are picked up by
-touching them — two fruit, three animal tokens, two weapons, the פייה — and all eight share detect, apply,
-consume, notify, with only the apply step differing. That is Template Method by its nature rather than by
-decision. The counter is the second MVC triad.
-
-##### Stage 12 — Hazards
-
-1. תהום: falling below the level costs a פסילה.
-1. מדורה: touch costs a פסילה; only the פייה destroys it.
-1. אבן: touch costs 3 כוח, knocks the player forward, brief immunity for the length of the shove.
-
-**What it needs: `IDestructible`, and it is the best idea in the plan.** Every object in this game answers
-a different version of one question: what is allowed to destroy me? The אבן says boomerang, animal or פייה
-but not axe (5.3). The מדורה says פייה only. Five of the six enemies say axe, boomerang, animal or פייה;
-the רוח רפאים says פייה only. One interface answered per type turns "I don't want to see the axe destroy
-the rock" into data instead of conditionals scattered across every projectile, and it is the same
-interface for hazards and enemies.
-
-The riding rule lives in one place too: the player's damage entry point checks whether an animal is being
-ridden, and if so dismounts and destroys the hazard instead of applying it (5.5, 5.8, 7.10). One rule, one
-site, rather than repeated in every hazard.
-
-##### Stage 13 — Weapons and projectiles
-
-1. `BaseProjectile` and its fixed lifecycle.
-1. `ProjectileAxe`, thrown in an arc; `ProjectileBoomerang`, returning to the player's current position.
-1. `ProjectileBuilder` and `ProjectileDirector`.
-1. A projectile pool taking a prefab rather than one class per projectile type.
-1. The weapon slot, the throw cooldown, the cap on how many are in flight (6.7).
-1. All of it wired through the installer.
-
-**What it needs: Builder, Pooling, Template and DI at once**, which is the Lesson 9, 10 and 12 chain
-applied to this game's projectiles. Five recipes really differ — axe, boomerang, snake fireball, red
-animal fire, and the arc and return behaviours between them — which is more variety than Exercise 3's
-single laser had. Exercise 3's `LaserPoolManager` handled one type; four copies of that class is exactly
-what the SOLID check finds, so the pool takes a prefab instead.
-
-##### Stage 14 — Enemies
-
-1. The `Enemy` base: spawn, behave, take damage, die, drop, wait, return.
-1. עכביש, ציפור, jumping נחש, shooting נחש, צפרדע, רוח רפאים.
-1. The respawn timer.
-1. The shooting נחש's projectile, reusing stage 13's pool and builder.
-1. Each enemy's `IDestructible` answer.
-
-**What it needs: Template, Async and Pooling.** Six subclasses sharing one fixed lifecycle where only
-`Behave` and the destructible answer vary is the strongest Template in the project. The respawn timer is
-the Async home, for the reason above.
-
-##### Stage 15 — Animals
-
-1. Mount by collecting לב, עלה or כוכב; swap when a second token is taken while riding.
-1. Blue hits low with its tail, red spits fire higher, green spins in place.
-1. Absorb one hit, then both the animal and what hit it disappear.
-1. Carry into level 2.
-
-**A pattern deliberately rejected here.** Composing the mounted state — sprite, attack behaviour, attack
-height, the absorb rule — looks like a second Builder. It is four fields, and a ScriptableObject per
-animal says the same thing with less machinery and stays editable without recompiling. Builder keeps one
-strong home in stage 13 rather than a weak second one here, which is the same call Exercise 3 made.
-
-##### Stage 16 — ביצים, drops and collectibles
-
-1. The drop factory, making a collectible from a configured type.
-1. Per-enemy drop configuration, including dropping nothing (8.3).
-1. Eggs, opened by stepping on them, contents configured per egg (10.2, 10.3).
-1. **Reflection**: a `[Drop(DropType.Heart)]` attribute on each collectible class, scanned once when
-   the container is built and cached in a `Dictionary<DropType, Type>`.
-
-**What it needs: Factory, with two callers.** An enemy or an egg says *what*; the factory knows *how* to
-build a לב, a boomerang or a פייה, and neither caller ever learns. Both requirements say the choice is
-authored data rather than a roll, which is precisely a factory taking a configured type.
-
-**And Reflection, which is `[good]` rather than required.** Without it this factory holds the one
-switch statement the whole design admits, and every new drop type edits it. With the attribute and one
-cached scan at startup, a new drop type is a new class and the factory is never opened again —
-open/closed demonstrated instead of asserted, for about thirty lines and a single scan. The instructor
-said he meant to put Reflection on the list and would be glad to see it (00:54:18); Exercise 2 parked
-it and Exercise 3 dropped it, so this is the third time of asking.
-
-**The escape hatch is deliberate.** If this stage arrives and the schedule is tight, write the switch
-and move on. Nothing else in the project depends on which way this goes, which is exactly why the
-reflection lives here rather than somewhere structural.
-
-##### Stage 17 — פייה
-
-1. Ten seconds of invincibility.
-1. Destroys everything it touches, מדורה and רוח רפאים included.
-1. תהום still kills (9.3), and a level needs a place to demonstrate exactly that (9.4).
-
-**Deliberately a coroutine, not a Task.** The פייה's ten seconds run on a MonoBehaviour that stays alive
-for the whole duration, needs no cancellation token and returns nothing, so a coroutine is the right tool
-and a Task would be worse. Lesson 5 makes exactly this contrast in one project: `EnemySpawner.cs` on
-Tasks beside `PlayerInvincible.cs` on a coroutine. Having both, and being able to say why each is where
-it is, answers the question he said outright he will ask — in both directions.
-
-This stage also touches every other system, so it doubles as the integration test.
-
-##### Stage 18 — Level 2's mechanics
-
-1. Vertical camera framing.
-1. The transition, with no level-number branch anywhere in it.
-1. The completion popup, a second listener on stage 10's machinery.
-1. Carried state crossing: weapon, animal and fruit count survive; כוח resets.
-
-##### Stage 19 — Author both levels to spec
-
-1. Level 1 in Tiled, exported, then edited through the tools.
-1. Level 2 the same, climbing bottom to top.
-1. Satisfy the כוח arithmetic: the fruit needed to cross a level against a פסילה every 20.
-1. Place drops and eggs so every type is reachable in the opening half-minute (10.4).
-1. The פייה-then-תהום spot he said he will look for.
+The fourteen items from Step 1 become stages 6 to 19, which makes N = 21. Each of them is written
+out in its own section further down this file, in sequence with every other stage, rather than nested
+under this step. What each one needs is recorded there beside what it does, since the two are read
+together and a stage's own section is where anyone looks.
 
 #### Step 4 — Animation scope `[x]`
 
@@ -506,7 +322,8 @@ Two notes for Stage 3 that came out of looking:
 
 Roughly 59 sprites: 7 player on foot, 9 riding, 12 enemies, 6 projectiles, 8 collectibles, 2 egg, 3
 hazards, 8 tiles, 4 UI. All-static would be about 40, so the animation scope costs 19 extra cuts —
-an hour or two with a repeatable keying method, not a weekend.
+an hour or two with a repeatable keying method, not a weekend. Stage 3 cut 82; this estimate was
+thinnest on the riding frames, which needed idle and jumping on top of a walk pair and an attack.
 
 **Animator on the player only; a shared sprite-swap component everywhere else.** The player has real
 states driven by what he is doing. Everything else is an array of sprites and an interval, about
@@ -684,15 +501,259 @@ YAML, pasted there by mistake at the end of Stage 3. Unity had been ignoring the
 silently — the sprites kept the settings from the one run before it broke, so nothing looked wrong
 until a new rule failed to apply. Deleting the `.meta` and letting Unity rebuild it was the fix.
 
-### Stage 5 — Re-read the plan `[ ]`
+### Stage 5 — Re-read the plan `[x]`
 
 Before any game code. Check that Stages 0 to 4 actually hold together, that every required technique
 has a home, and that nothing in the stage list depends on something later in it.
 
-### Stages 6 to 19 — Game development `[ ]`
+**All seven techniques kept their homes.** Stage 4 wrote only editor code and assets, so nothing
+moved. The stage order holds too, with one intended near-miss: stage 12 defines `IDestructible`
+before stage 13 exists to prove "boomerang yes, axe no", which is what Step 1's ordering meant.
 
-Defined in Stage 1, Step 3. Each stage there lists its
-sub-steps and what it actually needs, rather than which pattern it was assigned.
+**Stages 6 to 19 moved out of Step 3** into their own sections in sequence with every other stage,
+since a stage's own section is where anyone looks for it. Step 3 keeps the reasoning that produced
+them.
+
+**Four real findings, all now folded into the stages above.** Stage 6 still listed the scene
+skeleton, the eleven files and the scratch level, all of which Stages 2 and 4 had already done, so it
+shrank to the player alone. Nothing created the player object at all, which left Stage 4's capsule
+and the `Frictionless` material homeless. Nothing produced a level's extent, which stage 7's clamp,
+stage 8's start position and stage 12's תהום all need - that became `LevelDefinition`. And nothing
+owned the start marker, which became `PlayerStart`.
+
+Five smaller ones: Tiled survived in Stage 19 and read as current in Step 2, the fruit had two names,
+Step 4's sprite estimate was stale against Stage 3's 82, and Stages 18 and 19 lacked the "what it
+needs" paragraph every other stage carries. One correction with nothing to fix: the מדורה's two
+frames come from Step 4's shared sprite-swap component, not from an Animator.
+
+### Stage 6 — The player moving in the level `[ ]`
+
+Stages 2 and 4 built the scene, the tools, the prefabs and a scratch level 1, so what is left here is
+only the player himself.
+
+1. The player object: `Sprite_Player_Idle` on a `Rigidbody2D`, a vertical `CapsuleCollider2D` 1 by 2
+   because that is what his art measures inside its 2x3 box, and
+   `Assets/Physics/Frictionless.physicsMaterial2D`, created in this stage because his collider is
+   what needs it. He is one object for the whole game rather than a child of either level, since the
+   weapon, the animal and the fruit count all cross the level boundary with him.
+1. Player movement on the arrow keys.
+1. Player jump on `Space`, height varying with how long it is held.
+1. Attack on `Z`, writing a log line and nothing else.
+
+**What it needs: nothing from the seven, deliberately.** There is no logic here worth extracting from a
+MonoBehaviour — reading input and pushing a `Rigidbody2D` is exactly what a MonoBehaviour is for, and an
+`IInputService` injected into the player would be textbook DI with nothing behind it, since this game
+never swaps input implementations and there are no tests to fake one for. The installer exists from this
+stage and starts nearly empty. Saying that out loud at the defense is stronger than pretending
+otherwise.
+
+Ground tiles carry plain box colliders with no composite above them, so the capsule's rounded bottom
+is what stops him catching on the seams between them. Exercise 3 got the same effect from a circle
+collider, which worked there only because Mario was one cell tall.
+
+### Stage 7 — Camera `[ ]`
+
+1. `LevelDefinition`, a component on `Level_1` and `Level_2` holding the level's width and height in
+   cells and its fall line. With the level root at the origin and Stage 4's pivot, the playable rect
+   runs from `-0.5` to `width - 0.5` across and `-0.5` to `height - 0.5` up.
+1. `PlayerStart` on the `Sprite_Player_Start` prefab, which answers where the player begins and hides
+   its own sprite when the level starts. Found among the level's children rather than referenced by
+   field, since a serialized `Transform` would dangle the first time a rebuild replaced the marker.
+1. Follow the player, clamped so the view never leaves the level (11.4).
+1. An inspector toggle between following and framing the whole level, the second for testing.
+
+Exercise 3 has a `CameraFollow.cs`, but it is gameplay code rather than tooling and it has neither the
+clamp nor the toggle, so this is written fresh.
+
+**Why the size is authored rather than measured.** Nothing at runtime otherwise knows how big a level
+is, because the level file is not read at Play. Measuring the children's renderers was the first
+answer and it describes the art rather than the level: the scratch level 2's tiles fill 15 columns of
+a 32-wide grid, so the camera would clamp to a strip. Reading the file's own width and height was the
+second, and `Save` grows the grid without ever shrinking it, so those numbers are a high-water mark -
+that same level 2 file says 32x45 for something painted 15 by 22. The argument that settles it is
+that a level shorter than the view cannot contain the camera at all, so the clamp rect has to be at
+least the view's size whatever the tiles do. That makes the level's size a decision rather than a
+measurement, and decisions get written down.
+
+### Stage 8 — State model and game flow `[ ]`
+
+1. `SessionState` (פסילות, fruit count), `CarriedState` (weapon, animal), `LevelState` (כוח, which
+   enemies are dead, which collectibles are taken, player position). Plain C# classes behind interfaces.
+1. `GameFlow` with the real operations: `StartGame`, `StartLevel`, `LoseStrike`, `CompleteLevel`,
+   `GameOver`. Driven by a debug key for now.
+1. `StartLevel` and `LoseStrike` both move the player to the `PlayerStart` of the level's own
+   `LevelDefinition`, per 3.3. The marker is drawn at 40% alpha so a level can be authored against
+   where the player will actually stand, and it hides itself the moment the level starts.
+1. `IResettable`, and a reset that walks everything registered.
+1. Events for `StrikeLost`, `GameOver` and `LevelComplete`, raised here and listened to later.
+
+**What it needs: DI, and one interface that carries the whole stage.** `IResettable` is the design: a
+collectible, an enemy, the player and the כוח model each register, and the reset walks the list. A full
+reset restores everything; a partial reset restores everything except enemies, per 3.4 and 3.5. Adding a
+new resettable kind later touches no reset code, which is the open/closed answer.
+
+**A pattern deliberately rejected here.** Full and partial reset look like a Template Method with two
+subclasses, and it would be one boolean of real difference. A flag on one method is simpler and honest;
+a base class and two subclasses for one branch is pattern-for-its-own-sake and exactly what the SOLID
+check would find. Worth saying at the defense that it was considered and dropped.
+
+### Stage 9 — כוח and its bar `[ ]`
+
+1. `PowerModel` — current, maximum 16, level start 11, drain 1 per 2 seconds.
+1. `PowerController` — ticks the drain, applies fruit, caps at maximum, raises "empty".
+1. `PowerView` — the bar.
+1. Empty raises `LoseStrike` through the flow's event rather than by calling it directly.
+
+**What it needs: MVC**, in the same shape as Exercise 2's coin counter with its `ICoinsModel` and
+`ICoinsView`, which he has already seen and accepted. The controller is a plain C# class ticked through
+Zenject's `ITickable`, so no MonoBehaviour is involved at all — which is the Clean Architecture line the
+course keeps making, demonstrated rather than asserted.
+
+### Stage 10 — Popups and restart `[ ]`
+
+1. Game Over popup with a restart button.
+1. Restart: session cleared, carried cleared, back to level 1, no scene load.
+1. The פסילות display.
+
+**What it needs: Async, second home.** `await popup.ShowAsync(...)` returns which button was pressed. A
+coroutine cannot return a value — it needs a callback or a shared field — and a `TaskCompletionSource`
+bridging a button click to an `await` is short enough to read on screen in the code video. Different
+justification from the respawn timer, so the two uses give two answers rather than one repeated twice.
+
+This stage is placed early on purpose: it is the first point the whole loop can run end to end — die,
+lose a פסילה, level resets, die twice more, game over, popup, restart, session clears — which proves the
+no-scene-reload architecture before any content is built on it.
+
+### Stage 11 — Fruit and the counter `[ ]`
+
+1. `Fruit_1` and `Fruit_2` of 4.3, built as the prefabs `Sprite_Fruit_Common` and
+   `Sprite_Fruit_Super`, adding 1 and 2 כוח. The requirement's names are what the video says; the
+   prefab names are what the tile map holds.
+1. The fruit counter, and a פסילה at every multiple of 20 (4.7).
+1. The counter display.
+
+**What it needs: the collectible base, and MVC again.** Eight things in this game are picked up by
+touching them — two fruit, three animal tokens, two weapons, the פייה — and all eight share detect, apply,
+consume, notify, with only the apply step differing. That is Template Method by its nature rather than by
+decision. The counter is the second MVC triad.
+
+### Stage 12 — Hazards `[ ]`
+
+1. תהום: falling past the fall line of the level's `LevelDefinition` costs a פסילה. The line sits a
+   couple of units below the level's bottom, so the player leaves the screen before he dies.
+1. מדורה: touch costs a פסילה; only the פייה destroys it.
+1. אבן: touch costs 3 כוח, knocks the player forward, brief immunity for the length of the shove.
+
+**What it needs: `IDestructible`, and it is the best idea in the plan.** Every object in this game answers
+a different version of one question: what is allowed to destroy me? The אבן says boomerang, animal or פייה
+but not axe (5.3). The מדורה says פייה only. Five of the six enemies say axe, boomerang, animal or פייה;
+the רוח רפאים says פייה only. One interface answered per type turns "I don't want to see the axe destroy
+the rock" into data instead of conditionals scattered across every projectile, and it is the same
+interface for hazards and enemies.
+
+The riding rule lives in one place too: the player's damage entry point checks whether an animal is being
+ridden, and if so dismounts and destroys the hazard instead of applying it (5.5, 5.8, 7.10). One rule, one
+site, rather than repeated in every hazard.
+
+### Stage 13 — Weapons and projectiles `[ ]`
+
+1. `BaseProjectile` and its fixed lifecycle.
+1. `ProjectileAxe`, thrown in an arc; `ProjectileBoomerang`, returning to the player's current position.
+1. `ProjectileBuilder` and `ProjectileDirector`.
+1. A projectile pool taking a prefab rather than one class per projectile type.
+1. The weapon slot, the throw cooldown, the cap on how many are in flight (6.7).
+1. All of it wired through the installer.
+
+**What it needs: Builder, Pooling, Template and DI at once**, which is the Lesson 9, 10 and 12 chain
+applied to this game's projectiles. Five recipes really differ — axe, boomerang, snake fireball, red
+animal fire, and the arc and return behaviours between them — which is more variety than Exercise 3's
+single laser had. Exercise 3's `LaserPoolManager` handled one type; four copies of that class is exactly
+what the SOLID check finds, so the pool takes a prefab instead.
+
+### Stage 14 — Enemies `[ ]`
+
+1. The `Enemy` base: spawn, behave, take damage, die, drop, wait, return.
+1. עכביש, ציפור, jumping נחש, shooting נחש, צפרדע, רוח רפאים.
+1. The respawn timer.
+1. The shooting נחש's projectile, reusing stage 13's pool and builder.
+1. Each enemy's `IDestructible` answer.
+
+**What it needs: Template, Async and Pooling.** Six subclasses sharing one fixed lifecycle where only
+`Behave` and the destructible answer vary is the strongest Template in the project. The respawn timer is
+the Async home, for the reason above.
+
+### Stage 15 — Animals `[ ]`
+
+1. Mount by collecting לב, עלה or כוכב; swap when a second token is taken while riding.
+1. Blue hits low with its tail, red spits fire higher, green spins in place.
+1. Absorb one hit, then both the animal and what hit it disappear.
+1. Carry into level 2.
+
+**A pattern deliberately rejected here.** Composing the mounted state — sprite, attack behaviour, attack
+height, the absorb rule — looks like a second Builder. It is four fields, and a ScriptableObject per
+animal says the same thing with less machinery and stays editable without recompiling. Builder keeps one
+strong home in stage 13 rather than a weak second one here, which is the same call Exercise 3 made.
+
+### Stage 16 — ביצים, drops and collectibles `[ ]`
+
+1. The drop factory, making a collectible from a configured type.
+1. Per-enemy drop configuration, including dropping nothing (8.3).
+1. Eggs, opened by stepping on them, contents configured per egg (10.2, 10.3).
+1. **Reflection**: a `[Drop(DropType.Heart)]` attribute on each collectible class, scanned once when
+   the container is built and cached in a `Dictionary<DropType, Type>`.
+
+**What it needs: Factory, with two callers.** An enemy or an egg says *what*; the factory knows *how* to
+build a לב, a boomerang or a פייה, and neither caller ever learns. Both requirements say the choice is
+authored data rather than a roll, which is precisely a factory taking a configured type.
+
+**And Reflection, which is `[good]` rather than required.** Without it this factory holds the one
+switch statement the whole design admits, and every new drop type edits it. With the attribute and one
+cached scan at startup, a new drop type is a new class and the factory is never opened again —
+open/closed demonstrated instead of asserted, for about thirty lines and a single scan. The instructor
+said he meant to put Reflection on the list and would be glad to see it (00:54:18); Exercise 2 parked
+it and Exercise 3 dropped it, so this is the third time of asking.
+
+**The escape hatch is deliberate.** If this stage arrives and the schedule is tight, write the switch
+and move on. Nothing else in the project depends on which way this goes, which is exactly why the
+reflection lives here rather than somewhere structural.
+
+### Stage 17 — פייה `[ ]`
+
+1. Ten seconds of invincibility.
+1. Destroys everything it touches, מדורה and רוח רפאים included.
+1. תהום still kills (9.3), and a level needs a place to demonstrate exactly that (9.4).
+
+**Deliberately a coroutine, not a Task.** The פייה's ten seconds run on a MonoBehaviour that stays alive
+for the whole duration, needs no cancellation token and returns nothing, so a coroutine is the right tool
+and a Task would be worse. Lesson 5 makes exactly this contrast in one project: `EnemySpawner.cs` on
+Tasks beside `PlayerInvincible.cs` on a coroutine. Having both, and being able to say why each is where
+it is, answers the question he said outright he will ask — in both directions.
+
+This stage also touches every other system, so it doubles as the integration test.
+
+### Stage 18 — Level 2's mechanics `[ ]`
+
+1. Vertical camera framing.
+1. The transition, with no level-number branch anywhere in it.
+1. The completion popup, a second listener on stage 10's machinery.
+1. Carried state crossing: weapon, animal and fruit count survive; כוח resets.
+
+**What it needs: nothing new, and that is the point.** The camera comes from stage 7, the popup
+machinery from stage 10 and the carried state from stage 8; this stage only wires them to a second
+level. The one design constraint is that the transition holds no level number anywhere, because a
+branch on which level this is would be the exact thing open/closed exists to prevent.
+
+### Stage 19 — Author both levels to spec `[ ]`
+
+1. Level 1 painted in `Tools > Tile Placer`, against mechanics that are finished by now.
+1. Level 2 the same, climbing bottom to top.
+1. Satisfy the כוח arithmetic: the fruit needed to cross a level against a פסילה every 20.
+1. Place drops and eggs so every type is reachable in the opening half-minute (10.4).
+1. The פייה-then-תהום spot he said he will look for.
+
+**What it needs: no code at all.** This is authoring, and it is where the requirements that only
+level design can satisfy get satisfied: the כוח arithmetic, every drop type reachable early, and the
+place he said he will go looking for.
 
 ### Stage 20 — Final testing, comments and log check `[ ]`
 
@@ -915,3 +976,20 @@ _(append entries here as we make design decisions.)_
   and with two identically named children it answered with whichever it reached first. Walking down
   from `SceneManager.GetActiveScene().GetRootGameObjects()` fixes both. Editor tooling is not exempt
   from the SOLID check - it ships in the submission like everything else under `Assets/`.
+
+- **A level's size is authored on the level root, not derived.** `LevelDefinition` on `Level_1` and
+  `Level_2` holds width and height in cells and a fall line, and stage 7's camera clamp, stage 8's
+  `StartLevel` and stage 12's תהום all read it. Nothing at runtime otherwise knows a level's extent,
+  since the file is only read at edit time. Measuring the children's renderers describes the art
+  instead of the level - scratch level 2's tiles fill 15 columns of a 32-wide grid - and reading the
+  file's own width and height inherits a high-water mark, because `Save` grows the grid and never
+  shrinks it, which is why that same file says 32x45 for a level painted 15 by 22. The deciding
+  argument is that a level shorter than the camera's view cannot contain it at all, so the clamp rect
+  has to be at least the view's size regardless of where the tiles stop. That makes the size a design
+  decision, and the cost is two numbers per level kept in step by hand.
+- **The start marker is found, not referenced.** `PlayerStart` sits on the `Sprite_Player_Start`
+  prefab and the level asks its children for it. A serialized `Transform` on the level root was the
+  obvious alternative and it dangles the first time a rebuild replaces the marker - the incremental
+  build keeps a marker that hasn't moved, so the break would only appear after the start point was
+  edited, which is the worst time to find it. The same component hides its own sprite when the level
+  starts, since the 40% alpha exists for authoring only.
