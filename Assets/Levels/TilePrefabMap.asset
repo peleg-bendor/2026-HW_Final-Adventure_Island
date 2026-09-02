@@ -18,9 +18,9 @@ MonoBehaviour:
   - tileId: 2
     prefab: {fileID: 4893424657135555120, guid: 6185ece2dafe3874a94da69daee844fd, type: 3}
   - tileId: 3
-    prefab: {fileID: 7925792568244957991, guid: 7c0094b2e8744c544884a5dd6fa384f0, type: 3}
-  - tileId: 4
     prefab: {fileID: 332109482427642056, guid: 6d46e0b11b6fbf1448855b7fcbf7680c, type: 3}
+  - tileId: 4
+    prefab: {fileID: 7925792568244957991, guid: 7c0094b2e8744c544884a5dd6fa384f0, type: 3}
   - tileId: 5
     prefab: {fileID: 8722248720077441519, guid: f9286171dac96bb44b4cb76efaca144c, type: 3}
   - tileId: 6

@@ -648,7 +648,7 @@ would put a creature's feet on the cell boundary, while a tile probably wants Ce
 depends on how `TilePlacerWindow` positions what it places, so `SpriteImportRules.cs` deliberately
 says nothing about it and Unity's default stands.
 
-### Stage 4 — The level pipeline `[ ]`
+### Stage 4 — The level pipeline `[~]`
 
 **Scope narrowed in Stage 1.** This stage builds the pipeline and a scratch level to test it with. It
 does not author the levels anyone will play: a real level can only be built against finished
@@ -656,12 +656,33 @@ mechanics, so that is item 14 of the development list, at the end. Levels 1 and 
 grounds until then.
 
 - Two levels. Level 1 runs left to right; level 2 climbs bottom to top.
-- The instructor confirmed on camera that Tiled is **not** required and the pipeline is free choice.
-  Carrying `LevelWindow`, `TilePlacerWindow` and `TilePrefabMap` forward keeps a data-driven level
-  that three exercises have already proved, which is the argument for Tiled staying. That is a Stage
-  1 decision, not one to make here.
 - The gameplay reference the instructor pointed at: level 1 from 2:04 of the gameplay video, level 2
   from 7:15.
+
+**Tiled is out**, which reverses Stage 1 Step 2 and the third sub-step of Stage 6. The file format
+stays Tiled's on purpose, so the decision is reversible; the reasoning is in the log below.
+
+#### Steps
+
+1. The pivot, in `SpriteImportRules.cs`. `[x]`
+1. `SceneObjectMemory` resolving a hierarchy path instead of a leaf name, and both tool windows
+   defaulting to `Level_1` rather than Mario's `World`. `[x]`
+1. Six sorting layers, and the eight prefabs the level file holds that need no script yet. `[x]`
+1. `TilePrefabMap` filled in with ids 1 to 8. `[x]`
+1. `Level01.txt`, a scratch level 1, and the round trip proved in both directions. `[x]`
+1. `Build` made incremental, so a rebuild leaves a matching object alone instead of replacing it.
+   `[x]`
+1. Drag-to-paint in `TilePlacerWindow`. `[x]`
+1. `TiledMap.cs` renamed to `LevelMap.cs`, since the format is no longer read from Tiled. `[ ]`
+1. `Level02.txt` and a scratch level 2, tall and narrow, to prove the row flip on a vertical map.
+   `[ ]`
+1. `CONVENTIONS.md` updated with the pivot rule, the sorting layers and the incremental rebuild.
+   `[ ]`
+
+**Watch for this.** `SpriteImportRules.cs.meta` was found holding a copy of the script rather than
+YAML, pasted there by mistake at the end of Stage 3. Unity had been ignoring the asset ever since,
+silently — the sprites kept the settings from the one run before it broke, so nothing looked wrong
+until a new rule failed to apply. Deleting the `.meta` and letting Unity rebuild it was the fix.
 
 ### Stage 5 — Re-read the plan `[ ]`
 
@@ -802,8 +823,11 @@ _(append entries here as we make design decisions.)_
   out of the boss-room screenshots. A tile has to be exactly 48x48 with no transparent pixel in it,
   and the first hand-cut set was 18 source px wide and cut on a block boundary, which left a hole at
   every corner once the tiles were laid edge to edge. Three earth tiles kept, each from a different
-  boss room. The texture repeats every 32px, so one tile alone shows a visible grid - mixing two of
-  the three across a run of ground hides it.
+  boss room. The last sentence of this entry used to say the texture repeated every 32px, so that a
+  run of one tile showed a visible grid and two had to be mixed to hide it. Measured in Stage 4 that
+  is not true of the coordinate-cut set: none of the three has any period smaller than 48px in
+  either axis, and a run of one tiles cleanly. The observation belonged to the hand-cut set this
+  entry replaced.
 - **Spikes are optional and were cut anyway.** The only mention is 00:50:15, "אתם יכולים גם לעשות
   שיהיה קוצים למטה בחלק מהמקומות. עוד תהום" - offered as a variant of תהום rather than a
   requirement. One tile, and it gives level 2 a hazard that is not a bottomless fall. Clouds appear
@@ -814,3 +838,80 @@ _(append entries here as we make design decisions.)_
 - **The red animal's token is the spade.** 7.2 asks for לב, עלה and כוכב; the original uses card
   suits. The heart and star exist outright, and the spade is the closest thing in the sheets to a
   leaf. Sourcing or drawing a leaf was the alternative and it buys nothing.
+
+- **The sprite pivot is the centre of a sprite's bottom cell**, set as a custom pivot of
+  `(0.5, 24 / textureHeight)` and clamped to `0.5` for anything shorter than a cell. One integer
+  coordinate then means the same thing for a 1x1 tile as for a 3x4 animal, and a creature's feet
+  land on a cell boundary whatever its height. Unity's default Center was the alternative and it
+  fails on parity: art is bottom-aligned in a whole number of cells, so an odd-height sprite lands on
+  a boundary and an even-height one lands half a cell into the floor - the מדורה, the door, both
+  נחשים and the red and blue mounts, five of the things that stand on the ground. Bottom-Center was
+  the other candidate and it works, at the cost of an asymmetric grid, a `Floor` on Y against a
+  `Round` on X in the placer, and a collider offset on all fourteen one-cell prefabs that this way
+  gets for free. The question could not arise in Exercise 3: all 46 of its sprites were 48x48.
+- **The level file holds everything, and `Build` is a diff rather than a teardown.** Six of the
+  things placed in a level carry per-instance configuration - the spider's range, the bird's speed,
+  dip and wavelength, the drop on every enemy, the ביצה's contents - and Mario's `Build` destroyed
+  every child and recreated it from a file that stores one int per cell, so a rebuild would wipe all
+  of it. Two alternatives were weighed: splitting the hierarchy into `Tiles` and `Objects` and
+  keeping the configured objects out of the file, and keeping Mario's `Build` with a confirmation
+  dialog. The split costs a complete record and a second place to look; the dialog leaves a rebuild
+  restoring a level where every bird flies straight, which is worse than not restoring because it
+  looks right. Indexing the existing children by cell and comparing against the file costs about
+  forty lines and removes the hazard instead of warning about it. It also keeps `LevelWindow`'s
+  open/closed property intact, since the comparison is on position and prefab identity and adds no
+  type knowledge.
+- **Tiled is dropped.** Stage 1 Step 2 kept it for first drafts and Stage 6 wanted the path proven
+  early; both are reversed. `TilePlacerWindow` already previews better than Tiled can, because it
+  stamps the real prefab at real size against the real camera framing, and this project's placeables
+  are 1x1 up to 3x4 where Tiled would show a 48px thumbnail for all of them - the one thing worth
+  seeing while authoring is the thing it gets wrong. Stage 1 had already ruled out round-tripping
+  through Tiled, so it was only ever going to run once per level, and for that one run it brings a
+  tileset atlas to assemble, the CSV-versus-Base64 export trap and the flip-bits-in-the-GID trap. Its
+  one real advantage is bulk terrain, and the answer to that is drag-to-paint in our own tool rather
+  than a second application. **The file format stays Tiled's**, so the decision costs nothing to
+  reverse.
+- **Tile ids are contiguous, grouped by kind in order.** 1 the start marker, 2 to 4 the earth tiles,
+  5 to 8 spikes, אבן, מדורה and the door, 9 to 14 the six enemies, 15 the ביצה, 16 and 17 the two
+  fruit tiers, 18 to 23 the weapons, tokens and the פייה. Banding with gaps was the first proposal
+  and its only argument was Tiled's consecutive GIDs, which stopped mattering when Tiled went. The
+  cost of no gaps is that a placeable added later appends rather than slotting into its group, since
+  renumbering would mean rewriting every level file by hand.
+- **A per-instance value is a field when it gets passed on and a subclass when it gets branched on.**
+  The ביצה holds a `DropType` and hands it to the factory without ever asking what it is, so one
+  prefab. The spider's static-or-moving is a `moveRange` float where zero means static, which needs
+  no branch at all and is how 8.6 and 8.9 are worded. The two נחשים are two prefabs and two
+  subclasses: one runs stand-hop-stand on a timer and the other tracks the player, fires, and needs a
+  stop condition, so an `AttackType` enum would be tested every frame and half the serialized fields
+  would be dead on each instance. That is the switch over enemy types the SOLID risk register
+  predicts, and it would take Template's demonstration from six subclasses to five.
+- **The fruit's look is a prefab override, not a field.** The fifteen fruit sprites are fifteen
+  different fruits rather than animation frames, but 4.3 makes the value a property of the tier and
+  the tier is the prefab, so nothing in the game reads which one it is. An enum, a sprite array and
+  an index would exist only to reproduce a field the `SpriteRenderer` already has, and the override
+  is protected by the incremental rebuild like any other per-instance value.
+- **No `CompositeCollider2D` on the ground.** Adjacent `BoxCollider2D`s leave internal faces that a
+  box-shaped character catches on, and the composite removes them for good. Exercise 3 never met the
+  problem because Mario had a `CircleCollider2D` of radius 0.45 on a 1x1 sprite - he was a ball, and
+  a frictionless one. That approach transfers with the shape changed: the player's body measures 1 by
+  2 units inside its 2x3 box, so a vertical capsule gives the same rounded bottom with coverage that
+  matches, and the frog's body is a genuine 1x1 where Mario's circle fits exactly. A composited
+  collider also raises its events on the composite's GameObject rather than the tile, and ticking
+  `Used By Composite` on a prefab dropped under a root that has no composite leaves it with no
+  collision at all, silently. Adding one later is two components and one checkbox with no change to
+  the file, the tools or any other prefab, so the reversible option goes first.
+- **The אבן is a trigger, not a solid.** 00:17:49: "מעיפים אותו מהאבן... איך שהוא מגיע באבן הוא טס
+  קדימה. ואז אם יש אש או משהו כזה, הוא מת" - the player enters the rock and is flung forward across
+  it, into whatever is on the far side. A blocking collider stops him at its face, so there is
+  nothing to be flung across and nothing to land in. 5.2 already says he is inside the collider while
+  being pushed.
+- **Six sorting layers, back to front: `Background`, `Level`, `Pickups`, `Enemies`, `Player`,
+  `Effects`.** Unity's `Default` is left first and unused, so a prefab whose layer was forgotten
+  renders behind the ground and shows itself. `Level` rather than `Tiles` because the door and the
+  מדורה are not tiles, and `Pickups` split from it so a fruit lying in the same cell as scenery reads
+  as collectable. Exercise 3 needed none of this: every sprite was one cell and nothing overlapped.
+- **`SceneObjectMemory` remembers a hierarchy path.** `GameObject.Find` matches on the leaf name and
+  skips inactive objects, so with one level deactivated it answered with the other level's object,
+  and with two identically named children it answered with whichever it reached first. Walking down
+  from `SceneManager.GetActiveScene().GetRootGameObjects()` fixes both. Editor tooling is not exempt
+  from the SOLID check - it ships in the submission like everything else under `Assets/`.

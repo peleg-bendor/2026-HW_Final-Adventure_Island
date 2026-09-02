@@ -1,10 +1,10 @@
 using System;
 
-// The handful of fields this project reads out of a Tiled JSON export, shaped for JsonUtility.
-// Deliberately not the whole format - every key left out here is ignored on parse, so the tool
-// stays indifferent to Tiled's version and to map settings that don't affect placement.
+// The fields a level file holds, shaped for JsonUtility. Deliberately still Tiled's map export
+// minus every key this project doesn't read - levels are authored in the editor tools rather than
+// in Tiled, and keeping its shape is what leaves that reversible.
 [Serializable]
-public class TiledMap
+public class LevelMap
 {
     public int width;
     public int height;

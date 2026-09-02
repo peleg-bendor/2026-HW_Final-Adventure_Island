@@ -47,7 +47,7 @@ public class LevelWindow : EditorWindow
         bool ready = levelFile != null && tilePrefabMap != null && levelParent != null;
         using (new EditorGUI.DisabledScope(!ready))
         {
-            EditorGUILayout.HelpBox("Build replaces every child of Parent. Save overwrites the level file.", MessageType.Warning);
+            EditorGUILayout.HelpBox("Build makes Parent match the level file. Save overwrites the level file.", MessageType.Warning);
 
             if (GUILayout.Button("Build Level"))
                 Build();
@@ -57,9 +57,12 @@ public class LevelWindow : EditorWindow
         }
     }
 
+    // Reconciles the scene against the file rather than emptying it first. A cell already holding
+    // the right prefab is left alone, so everything set on that instance by hand survives a
+    // rebuild - which is the only place a bird's dip or a ביצה's contents is stored.
     private void Build()
     {
-        TiledMap map = JsonUtility.FromJson<TiledMap>(levelFile.text);
+        LevelMap map = JsonUtility.FromJson<LevelMap>(levelFile.text);
         if (map == null || map.layers == null)
         {
             Debug.LogError("Not a level file this tool can read: " + levelFile.name);
@@ -76,17 +79,41 @@ public class LevelWindow : EditorWindow
         // Ctrl+Z instead of one per object destroyed and created.
         int undoGroup = Undo.GetCurrentGroup();
 
-        ClearChildren();
-
         HashSet<int> unmapped = new HashSet<int>();
-        int placed = 0;
-        foreach (TiledMap.Layer layer in map.layers)
-        {
-            if (layer == null || layer.data == null)
-                continue;
+        Dictionary<Vector2Int, GameObject> wanted = ReadCells(map, unmapped);
 
-            placed += PlaceLayer(layer, map.width, map.height, unmapped);
+        List<GameObject> doomed = new List<GameObject>();
+        Dictionary<Vector2Int, GameObject> existing = IndexChildren(doomed);
+
+        int kept = 0;
+        int added = 0;
+
+        foreach (KeyValuePair<Vector2Int, GameObject> cell in wanted)
+        {
+            if (existing.TryGetValue(cell.Key, out GameObject current))
+            {
+                existing.Remove(cell.Key);
+
+                if (PrefabUtility.GetCorrespondingObjectFromSource(current) == cell.Value)
+                {
+                    kept++;
+                    continue;
+                }
+
+                doomed.Add(current);
+            }
+
+            if (Place(cell.Value, cell.Key))
+                added++;
         }
+
+        // Whatever the file never named. Destroyed after the placing rather than before it, so a
+        // replaced cell's old occupant can't be confused for the new one while both are alive.
+        foreach (GameObject leftover in existing.Values)
+            doomed.Add(leftover);
+
+        foreach (GameObject gone in doomed)
+            Undo.DestroyObjectImmediate(gone);
 
         Undo.SetCurrentGroupName("Build Level");
         Undo.CollapseUndoOperations(undoGroup);
@@ -94,55 +121,83 @@ public class LevelWindow : EditorWindow
         if (unmapped.Count > 0)
             Debug.LogWarning("Tile ids skipped, nothing mapped to them: " + string.Join(", ", unmapped));
 
-        Debug.Log("Level built from " + levelFile.name + " - " + placed + " objects under " + levelParent.name);
+        Debug.Log("Level built from " + levelFile.name + " under " + levelParent.name
+            + " - " + kept + " kept, " + added + " added, " + doomed.Count + " removed");
     }
 
-    private void ClearChildren()
+    private Dictionary<Vector2Int, GameObject> ReadCells(LevelMap map, HashSet<int> unmapped)
     {
-        Transform parent = levelParent.transform;
+        Dictionary<Vector2Int, GameObject> cells = new Dictionary<Vector2Int, GameObject>();
+        int cellCount = map.width * map.height;
 
-        // Counts down, because destroying a child immediately reindexes every child after it.
-        for (int i = parent.childCount - 1; i >= 0; i--)
-            Undo.DestroyObjectImmediate(parent.GetChild(i).gameObject);
-    }
-
-    private int PlaceLayer(TiledMap.Layer layer, int width, int height, HashSet<int> unmapped)
-    {
-        int placed = 0;
-
-        for (int i = 0; i < layer.data.Length; i++)
+        foreach (LevelMap.Layer layer in map.layers)
         {
-            int tileId = layer.data[i];
-
-            // Tiled writes 0 for an empty cell, the one id that means "nothing here".
-            if (tileId == 0)
+            if (layer == null || layer.data == null)
                 continue;
 
-            GameObject prefab = tilePrefabMap.GetPrefab(tileId);
-            if (prefab == null)
+            // Stopped at the grid's own size rather than the array's, so a hand-edited file with
+            // a trailing entry places nothing at a negative row instead.
+            int last = Mathf.Min(layer.data.Length, cellCount);
+
+            for (int i = 0; i < last; i++)
             {
-                unmapped.Add(tileId);
-                continue;
+                int tileId = layer.data[i];
+
+                // Tiled writes 0 for an empty cell, the one id that means "nothing here".
+                if (tileId == 0)
+                    continue;
+
+                GameObject prefab = tilePrefabMap.GetPrefab(tileId);
+                if (prefab == null)
+                {
+                    unmapped.Add(tileId);
+                    continue;
+                }
+
+                // Rows are stored downwards from the top of the file while Unity's Y axis points
+                // upwards, so the file's first row belongs at the highest Y in the scene.
+                cells[new Vector2Int(i % map.width, (map.height - 1) - (i / map.width))] = prefab;
             }
-
-            GameObject tile = PrefabUtility.InstantiatePrefab(prefab, levelParent.transform) as GameObject;
-            if (tile == null)
-            {
-                Debug.LogWarning("Could not instantiate the prefab mapped to tile id " + tileId);
-                continue;
-            }
-
-            // Rows are stored downwards from the top of the file while Unity's Y axis points
-            // upwards, so the file's first row belongs at the highest Y in the scene.
-            int column = i % width;
-            int row = (height - 1) - (i / width);
-            tile.transform.localPosition = new Vector3(column, row, 0f);
-
-            Undo.RegisterCreatedObjectUndo(tile, "Build Level");
-            placed++;
         }
 
-        return placed;
+        return cells;
+    }
+
+    // Two objects in one cell can't both be written to the file, so the second and later ones go
+    // straight in with what the rebuild is about to remove.
+    private Dictionary<Vector2Int, GameObject> IndexChildren(List<GameObject> doomed)
+    {
+        Dictionary<Vector2Int, GameObject> byCell = new Dictionary<Vector2Int, GameObject>();
+        Transform parent = levelParent.transform;
+
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            GameObject child = parent.GetChild(i).gameObject;
+            Vector3 position = child.transform.localPosition;
+            Vector2Int cell = new Vector2Int(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.y));
+
+            if (byCell.ContainsKey(cell))
+                doomed.Add(child);
+            else
+                byCell.Add(cell, child);
+        }
+
+        return byCell;
+    }
+
+    private bool Place(GameObject prefab, Vector2Int cell)
+    {
+        GameObject tile = PrefabUtility.InstantiatePrefab(prefab, levelParent.transform) as GameObject;
+        if (tile == null)
+        {
+            Debug.LogWarning("Could not instantiate " + prefab.name);
+            return false;
+        }
+
+        tile.transform.localPosition = new Vector3(cell.x, cell.y, 0f);
+
+        Undo.RegisterCreatedObjectUndo(tile, "Build Level");
+        return true;
     }
 
     private void Save()
@@ -161,7 +216,7 @@ public class LevelWindow : EditorWindow
 
         // The file's own size is the floor, so deleting something at the edge can't quietly
         // shrink the level, while anything placed past it grows the grid to fit.
-        TiledMap existing = JsonUtility.FromJson<TiledMap>(levelFile.text);
+        LevelMap existing = JsonUtility.FromJson<LevelMap>(levelFile.text);
         int width = existing != null ? Mathf.Max(existing.width, 1) : 1;
         int height = existing != null ? Mathf.Max(existing.height, 1) : 1;
         foreach (PlacedTile tile in tiles)

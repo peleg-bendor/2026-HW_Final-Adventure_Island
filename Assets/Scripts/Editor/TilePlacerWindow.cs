@@ -23,6 +23,15 @@ public class TilePlacerWindow : EditorWindow
     // worse than one click away from placing one.
     private Mode mode;
 
+    // One press-drag-release, collapsed into a single undo entry and reported as one line. None of
+    // it is serialized either, since a stroke cannot outlive the drag that opened it.
+    private bool painting;
+    private Vector3 paintedCell;
+    private int strokeUndoGroup;
+    private int strokePlaced;
+    private int strokeErased;
+    private string strokePrefabName;
+
     [MenuItem("Tools/Tile Placer")]
     public static void ShowWindow()
     {
@@ -76,10 +85,10 @@ public class TilePlacerWindow : EditorWindow
     private string ModeHelp()
     {
         if (mode == Mode.Place)
-            return "Click in the Scene view to place. Clicking won't select anything while this is on.";
+            return "Click or drag in the Scene view to place. Clicking won't select anything while this is on.";
 
         if (mode == Mode.Erase)
-            return "Click in the Scene view to delete everything in that cell.";
+            return "Click or drag in the Scene view to delete everything in those cells.";
 
         return "Off, so the Scene view behaves normally.";
     }
@@ -93,11 +102,25 @@ public class TilePlacerWindow : EditorWindow
         if (entries.Count == 0)
             return;
 
+        int controlId = GUIUtility.GetControlID(FocusType.Passive);
+
         // Claims the Scene view's default click handling, so placing a tile doesn't also select
         // whatever happened to be under the cursor.
-        HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
+        HandleUtility.AddDefaultControl(controlId);
 
+        GameObject prefab = entries[Mathf.Clamp(selectedIndex, 0, entries.Count - 1)].prefab;
         Event current = Event.current;
+
+        // Closed before the cell is worked out, so a button released over a view that can't
+        // answer still ends the stroke rather than leaving it open.
+        if (painting && current.type == EventType.MouseUp)
+        {
+            GUIUtility.hotControl = 0;
+            EndStroke();
+            current.Use();
+            return;
+        }
+
         if (!TryGetCell(current.mousePosition, out Vector3 cell))
             return;
 
@@ -113,12 +136,62 @@ public class TilePlacerWindow : EditorWindow
         // than someone placing a tile.
         if (current.type == EventType.MouseDown && current.button == 0 && !current.alt)
         {
-            if (mode == Mode.Erase)
-                Erase(cell);
-            else
-                Place(entries[Mathf.Clamp(selectedIndex, 0, entries.Count - 1)].prefab, cell);
-
+            GUIUtility.hotControl = controlId;
+            BeginStroke();
+            Paint(prefab, cell);
             current.Use();
+        }
+        else if (current.type == EventType.MouseDrag && painting && cell != paintedCell)
+        {
+            Paint(prefab, cell);
+            current.Use();
+        }
+    }
+
+    private void BeginStroke()
+    {
+        // A stroke left open, by a button released outside the Scene view, is closed here rather
+        // than tracked, so the next click starts from a clean undo group.
+        if (painting)
+            EndStroke();
+
+        painting = true;
+        strokeUndoGroup = Undo.GetCurrentGroup();
+        strokePlaced = 0;
+        strokeErased = 0;
+    }
+
+    private void EndStroke()
+    {
+        painting = false;
+
+        // Collapsed per stroke, so one Ctrl+Z takes back a whole dragged run of ground rather
+        // than one press per cell of it.
+        Undo.SetCurrentGroupName(mode == Mode.Erase ? "Erase Tiles" : "Place Tiles");
+        Undo.CollapseUndoOperations(strokeUndoGroup);
+
+        // Reported per stroke for the same reason, and silent when a drag changed nothing.
+        if (strokePlaced > 0)
+            Debug.Log("Placed " + strokePlaced + " x " + strokePrefabName);
+
+        if (strokeErased > 0)
+            Debug.Log("Erased " + strokeErased + " object(s)");
+    }
+
+    private void Paint(GameObject prefab, Vector3 cell)
+    {
+        paintedCell = cell;
+
+        if (mode == Mode.Erase)
+        {
+            strokeErased += ClearCell(cell);
+            return;
+        }
+
+        if (Place(prefab, cell))
+        {
+            strokePrefabName = prefab.name;
+            strokePlaced++;
         }
     }
 
@@ -156,9 +229,13 @@ public class TilePlacerWindow : EditorWindow
         return true;
     }
 
-    private void Place(GameObject prefab, Vector3 cell)
+    private bool Place(GameObject prefab, Vector3 cell)
     {
-        int undoGroup = Undo.GetCurrentGroup();
+        // Left alone when the cell already holds this prefab, so dragging back across a painted
+        // run doesn't destroy and rebuild what is already right.
+        Transform occupant = FindInCell(cell);
+        if (occupant != null && PrefabUtility.GetCorrespondingObjectFromSource(occupant.gameObject) == prefab)
+            return false;
 
         ClearCell(cell);
 
@@ -166,7 +243,7 @@ public class TilePlacerWindow : EditorWindow
         if (tile == null)
         {
             Debug.LogWarning("Could not place " + prefab.name);
-            return;
+            return false;
         }
 
         tile.transform.localPosition = cell;
@@ -174,34 +251,28 @@ public class TilePlacerWindow : EditorWindow
         // Instantiated through PrefabUtility rather than plain Instantiate, so the tile keeps a
         // link to its prefab - which is the only way saving can work out what tile id it is.
         Undo.RegisterCreatedObjectUndo(tile, "Place Tile");
-
-        Undo.SetCurrentGroupName("Place Tile");
-        Undo.CollapseUndoOperations(undoGroup);
-
-        Debug.Log("Placed " + prefab.name + " at (" + cell.x + ", " + cell.y + ")");
+        return true;
     }
 
-    private void Erase(Vector3 cell)
+    private Transform FindInCell(Vector3 cell)
     {
-        int undoGroup = Undo.GetCurrentGroup();
+        Transform parent = levelParent.transform;
 
-        int removed = ClearCell(cell);
-        if (removed == 0)
-            return;
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            Transform child = parent.GetChild(i);
+            if (IsInCell(child, cell))
+                return child;
+        }
 
-        // Collapsed the same way placing is, so one Ctrl+Z brings back everything the click took
-        // rather than one press per object.
-        Undo.SetCurrentGroupName("Erase Tile");
-        Undo.CollapseUndoOperations(undoGroup);
-
-        Debug.Log("Erased " + removed + " object(s) at (" + cell.x + ", " + cell.y + ")");
+        return null;
     }
 
     private int ClearCell(Vector3 cell)
     {
         Transform parent = levelParent.transform;
 
-        // Counted so erasing can stay quiet about a cell that held nothing.
+        // Counted so a stroke can stay quiet about cells that held nothing.
         int removed = 0;
 
         // A cell holds one tile, since that's all the level file can store. Painting over
@@ -209,8 +280,7 @@ public class TilePlacerWindow : EditorWindow
         for (int i = parent.childCount - 1; i >= 0; i--)
         {
             Transform child = parent.GetChild(i);
-            if (Mathf.RoundToInt(child.localPosition.x) == Mathf.RoundToInt(cell.x) &&
-                Mathf.RoundToInt(child.localPosition.y) == Mathf.RoundToInt(cell.y))
+            if (IsInCell(child, cell))
             {
                 Undo.DestroyObjectImmediate(child.gameObject);
                 removed++;
@@ -218,5 +288,11 @@ public class TilePlacerWindow : EditorWindow
         }
 
         return removed;
+    }
+
+    private static bool IsInCell(Transform child, Vector3 cell)
+    {
+        return Mathf.RoundToInt(child.localPosition.x) == Mathf.RoundToInt(cell.x)
+            && Mathf.RoundToInt(child.localPosition.y) == Mathf.RoundToInt(cell.y);
     }
 }
