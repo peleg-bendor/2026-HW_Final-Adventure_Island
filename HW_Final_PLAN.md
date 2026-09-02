@@ -535,10 +535,10 @@ only the player himself.
    because that is what his art measures inside its 2x3 box, and
    `Assets/Physics/Frictionless.physicsMaterial2D`, created in this stage because his collider is
    what needs it. He is one object for the whole game rather than a child of either level, since the
-   weapon, the animal and the fruit count all cross the level boundary with him.
-1. Player movement on the arrow keys. `[ ]`
-1. Player jump on `Space`, height varying with how long it is held. `[ ]`
-1. Attack on `Z`, writing a log line and nothing else. `[ ]`
+   weapon, the animal and the fruit count all cross the level boundary with him. `[x]`
+1. Player movement on the arrow keys. `[x]`
+1. Player jump on `Space`, height varying with how long it is held. `[x]`
+1. Attack on `Z`, writing a log line and nothing else. `[x]`
 1. The player's Animator: idle, walk, jump, throw and death, driven by what the movement and jump
    components already know rather than by a second read of the keyboard. `[ ]`
 1. A tuning pass with the animation on, since that is the first point where the numbers can be
