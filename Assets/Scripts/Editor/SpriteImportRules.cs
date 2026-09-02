@@ -3,8 +3,7 @@ using UnityEngine;
 
 // Applies the import settings this project's art depends on to everything under Assets/Sprites/,
 // every time one of them is imported. It is a rule rather than a one-off fixer: a sprite whose
-// settings get changed by hand goes back to these on its next reimport. It deliberately says
-// nothing about the pivot, which belongs with the level tools rather than here.
+// settings get changed by hand goes back to these on its next reimport.
 public class SpriteImportRules : AssetPostprocessor
 {
     const string SpriteFolder = "Assets/Sprites/";
@@ -29,11 +28,33 @@ public class SpriteImportRules : AssetPostprocessor
         importer.textureCompression = TextureImporterCompression.Uncompressed;
         importer.mipmapEnabled = false;
 
-        // Full Rect rather than Tight. The transparent padding around each sprite is what holds
-        // every frame of one character to the same size, and a Tight mesh crops it straight off.
+        importer.GetSourceTextureWidthAndHeight(out _, out int height);
+
         TextureImporterSettings settings = new TextureImporterSettings();
         importer.ReadTextureSettings(settings);
+
+        // Full Rect rather than Tight. The transparent padding around each sprite is what holds
+        // every frame of one character to the same size, and a Tight mesh crops it straight off.
         settings.spriteMeshType = SpriteMeshType.FullRect;
+
+        // Centred across, so mirroring a sprite to face left turns it about its own middle
+        // instead of moving it a whole box width sideways.
+        settings.spriteAlignment = (int)SpriteAlignment.Custom;
+        settings.spritePivot = new Vector2(0.5f, PivotY(height));
+
         importer.SetTextureSettings(settings);
+    }
+
+    // Anchors a sprite at the middle of its bottom cell, so one integer coordinate means the same
+    // for a 1x1 tile as for a 3x4 animal and feet land on a cell boundary whatever the height.
+    // Center was the alternative and it leaves every even-height sprite half a cell into the floor.
+    static float PivotY(int textureHeight)
+    {
+        // A sprite shorter than a cell has no bottom cell to sit in, so it stays centred rather
+        // than anchored above its own top edge. The two HUD pieces are the only ones.
+        if (textureHeight <= PixelsPerUnit)
+            return 0.5f;
+
+        return PixelsPerUnit * 0.5f / textureHeight;
     }
 }

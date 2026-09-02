@@ -594,7 +594,7 @@ worst spot is worth predicting rather than discovering.
 - **The three MVC triads have to be the same shape.** Two idioms for one HUD is a visible
   inconsistency in a place he will definitely look.
 
-### Stage 2 — Project and repo setup `[ ]`
+### Stage 2 — Project and repo setup `[x]`
 
 - Create `2026-HW_Final-Adventure_Island` as a fresh Unity project. Not a copy of Exercise 3.
 - Check the scene and the Build Settings.
@@ -613,23 +613,40 @@ worst spot is worth predicting rather than discovering.
 - `git init` and a clean starting commit.
 - Move this plan file into the project once the folder exists.
 
-### Stage 3 — Sprites `[ ]`
+### Stage 3 — Sprites `[x]`
 
-`Course/Exercises/Copy of NES - Adventure Island.zip` holds sheets covering most of what's needed.
+Done. **82 sprites in `Assets/Sprites/`**, against the 59 Stage 1 estimated: 21 riding, 15 fruit, 14
+enemies, 9 player on foot, 4 weapons, 4 tiles, 3 tokens, 3 hazards, 3 destroy puffs, 2 egg, 2 UI, the
+פייה and the exit door. The riding count is where the estimate was thinnest - it budgeted 9 and each
+animal needed idle and jumping frames on top of its walk pair and attack.
 
-- Decide which sprites are needed, which depends on Stage 1's animation scope.
-- Cut them out of the sheets. The instructor demonstrated Paint.NET for this.
-- Most of the sheets have opaque backgrounds, so a repeatable way to key them out is worth finding
-  once and reusing, instead of doing it by hand per sprite.
-- Import at Pixels Per Unit 48, per `CONVENTIONS.md`. The art sits on a 16px grid and is upscaled 3x
-  first, so one grid cell is stored as 48px, like every earlier exercise's tiles.
-- Key the background out at native resolution first, so the colour match is exact, then upscale the
-  whole sheet, then cut on a 48px grid. Three operations per sheet rather than per sprite.
-- Sprites are not all one cell. Expect 16x16 for tiles and the smallest enemies, 16x24 and 16x32 for
-  most enemies, 16x32 for the player, and about 32x32 for an animal with its rider - so cut to the
-  sprite's own extent on the grid rather than to a fixed box.
-- Roughly 59 sprites, per Stage 1 Step 4: 7 player on foot, 9 riding, 12 enemies, 6 projectiles, 8
-  collectibles, 2 egg, 3 hazards, 8 tiles, 4 UI.
+Every requirement has its art: all six enemies of 8.1, both weapons, the three animals of 7.1 with
+their tokens, the אבן and מדורה of section 5, the פייה, the ביצה in both states, the exit door, both
+fruit tiers and the two HUD pieces of section 12.
+
+**The pipeline is three scripts in `Tools/`**, outside `Assets/` so Unity never compiles them:
+
+- `prepare_sheets.py` reads the zip, clears each sheet's background, upscales 3x nearest-neighbour,
+  and writes each sheet twice - once with real alpha, once with the background filled in a colour it
+  has proved absent from that sheet's art. The second copy is what gets cut from, because Paint
+  cannot be trusted to preserve transparency.
+- The cutting itself is by hand, in Paint, using Crop rather than copy-paste. Crop was measured to
+  give byte-identical output at every tightness; pasting drops the sprite onto a white canvas and
+  eats any white in the art that touches the edge.
+- `finish_sprites.py` clears the background, trims to the art, and pads out to whole 48px cells.
+- `cut_tiles.py` takes the ground tiles by coordinate instead, for the reason in the log below.
+
+`Tools/Cut/` is tracked - it is hand work and cannot be regenerated. `Tools/SheetsReady/` and
+`Tools/Ready/` are gitignored, since the scripts rebuild both exactly.
+
+`SpriteImportRules.cs` in `Assets/Scripts/Editor/` holds the import settings as a rule rather than a
+default: PPU 48, Point filtering, no compression, Full Rect, no mipmaps. It runs on every import, so
+a sprite whose settings get changed by hand goes back on the next reimport.
+
+**Left for Stage 4:** the pivot. `finish_sprites.py` bottom-aligns art in its box, so Bottom-Center
+would put a creature's feet on the cell boundary, while a tile probably wants Center. Which is right
+depends on how `TilePlacerWindow` positions what it places, so `SpriteImportRules.cs` deliberately
+says nothing about it and Unity's default stands.
 
 ### Stage 4 — The level pipeline `[ ]`
 
@@ -767,3 +784,33 @@ _(append entries here as we make design decisions.)_
   the fact, and would be glad to see it. Exercise 2 parked reflection and Exercise 3 dropped it; this
   is the first place it would be welcome rather than invented, so it is worth reconsidering once
   Stage 1 knows how much room there is.
+- **Backgrounds are cleared globally, not flood-filled from the border.** The obvious method is to
+  flood inward from the edge, and it is wrong twice over. The rippers left background sealed inside
+  sprite outlines where a flood can never reach: two shades of khaki across 149 pockets on
+  `123.png`, a purple box behind one frame, and the green boxes holding the effects on `29903.png`.
+  And a flood cannot tell a solid-coloured sprite from a background at all - it consumed the כוח bar
+  whole and stripped the frame off the exit door. Every colour was checked against all sixteen
+  sheets' art before being added to the clear list; the pale pink that looks equally out of place is
+  the pink animal's belly, and clearing it would have gutted four sprites.
+- **Frames of one character share a box size.** Padding each frame to its own extent makes a
+  character slide sideways when the Animator changes state - an idle frame one cell wide beside a
+  throwing frame two cells wide moves him half a unit. Effects and projectiles are excluded, since
+  they spawn at their own position and padding a 24px fireball into the rider's 2x4 box would leave
+  its pivot in empty space. The two HUD sprites are left unpadded entirely: the 48px cell means
+  nothing on a Canvas. The cost is transparent padding, which is atlas space and nothing else.
+- **Tiles are cut by coordinate, not by hand.** No sheet in the zip is a tileset, so the ground comes
+  out of the boss-room screenshots. A tile has to be exactly 48x48 with no transparent pixel in it,
+  and the first hand-cut set was 18 source px wide and cut on a block boundary, which left a hole at
+  every corner once the tiles were laid edge to edge. Three earth tiles kept, each from a different
+  boss room. The texture repeats every 32px, so one tile alone shows a visible grid - mixing two of
+  the three across a run of ground hides it.
+- **Spikes are optional and were cut anyway.** The only mention is 00:50:15, "אתם יכולים גם לעשות
+  שיהיה קוצים למטה בחלק מהמקומות. עוד תהום" - offered as a variant of תהום rather than a
+  requirement. One tile, and it gives level 2 a hazard that is not a bottomless fall. Clouds appear
+  in neither source; the one apparent match in the transcript is inside another word.
+- **The רוח רפאים is the white bat from `88429.gif`.** The instructor said on camera he could not
+  extract one (8.24), and he is right that no sheet has a Boo. The bat reads as a ghost, is in the
+  material he provided, and answers better at the defense than a downloaded Mario asset would.
+- **The red animal's token is the spade.** 7.2 asks for לב, עלה and כוכב; the original uses card
+  suits. The heart and star exist outright, and the spade is the closest thing in the sheets to a
+  leaf. Sourcing or drawing a leaf was the alternative and it buys nothing.

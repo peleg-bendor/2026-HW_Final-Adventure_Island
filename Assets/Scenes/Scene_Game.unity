@@ -130,7 +130,7 @@ GameObject:
   - component: {fileID: 247347957}
   - component: {fileID: 247347956}
   m_Layer: 0
-  m_Name: Zenject
+  m_Name: SceneContext
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
