@@ -13,7 +13,8 @@ had been carried by hand from session to session until they landed here.
 Carried into the final project at its Stage 2. The comment, logging and code-quality rules came
 across unchanged. The naming and hierarchy section was rewritten, because this is a different game:
 two levels living in one scene, 16px source art instead of Mario's, and a dependency-injection
-container sitting in the hierarchy.
+container sitting in the hierarchy. Stage 4 revised that section again once the level pipeline was
+actually built: the pivot, the sorting layers, the prefab rules, and what a rebuild does now.
 
 This file does not travel with `Assets` - it sits at the project root, so copying `Assets` into the
 next exercise leaves it, `README.md` and `.gitignore` behind. Copy all four by hand.
@@ -76,12 +77,30 @@ world unit: a tile is 1x1, an animal with its rider is 2x2, and a creature 16 wi
 up 1 by 1.5. Setting PPU per sprite to normalise every sprite to one unit would break the tile grid,
 which `TilePlacerWindow` draws as a 1-unit cell cursor and places on integer coordinates.
 
+Every sprite is anchored at the middle of its bottom cell: a custom pivot of `(0.5, 24 / texture
+height)`, clamped to `0.5` for anything shorter than a cell. One integer coordinate then means the
+same thing for a 1x1 tile as for a 3x4 animal, and a creature's feet land on a cell boundary whatever
+its height. Unity's default Center fails on parity, because art is bottom-aligned inside a whole
+number of cells: an odd-height sprite lands on a boundary and an even-height one lands half a cell
+into the floor. `SpriteImportRules.cs` applies the pivot on every import along with PPU 48, Point
+filtering, no compression and Full Rect, so a setting changed by hand in the Inspector goes back on
+the next reimport. Don't set import settings by hand; change the rule.
+
 Cut per sheet, not per sprite: key out the background at native resolution first, so the colour match
 is exact, then upscale the whole sheet, then cut on a 48px grid. A sprite spans one cell, two or six
 depending on what it is, so the grid is the guide rather than the cut size.
 
-Prefabs for objects placed in the level take the `Sprite_` prefix. Prefabs for things spawned at
-runtime don't.
+Prefabs live in `Assets/Prefabs/`, flat. Those for objects placed in the level take the `Sprite_`
+prefix; those for things spawned at runtime don't.
+
+A collider is sized to the art rather than to the sprite's box, since the box carries transparent
+padding: the door measures 1.3 by 1.8 inside a 2x2 box. Ground tiles carry a plain `BoxCollider2D`
+with no `CompositeCollider2D` above them, so anything that walks needs a rounded bottom or it catches
+on the seams between tiles - a capsule, or a circle where the body is a single cell.
+
+Sorting layers, back to front: `Background`, `Level`, `Pickups`, `Enemies`, `Player`, `Effects`.
+Unity's `Default` is left first and unused, so a prefab whose layer was forgotten renders behind the
+ground and shows itself.
 
 Scripts are grouped under `Assets/Scripts/` by domain, with three folders named for a pattern
 instead: `Builder/`, `Factory/` and `Pooling/`. Grouping by pattern is worse organisation - it
@@ -101,12 +120,23 @@ child, `Scripts` for logic-only manager objects, `Logging` for `LogSettings` and
 beside it. Both levels exist in the one scene with one active at a time, because nothing in this
 project loads a scene.
 
-The levels are data-driven. `Assets/Levels/Level01.txt` and `Level02.txt` are the source and the
-scene is output: `Tools > Level` builds a file into the scene and writes the scene back out,
-`Tools > Tile Placer` stamps and erases single tiles, and building deletes and recreates every child
-of the parent it was pointed at. The tools take that parent as a field per build, so point them at
-the matching level root. Saving the level file deliberately does not save the scene, so a tile can
-be tried without committing it.
+The levels are data-driven. `Assets/Levels/Level01.txt` and `Level02.txt` hold one tile id per cell,
+in Tiled's map format although nothing here is authored in Tiled: `Tools > Level` builds a file into
+the scene and writes the scene back out, and `Tools > Tile Placer` paints and erases, by click or by
+drag, one undo entry and one Console line per stroke. Both tools take the level root as a field, so
+point them at `Level_1` or `Level_2` to match the file before pressing anything. Saving the level
+file deliberately does not save the scene, so a tile can be tried without committing it.
+
+Building is a diff rather than a teardown. A cell already holding the right prefab is left alone, a
+cell holding the wrong thing is replaced, and anything the file doesn't name is removed. That is what
+makes per-instance configuration safe: the file records what is where, and the scene instance records
+which one it is - a spider's range, a bird's dip, an enemy's drop, a ביצה's contents. None of it
+would survive a rebuild that emptied the parent first.
+
+Tile ids are contiguous and grouped by kind in the order they were added, starting at 1. The mapping
+from id to prefab lives only in `Assets/Levels/TilePrefabMap.asset`, so a new tile type is a row in
+that asset rather than an edit to any tool. A new id appends rather than slotting into its group,
+since renumbering would mean rewriting every level file by hand.
 
 ## Code quality
 

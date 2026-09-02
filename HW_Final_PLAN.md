@@ -648,7 +648,7 @@ would put a creature's feet on the cell boundary, while a tile probably wants Ce
 depends on how `TilePlacerWindow` positions what it places, so `SpriteImportRules.cs` deliberately
 says nothing about it and Unity's default stands.
 
-### Stage 4 — The level pipeline `[~]`
+### Stage 4 — The level pipeline `[x]`
 
 **Scope narrowed in Stage 1.** This stage builds the pipeline and a scratch level to test it with. It
 does not author the levels anyone will play: a real level can only be built against finished
@@ -673,11 +673,11 @@ stays Tiled's on purpose, so the decision is reversible; the reasoning is in the
 1. `Build` made incremental, so a rebuild leaves a matching object alone instead of replacing it.
    `[x]`
 1. Drag-to-paint in `TilePlacerWindow`. `[x]`
-1. `TiledMap.cs` renamed to `LevelMap.cs`, since the format is no longer read from Tiled. `[ ]`
+1. `TiledMap.cs` renamed to `LevelMap.cs`, since the format is no longer read from Tiled. `[x]`
 1. `Level02.txt` and a scratch level 2, tall and narrow, to prove the row flip on a vertical map.
-   `[ ]`
+   `[x]`
 1. `CONVENTIONS.md` updated with the pivot rule, the sorting layers and the incremental rebuild.
-   `[ ]`
+   `[x]`
 
 **Watch for this.** `SpriteImportRules.cs.meta` was found holding a copy of the script rather than
 YAML, pasted there by mistake at the end of Stage 3. Unity had been ignoring the asset ever since,
