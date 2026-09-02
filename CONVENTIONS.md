@@ -10,8 +10,10 @@ actually been written since. The logging rules were written down for the first t
 from the habits 89 existing calls already followed. The naming, hierarchy and code-quality rules
 had been carried by hand from session to session until they landed here.
 
-Carried into the final project at its Stage 2. The comment, logging and code-quality rules came
-across unchanged. The naming and hierarchy section was rewritten, because this is a different game:
+Carried into the final project at its Stage 2. The logging and code-quality rules came across
+unchanged. The comment rules were cut back during Stage 6: four lines became two, and a comment
+now names the alternative it rejected instead of making the case for it, because the case is
+already in the plan and reading it twice in every file was tiring. The naming and hierarchy section was rewritten, because this is a different game:
 two levels living in one scene, 16px source art instead of Mario's, and a dependency-injection
 container sitting in the hierarchy. Stage 4 revised that section again once the level pipeline was
 actually built: the pivot, the sorting layers, the prefab rules, and what a rebuild does now.
@@ -21,27 +23,28 @@ next exercise leaves it, `README.md` and `.gitignore` behind. Copy all four by h
 
 ## Comments
 
-1. Comment why, not what. The exception is a serialized field, which may carry a one-line gloss of
+1. **Two lines maximum**, on their own lines above what they describe. A file header may run to
+   three. No trailing comments. A comment that needs more room is arguing something that belongs
+   in the plan.
+2. **Name the rejected alternative, don't argue it.** "A capsule rather than a box, so he doesn't
+   catch on the seams" is the whole comment. The case for the decision lives in the plan's Decisions
+   Log and is not repeated in every file the decision touches.
+3. Comment why, not what. The exception is a serialized field, which may carry a one-line gloss of
    what it means and what units it is in, since the Inspector shows its name and nothing else.
-2. Every file has a header comment: below the `using` block, directly above the type or its
-   attributes, `//` and not `///`. It says what the class is for and what it deliberately isn't.
-3. A nested type gets its own header only when its existence is non-obvious.
-4. Comment a field only when the value or its existence is non-obvious.
-5. Comment a branch only when a reader would plausibly delete it.
-6. Prefer naming the alternative that was rejected. "X rather than Y, because Z" is the shape most
-   of this codebase's comments take, and it is what keeps a comment from restating the code.
-7. Four lines maximum, on their own lines above what they describe. No trailing comments.
-8. A comment makes one point. If it reaches for "also" or stacks a second unrelated claim, either
-   that claim belongs at the line it actually explains or it isn't worth saying. A file header's
-   "what it is for and what it deliberately isn't" counts as one point.
-9. State what is true now. No changelog voice, nothing about what the code used to do.
-10. Never repeat a value the code or the scene already holds. Explain what the number means instead:
-    "the cutoff sits at 60 degrees off vertical" rather than the `0.5f` the code already carries.
-11. No references to plan stages, lesson numbers, or the plan file. That narrative belongs in the
-    plan and in git.
-12. A comment naming another class, event or method is a reference. Renaming that thing means
+4. Every file has a header comment: below the `using` block, directly above the type or its
+   attributes, `//` and not `///`. What the class is for, and what it deliberately isn't.
+5. A nested type gets its own header only when its existence is non-obvious.
+6. Comment a field only when the value or its existence is non-obvious, and a branch only when a
+   reader would plausibly delete it. Most lines get nothing.
+7. A comment makes one point. Reaching for "also" means the second claim belongs at the line it
+   explains, or nowhere.
+8. State what is true now. No changelog voice, nothing about what the code used to do.
+9. Never repeat a value the code or the scene already holds. Say what the number means instead:
+   "the cutoff sits at 60 degrees off vertical" rather than the `0.5f` the code already carries.
+10. No references to plan stages, lesson numbers, or the plan file.
+11. A comment naming another class, event or method is a reference. Renaming that thing means
     updating the comment with it.
-13. If in doubt, write it so a human reading the file cold understands it. That outranks the rules
+12. If in doubt, write it so a human reading the file cold understands it. That outranks the rules
     above where they conflict.
 
 ## Logging

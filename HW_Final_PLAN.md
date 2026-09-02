@@ -536,9 +536,15 @@ only the player himself.
    `Assets/Physics/Frictionless.physicsMaterial2D`, created in this stage because his collider is
    what needs it. He is one object for the whole game rather than a child of either level, since the
    weapon, the animal and the fruit count all cross the level boundary with him.
-1. Player movement on the arrow keys.
-1. Player jump on `Space`, height varying with how long it is held.
-1. Attack on `Z`, writing a log line and nothing else.
+1. Player movement on the arrow keys. `[ ]`
+1. Player jump on `Space`, height varying with how long it is held. `[ ]`
+1. Attack on `Z`, writing a log line and nothing else. `[ ]`
+1. The player's Animator: idle, walk, jump, throw and death, driven by what the movement and jump
+   components already know rather than by a second read of the keyboard. `[ ]`
+1. A tuning pass with the animation on, since that is the first point where the numbers can be
+   judged rather than guessed: the capsule width, the jump height and cut, the brake. `[ ]`
+1. Cut every comment in the project back to the revised rules, across the seven editor tools, the
+   five logging files and `GameInstaller`. A mechanical pass, reviewed as a diff. `[ ]`
 
 **What it needs: nothing from the seven, deliberately.** There is no logic here worth extracting from a
 MonoBehaviour — reading input and pushing a `Rigidbody2D` is exactly what a MonoBehaviour is for, and an
@@ -550,6 +556,16 @@ otherwise.
 Ground tiles carry plain box colliders with no composite above them, so the capsule's rounded bottom
 is what stops him catching on the seams between them. Exercise 3 got the same effect from a circle
 collider, which worked there only because Mario was one cell tall.
+
+**The Animator is here because this is the only stage where a frozen sprite would be conspicuous.**
+Step 4 of Stage 1 settled the scope and no stage carried the work; the player takes it here, at the
+end rather than the start, because a walk cycle judged against movement that still feels wrong tunes
+the wrong thing. The shared sprite-swap component that covers everything else is not built here - it
+waits for the מדורה in stage 12, which is the first thing other than the player that moves. The rule
+that keeps the Animator out of the SOLID register: parameters are pushed by whoever already owns the
+fact, so `PlayerMovement` supplies speed and facing and `PlayerJump` supplies grounded and vertical
+velocity. A `PlayerAnimator` that read the keyboard again to decide he is walking would be a third
+copy of the input logic.
 
 ### Stage 7 — Camera `[ ]`
 
@@ -643,6 +659,9 @@ decision. The counter is the second MVC triad.
    couple of units below the level's bottom, so the player leaves the screen before he dies.
 1. מדורה: touch costs a פסילה; only the פייה destroys it.
 1. אבן: touch costs 3 כוח, knocks the player forward, brief immunity for the length of the shove.
+1. The shared sprite-swap component, an array of frames and an interval. The מדורה is the first
+   thing other than the player that moves, and the same component then covers the six enemies, the
+   three animals and the boomerang.
 
 **What it needs: `IDestructible`, and it is the best idea in the plan.** Every object in this game answers
 a different version of one question: what is allowed to destroy me? The אבן says boomerang, animal or פייה
@@ -987,6 +1006,57 @@ _(append entries here as we make design decisions.)_
   argument is that a level shorter than the camera's view cannot contain it at all, so the clamp rect
   has to be at least the view's size regardless of where the tiles stop. That makes the size a design
   decision, and the cost is two numbers per level kept in step by hand.
+- **Comments are cut to two lines, and stop arguing.** Peleg's call, made partway into Stage 6:
+  the existing comments are tiring to read and want to be half the length. Two things were making
+  them long. The four-line cap was generous, and the "X rather than Y, because Z" shape was carrying
+  the full case for a decision that the Decisions Log already holds - so the same argument was being
+  read twice, once here and once in every file the decision touched. The rule now names the
+  alternative in a clause and leaves the case where it lives. Applied to everything written from
+  here, and the last step of this stage walks the thirteen files that predate it. Doing that now
+  rather than at Stage 20 keeps it a mechanical pass instead of an edit to finished code.
+
+- **Input is read straight off the device, and the template action asset is deleted.**
+  `Keyboard.current.leftArrowKey.isPressed` in the component that acts on the key, as Exercise 3 did.
+  `Assets/InputSystem_Actions.inputactions` was the Unity template, untouched: nine actions of which
+  this game uses three, an `Attack` bound to the mouse rather than `Z`, and a whole UI map of
+  tracked-device actions. Keeping it meant either editing it down or shipping dead bindings in the
+  submission, and an action asset earns its keep through rebinding, a second device or an options
+  screen, none of which this game has. The scene's `EventSystem` never referenced it - its
+  `InputSystemUIInputModule` points at the Input System package's own default actions - so the only
+  reference was the project-wide slot in `EditorBuildSettings.asset`, cleared before the delete. The
+  cost is that adding a gamepad later means writing the polling for it by hand.
+- **The jump is one impulse, cut on release.** `linearVelocity.y` is set on press and multiplied by a
+  factor on release while he is still rising, so the impulse fixes the maximum height and letting go
+  early throws away the rest of the rise. Holding to sustain - a base impulse plus lift applied each
+  step for up to a maximum hold time - was the alternative and it is the more literal reading of 1.4,
+  at the cost of a third tunable, a floaty top end and a ceiling case to handle. Input is read in
+  `Update`, where `wasPressedThisFrame` is reliable, into flags consumed in `FixedUpdate` in order:
+  jump first, then cut, so a tap shorter than one physics step still produces the minimum jump rather
+  than being swallowed. No coyote time and no jump buffering: a press while airborne is consumed and
+  lost, which is what the original does and what neither source asks to change.
+- **Grounded means a contact whose normal points up.** `Rigidbody2D.GetContacts` and a test on
+  `normal.y`, rather than Exercise 3's `OverlapBox` probe. That probe needed an `SC_Floor` marker on
+  every tile to tell terrain from everything else, and this project's tile prefabs carry no script.
+  Contacts need no probe geometry, no depth or width factor, no layer mask and no marker; they cannot
+  return the player's own collider, a wall's normal points sideways so it cannot be mistaken for a
+  floor, and triggers generate no contact points at all, which excludes every hazard and pickup in
+  this project by construction - the spikes, the אבן, the מדורה and the door are all triggers already.
+  A `Ground` physics layer on the three earth-tile prefabs is the explicit version and stays available:
+  it is a `LayerMask` on the filter and three prefab edits, and the reversible option goes first for
+  the same reason the `CompositeCollider2D` was deferred. The check is a private method on
+  `PlayerJump` while jump is its only caller, and moves out when the Animator becomes the second one.
+- **Linear damping 0, and braking by hand.** Exercise 3 carried damping 5 *and* an explicit
+  `MoveTowards` brake, which is two brakes doing one job. Damping also decays vertical velocity, so
+  the jump apex would stop being a function of the jump speed and start being a function of a number
+  tuned for horizontal feel. Braking stays explicit and applies in the air as well, which is Exercise
+  3's behaviour: full air control is easier to play, and this is not a momentum game.
+- **The capsule is the width of the art, 1 by 2.** A collider exactly as wide as a one-cell gap
+  cannot be relied on to pass through one, and level 2 climbing bottom to top is likely to want
+  narrow shafts, so 0.9 was the alternative - Exercise 3's circle of radius 0.45 was the same
+  number on a one-cell body. Starting at the art's own measurement keeps `CONVENTIONS.md`'s collider
+  rule unbroken, and Stage 6's last step is a tuning pass with the animation on, which is where a
+  real snag would show up rather than being predicted.
+
 - **The start marker is found, not referenced.** `PlayerStart` sits on the `Sprite_Player_Start`
   prefab and the level asks its children for it. A serialized `Transform` on the level root was the
   obvious alternative and it dangles the first time a rebuild replaces the marker - the incremental
