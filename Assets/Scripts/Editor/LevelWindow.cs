@@ -14,8 +14,8 @@ public class LevelWindow : EditorWindow
     [SerializeField] private GameObject levelParent;
 
     // Defaulted rather than left empty, so a window opened for the first time already points at
-    // the object this project keeps every tile under.
-    [SerializeField] private string levelParentName = "World";
+    // the level this project builds first.
+    [SerializeField] private string levelParentPath = "Level_1";
 
     // Gathered from the scene before anything is written, so the grid can be sized to fit what
     // was actually found rather than assumed from the file it came from.
@@ -38,7 +38,7 @@ public class LevelWindow : EditorWindow
         levelFile = EditorGUILayout.ObjectField("Level File", levelFile, typeof(TextAsset), false) as TextAsset;
         tilePrefabMap = EditorGUILayout.ObjectField("Tile Prefabs", tilePrefabMap, typeof(TilePrefabMap), false) as TilePrefabMap;
         levelParent = EditorGUILayout.ObjectField("Parent", levelParent, typeof(GameObject), true) as GameObject;
-        levelParent = SceneObjectMemory.Resolve(levelParent, ref levelParentName);
+        levelParent = SceneObjectMemory.Resolve(levelParent, ref levelParentPath);
 
         EditorGUILayout.Space();
 
