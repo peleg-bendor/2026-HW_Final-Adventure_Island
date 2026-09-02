@@ -12,4 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f0318254bfd7c3419435e1a920b63e3, type: 3}
   m_Name: TilePrefabMap
   m_EditorClassIdentifier: Assembly-CSharp-Editor::TilePrefabMap
-  entries: []
+  entries:
+  - tileId: 1
+    prefab: {fileID: 2484033995815204093, guid: 3a5d7035013a8334ba71187c238556ff, type: 3}
+  - tileId: 2
+    prefab: {fileID: 4893424657135555120, guid: 6185ece2dafe3874a94da69daee844fd, type: 3}
+  - tileId: 3
+    prefab: {fileID: 7925792568244957991, guid: 7c0094b2e8744c544884a5dd6fa384f0, type: 3}
+  - tileId: 4
+    prefab: {fileID: 332109482427642056, guid: 6d46e0b11b6fbf1448855b7fcbf7680c, type: 3}
+  - tileId: 5
+    prefab: {fileID: 8722248720077441519, guid: f9286171dac96bb44b4cb76efaca144c, type: 3}
+  - tileId: 6
+    prefab: {fileID: 3705642295006891283, guid: 38fbbab1d59d65f4d90546d88b531861, type: 3}
+  - tileId: 7
+    prefab: {fileID: 4451844323785586048, guid: 9f9c4cd6ae3f359439b1e701f9cc323f, type: 3}
+  - tileId: 8
+    prefab: {fileID: 8707060295188842107, guid: 5ee0e89ec710046428d94d2604f665b2, type: 3}
