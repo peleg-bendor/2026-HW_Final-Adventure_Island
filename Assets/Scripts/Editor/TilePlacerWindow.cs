@@ -2,10 +2,9 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-// Editor window for editing the level one cell at a time by clicking, alongside the level window's
-// all-at-once build: stamping a tile into a cell, or clearing whatever a cell holds. It places only
-// what the tile prefab map already knows about, so everything it creates can be written back out as
-// level data.
+// Editor window for painting the level one cell at a time, alongside the level window's
+// all-at-once build. It places only what the tile prefab map knows about, so everything it
+// creates can be written back out as level data.
 public class TilePlacerWindow : EditorWindow
 {
     private enum Mode { Off, Place, Erase }
@@ -14,17 +13,12 @@ public class TilePlacerWindow : EditorWindow
     [SerializeField] private GameObject levelParent;
     [SerializeField] private int selectedIndex;
 
-    // Defaulted rather than left empty, so a window opened for the first time already points at
-    // the level this project builds first.
     [SerializeField] private string levelParentPath = "Level_1";
 
-    // Off after every restart, and deliberately not serialized: while a mode is active the Scene
-    // view stops selecting on click, and reopening Unity one click away from deleting a tile is
-    // worse than one click away from placing one.
+    // Not serialized, so a mode is off after a restart; reopening one click from erasing is bad.
     private Mode mode;
 
-    // One press-drag-release, collapsed into a single undo entry and reported as one line. None of
-    // it is serialized either, since a stroke cannot outlive the drag that opened it.
+    // One press-drag-release as one undo entry, unserialized since it can't outlive its drag.
     private bool painting;
     private Vector3 paintedCell;
     private int strokeUndoGroup;
@@ -70,8 +64,7 @@ public class TilePlacerWindow : EditorWindow
         for (int i = 0; i < entries.Count; i++)
             names[i] = entries[i].tileId + " - " + entries[i].prefab.name;
 
-        // Disabled rather than hidden while erasing, which doesn't read it. Leaving it live would
-        // suggest the choice still changes something.
+        // Disabled rather than hidden while erasing, which doesn't read it.
         using (new EditorGUI.DisabledScope(mode == Mode.Erase))
         {
             selectedIndex = EditorGUILayout.Popup("Tile", selectedIndex, names);
@@ -104,15 +97,13 @@ public class TilePlacerWindow : EditorWindow
 
         int controlId = GUIUtility.GetControlID(FocusType.Passive);
 
-        // Claims the Scene view's default click handling, so placing a tile doesn't also select
-        // whatever happened to be under the cursor.
+        // Claims the Scene view's click handling, so placing a tile doesn't also select.
         HandleUtility.AddDefaultControl(controlId);
 
         GameObject prefab = entries[Mathf.Clamp(selectedIndex, 0, entries.Count - 1)].prefab;
         Event current = Event.current;
 
-        // Closed before the cell is worked out, so a button released over a view that can't
-        // answer still ends the stroke rather than leaving it open.
+        // Closed before the cell is worked out, so a release over a dead view still ends it.
         if (painting && current.type == EventType.MouseUp)
         {
             GUIUtility.hotControl = 0;
@@ -124,16 +115,13 @@ public class TilePlacerWindow : EditorWindow
         if (!TryGetCell(current.mousePosition, out Vector3 cell))
             return;
 
-        // The only place the active mode shows up while looking at the scene rather than the
-        // window, which is where the cursor already is when a click is about to happen.
         Handles.color = mode == Mode.Erase ? Color.red : Color.yellow;
         Handles.DrawWireCube(levelParent.transform.TransformPoint(cell), Vector3.one);
 
         if (current.type == EventType.MouseMove)
             sceneView.Repaint();
 
-        // Alt is Unity's own camera modifier, so a click holding it is someone orbiting rather
-        // than someone placing a tile.
+        // Alt is Unity's camera modifier, so a click holding it is orbiting rather than placing.
         if (current.type == EventType.MouseDown && current.button == 0 && !current.alt)
         {
             GUIUtility.hotControl = controlId;
@@ -150,8 +138,7 @@ public class TilePlacerWindow : EditorWindow
 
     private void BeginStroke()
     {
-        // A stroke left open, by a button released outside the Scene view, is closed here rather
-        // than tracked, so the next click starts from a clean undo group.
+        // A stroke left open outside the Scene view is closed here, for a clean next undo group.
         if (painting)
             EndStroke();
 
@@ -165,12 +152,10 @@ public class TilePlacerWindow : EditorWindow
     {
         painting = false;
 
-        // Collapsed per stroke, so one Ctrl+Z takes back a whole dragged run of ground rather
-        // than one press per cell of it.
+        // Collapsed per stroke, so one Ctrl+Z takes back a whole dragged run of ground.
         Undo.SetCurrentGroupName(mode == Mode.Erase ? "Erase Tiles" : "Place Tiles");
         Undo.CollapseUndoOperations(strokeUndoGroup);
 
-        // Reported per stroke for the same reason, and silent when a drag changed nothing.
         if (strokePlaced > 0)
             Debug.Log("Placed " + strokePlaced + " x " + strokePrefabName);
 
@@ -214,16 +199,14 @@ public class TilePlacerWindow : EditorWindow
     {
         cell = Vector3.zero;
 
-        // The level is flat on z = 0, so a cell is wherever the cursor's ray crosses that plane.
-        // A Scene view rotated to look along it has no answer, hence the failure case.
+        // The level is flat on z = 0, so a cell is where the cursor's ray crosses that plane. A
+        // view rotated to look along it has no answer, hence the failure case.
         Ray ray = HandleUtility.GUIPointToWorldRay(mousePosition);
         Plane levelPlane = new Plane(Vector3.forward, Vector3.zero);
         if (!levelPlane.Raycast(ray, out float distance))
             return false;
 
-        // Rounded in the parent's own space, since that's the space tiles are placed and stored
-        // in. Rounding in world space instead would offset every placement by however far the
-        // parent sits from the origin.
+        // Rounded in the parent's space, not world, or placements shift by the parent's offset.
         Vector3 local = levelParent.transform.InverseTransformPoint(ray.GetPoint(distance));
         cell = new Vector3(Mathf.Round(local.x), Mathf.Round(local.y), 0f);
         return true;
@@ -231,8 +214,7 @@ public class TilePlacerWindow : EditorWindow
 
     private bool Place(GameObject prefab, Vector3 cell)
     {
-        // Left alone when the cell already holds this prefab, so dragging back across a painted
-        // run doesn't destroy and rebuild what is already right.
+        // Left alone when the cell already holds this prefab, so dragging back rebuilds nothing.
         Transform occupant = FindInCell(cell);
         if (occupant != null && PrefabUtility.GetCorrespondingObjectFromSource(occupant.gameObject) == prefab)
             return false;
@@ -248,8 +230,7 @@ public class TilePlacerWindow : EditorWindow
 
         tile.transform.localPosition = cell;
 
-        // Instantiated through PrefabUtility rather than plain Instantiate, so the tile keeps a
-        // link to its prefab - which is the only way saving can work out what tile id it is.
+        // PrefabUtility, not Instantiate, so the tile keeps the link that gives it its id.
         Undo.RegisterCreatedObjectUndo(tile, "Place Tile");
         return true;
     }
@@ -272,11 +253,9 @@ public class TilePlacerWindow : EditorWindow
     {
         Transform parent = levelParent.transform;
 
-        // Counted so a stroke can stay quiet about cells that held nothing.
         int removed = 0;
 
-        // A cell holds one tile, since that's all the level file can store. Painting over
-        // something replaces it rather than leaving two objects stacked in the same place.
+        // A cell holds one tile, all the file can store, so painting over something replaces it.
         for (int i = parent.childCount - 1; i >= 0; i--)
         {
             Transform child = parent.GetChild(i);

@@ -1,9 +1,8 @@
 using UnityEditor;
 using UnityEngine;
 
-// Editor window for the per-category log levels, so filtering the Console is a couple of clicks
-// rather than finding a GameObject first. A view onto the LogSettings component in the open scene
-// rather than a second copy of the settings, so a build reads the same values this edits.
+// Editor window for the per-category log levels, so filtering the Console doesn't mean finding a
+// GameObject first. A view onto the open scene's LogSettings rather than a second copy of it.
 public class LogsWindow : EditorWindow
 {
     [MenuItem("Tools/Logs")]
@@ -12,8 +11,7 @@ public class LogsWindow : EditorWindow
         GetWindow<LogsWindow>("Logs");
     }
 
-    // Repainted on a timer rather than only on interaction, so a level changed from the Inspector
-    // while this window is open doesn't leave the two showing different answers.
+    // Repainted on a timer, so an Inspector edit doesn't leave the two views disagreeing.
     private void OnInspectorUpdate()
     {
         Repaint();
@@ -50,8 +48,7 @@ public class LogsWindow : EditorWindow
 
             if (EditorGUI.EndChangeCheck())
             {
-                // Recorded and marked dirty by hand, because this edits a component from outside
-                // the Inspector, which is what normally does both.
+                // Recorded and marked dirty by hand, edited from outside the Inspector.
                 Undo.RecordObject(settings, "Change log level");
                 entry.level = chosen;
                 EditorUtility.SetDirty(settings);

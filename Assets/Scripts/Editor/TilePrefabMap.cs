@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Maps the tile ids in a level file to the prefabs they stand for. An asset rather than fields on
-// a tool window, so the mapping is version-controlled and survives a restart - and so a new tile
-// type is a row added here instead of an edit to any tool that reads it.
+// a tool window, so a new tile type is a row added here instead of an edit to any tool.
 [CreateAssetMenu(fileName = "TilePrefabMap", menuName = "Level/Tile Prefab Map")]
 public class TilePrefabMap : ScriptableObject
 {
@@ -17,12 +16,10 @@ public class TilePrefabMap : ScriptableObject
 
     [SerializeField] private Entry[] entries;
 
-    // For tools that offer a choice of tile rather than looking one up. Read-only, so the asset
-    // stays the only place deciding what the mapping holds.
+    // Read-only, so the asset stays the only place deciding what the mapping holds.
     public IReadOnlyList<Entry> Entries { get { return entries; } }
 
-    // An unmapped id returns null rather than raising anything: a level file may legitimately
-    // hold tiles this project doesn't place, and the caller is the one that reports them.
+    // An unmapped id returns null rather than raising: the caller is the one that reports it.
     public GameObject GetPrefab(int tileId)
     {
         if (entries == null)
@@ -37,9 +34,7 @@ public class TilePrefabMap : ScriptableObject
         return null;
     }
 
-    // The reverse of GetPrefab, for writing a scene back out as level data. Answers 0 - the id
-    // meaning an empty cell - for anything unmapped, so the caller can report it rather than
-    // write a tile that would come back as something else.
+    // The reverse of GetPrefab. Answers 0 for anything unmapped, so the caller reports it.
     public int GetTileId(GameObject prefab)
     {
         if (entries == null || prefab == null)

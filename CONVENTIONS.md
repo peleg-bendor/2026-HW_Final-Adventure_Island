@@ -93,11 +93,17 @@ Cut per sheet, not per sprite: key out the background at native resolution first
 is exact, then upscale the whole sheet, then cut on a 48px grid. A sprite spans one cell, two or six
 depending on what it is, so the grid is the guide rather than the cut size.
 
+Animation assets live in `Assets/Animation/`, flat. A clip takes the `Anim_` prefix and names the
+state it plays, `Anim_Player_Walk`, and a controller takes `Animator_`. Transitions are set to zero
+duration with no exit time: blending means nothing between discrete sprites and only adds lag.
+
 Prefabs live in `Assets/Prefabs/`, flat. Those for objects placed in the level take the `Sprite_`
 prefix; those for things spawned at runtime don't.
 
 A collider is sized to the art rather than to the sprite's box, since the box carries transparent
-padding: the door measures 1.3 by 1.8 inside a 2x2 box. Ground tiles carry a plain `BoxCollider2D`
+padding: the door measures 1.3 by 1.8 inside a 2x2 box. The exception is anything that has to fit
+through a one-cell gap, which is narrowed until it does - the player's art is a full unit wide and
+his capsule is 0.9. Ground tiles carry a plain `BoxCollider2D`
 with no `CompositeCollider2D` above them, so anything that walks needs a rounded bottom or it catches
 on the seams between tiles - a capsule, or a circle where the body is a single cell.
 

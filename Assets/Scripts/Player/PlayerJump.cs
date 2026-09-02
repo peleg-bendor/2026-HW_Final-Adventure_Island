@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// The player's jump, with height set by how long Space is held. Grounded is answered from the
-// body's own contacts rather than a probe, so no tile needs a marker component.
+// The player's jump, with height set by how long Space is held. Whether he is standing on
+// something is PlayerGround's answer, since the animator asks the same question.
 public class PlayerJump : MonoBehaviour
 {
     // Upward speed at the moment of the jump, in units per second.
@@ -11,23 +11,23 @@ public class PlayerJump : MonoBehaviour
     // What is left of the rise when Space is released early.
     [SerializeField] private float riseCutFactor = 0.5f;
 
-    // A rounded bottom perched on a tile corner reports a tilted normal, so ground is anything
-    // within about 45 degrees of vertical.
-    private const float GroundNormalMinimum = 0.7f;
-
-    // Reused rather than allocated, since the contacts are read every physics step.
-    private readonly ContactPoint2D[] contacts = new ContactPoint2D[8];
+    // Has to outlast PlayerGround's grace window, or the one press that starts a jump would still
+    // find the ground underneath it a frame later and start a second.
+    [SerializeField] private float jumpCooldown = 0.15f;
 
     private Rigidbody2D rigid;
+    private PlayerGround ground;
+    private float lastJumpTime = float.NegativeInfinity;
     private bool jumpRequested;
     private bool cutRequested;
 
     private void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
+        ground = GetComponent<PlayerGround>();
 
-        if (rigid == null)
-            GameLog.Warning(LogCategory.Player, "No Rigidbody2D found, the player will not jump");
+        if (rigid == null || ground == null)
+            GameLog.Warning(LogCategory.Player, "No Rigidbody2D or PlayerGround found, the player will not jump");
     }
 
     // Update rather than FixedUpdate, where a press shorter than one physics step is missed.
@@ -45,7 +45,7 @@ public class PlayerJump : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (rigid == null)
+        if (rigid == null || ground == null)
             return;
 
         // Jump before cut, so a tap inside one physics step gives the shortest jump rather than
@@ -65,12 +65,19 @@ public class PlayerJump : MonoBehaviour
 
     private void Jump()
     {
-        if (IsGrounded() == false)
+        if (Time.time - lastJumpTime < jumpCooldown)
+        {
+            GameLog.Verbose(LogCategory.Player, "Jump ignored - too soon after the last one");
+            return;
+        }
+
+        if (ground.IsGrounded() == false)
         {
             GameLog.Verbose(LogCategory.Player, "Jump ignored - not on the ground");
             return;
         }
 
+        lastJumpTime = Time.time;
         rigid.linearVelocity = new Vector2(rigid.linearVelocity.x, jumpSpeed);
         GameLog.Verbose(LogCategory.Player, "Jumped");
     }
@@ -82,20 +89,5 @@ public class PlayerJump : MonoBehaviour
             return;
 
         rigid.linearVelocity = new Vector2(rigid.linearVelocity.x, rigid.linearVelocity.y * riseCutFactor);
-    }
-
-    // Ground is a contact whose normal points up. A wall's points sideways and a trigger has no
-    // contact at all, so the hazards and pickups are excluded without naming any of them.
-    private bool IsGrounded()
-    {
-        int count = rigid.GetContacts(contacts);
-
-        for (int i = 0; i < count; i++)
-        {
-            if (contacts[i].normal.y > GroundNormalMinimum)
-                return true;
-        }
-
-        return false;
     }
 }

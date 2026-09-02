@@ -2,14 +2,11 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Keeps an editor window pointing at the same scene object across a full editor restart, by its
-// path in the hierarchy. Unity stores an asset reference as a GUID, but a scene GameObject has
-// only a per-session instance id, so a window's serialized layout has nothing durable to hold.
+// Keeps an editor window pointing at the same scene object across a restart, by its hierarchy
+// path. A scene GameObject has only a per-session instance id, so there is nothing durable to hold.
 public static class SceneObjectMemory
 {
-    // A field cleared by hand fills itself back in on the next repaint rather than staying empty.
-    // Nothing here has a reason to clear it, and healing back to a working tool beats leaving one
-    // that looks broken.
+    // A field cleared by hand fills itself back in, rather than leaving a tool that looks broken.
     public static GameObject Resolve(GameObject current, ref string rememberedPath)
     {
         if (current != null)
@@ -34,9 +31,7 @@ public static class SceneObjectMemory
         return path.ToString();
     }
 
-    // Walked down from the scene's roots rather than handed to GameObject.Find, which matches on
-    // the leaf name alone and skips anything inactive - so with one level deactivated it would
-    // answer with the other level's identically named child.
+    // Walked from the roots, not GameObject.Find, which matches leaf names and skips inactive.
     private static GameObject Find(string path)
     {
         int firstSlash = path.IndexOf('/');

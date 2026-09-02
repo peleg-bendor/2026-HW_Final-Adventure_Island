@@ -1,8 +1,7 @@
 using System;
 
-// The fields a level file holds, shaped for JsonUtility. Deliberately still Tiled's map export
-// minus every key this project doesn't read - levels are authored in the editor tools rather than
-// in Tiled, and keeping its shape is what leaves that reversible.
+// The fields a level file holds, shaped for JsonUtility. Tiled's map export minus every key this
+// project doesn't read, kept to that shape so going back to Tiled stays possible.
 [Serializable]
 public class LevelMap
 {
@@ -10,8 +9,6 @@ public class LevelMap
     public int height;
     public Layer[] layers;
 
-    // Nested rather than its own file: a layer means nothing outside the map holding it, and
-    // the schema is easier to check against the JSON when it reads in one piece.
     [Serializable]
     public class Layer
     {

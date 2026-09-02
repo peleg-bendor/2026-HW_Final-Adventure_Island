@@ -5,20 +5,16 @@ using UnityEditor;
 using UnityEngine;
 
 // Editor window that moves a level between its data file and the open scene, in both directions.
-// It knows no tile ids of its own - the tile prefab map holds those - so supporting a new tile
-// type never means changing this file.
+// It knows no tile ids of its own, so a new tile type never means changing this file.
 public class LevelWindow : EditorWindow
 {
     [SerializeField] private TextAsset levelFile;
     [SerializeField] private TilePrefabMap tilePrefabMap;
     [SerializeField] private GameObject levelParent;
 
-    // Defaulted rather than left empty, so a window opened for the first time already points at
-    // the level this project builds first.
     [SerializeField] private string levelParentPath = "Level_1";
 
-    // Gathered from the scene before anything is written, so the grid can be sized to fit what
-    // was actually found rather than assumed from the file it came from.
+    // Gathered before anything is written, so the grid fits what was found, not the file's claim.
     private struct PlacedTile
     {
         public int x;
@@ -42,8 +38,7 @@ public class LevelWindow : EditorWindow
 
         EditorGUILayout.Space();
 
-        // Disabled rather than hidden while something is missing, so the buttons' absence is
-        // never mistaken for the tool being broken.
+        // Disabled rather than hidden, so absent buttons don't read as a broken tool.
         bool ready = levelFile != null && tilePrefabMap != null && levelParent != null;
         using (new EditorGUI.DisabledScope(!ready))
         {
@@ -57,9 +52,7 @@ public class LevelWindow : EditorWindow
         }
     }
 
-    // Reconciles the scene against the file rather than emptying it first. A cell already holding
-    // the right prefab is left alone, so everything set on that instance by hand survives a
-    // rebuild - which is the only place a bird's dip or a ביצה's contents is stored.
+    // Reconciled rather than emptied first, so a correct cell keeps what was set on it by hand.
     private void Build()
     {
         LevelMap map = JsonUtility.FromJson<LevelMap>(levelFile.text);
@@ -75,8 +68,6 @@ public class LevelWindow : EditorWindow
             return;
         }
 
-        // One undo group around the whole rebuild, so undoing a mistaken build is a single
-        // Ctrl+Z instead of one per object destroyed and created.
         int undoGroup = Undo.GetCurrentGroup();
 
         HashSet<int> unmapped = new HashSet<int>();
@@ -107,8 +98,7 @@ public class LevelWindow : EditorWindow
                 added++;
         }
 
-        // Whatever the file never named. Destroyed after the placing rather than before it, so a
-        // replaced cell's old occupant can't be confused for the new one while both are alive.
+        // Destroyed after placing, so a replaced cell's old tile can't be taken for the new one.
         foreach (GameObject leftover in existing.Values)
             doomed.Add(leftover);
 
@@ -135,8 +125,7 @@ public class LevelWindow : EditorWindow
             if (layer == null || layer.data == null)
                 continue;
 
-            // Stopped at the grid's own size rather than the array's, so a hand-edited file with
-            // a trailing entry places nothing at a negative row instead.
+            // Stopped at the grid's size, so a trailing entry in a hand-edited file places nothing.
             int last = Mathf.Min(layer.data.Length, cellCount);
 
             for (int i = 0; i < last; i++)
@@ -154,8 +143,7 @@ public class LevelWindow : EditorWindow
                     continue;
                 }
 
-                // Rows are stored downwards from the top of the file while Unity's Y axis points
-                // upwards, so the file's first row belongs at the highest Y in the scene.
+                // File rows run downwards, Unity's Y upwards, so row 0 sits at the highest Y.
                 cells[new Vector2Int(i % map.width, (map.height - 1) - (i / map.width))] = prefab;
             }
         }
@@ -163,8 +151,7 @@ public class LevelWindow : EditorWindow
         return cells;
     }
 
-    // Two objects in one cell can't both be written to the file, so the second and later ones go
-    // straight in with what the rebuild is about to remove.
+    // Two objects in one cell can't both be written out, so later ones go with the removals.
     private Dictionary<Vector2Int, GameObject> IndexChildren(List<GameObject> doomed)
     {
         Dictionary<Vector2Int, GameObject> byCell = new Dictionary<Vector2Int, GameObject>();
@@ -214,8 +201,7 @@ public class LevelWindow : EditorWindow
         List<string> negative = new List<string>();
         List<PlacedTile> tiles = CollectTiles(unmapped, snapped, negative);
 
-        // The file's own size is the floor, so deleting something at the edge can't quietly
-        // shrink the level, while anything placed past it grows the grid to fit.
+        // The file's size is the floor, so deleting at the edge can't shrink the level.
         LevelMap existing = JsonUtility.FromJson<LevelMap>(levelFile.text);
         int width = existing != null ? Mathf.Max(existing.width, 1) : 1;
         int height = existing != null ? Mathf.Max(existing.height, 1) : 1;
@@ -238,8 +224,7 @@ public class LevelWindow : EditorWindow
 
         File.WriteAllText(path, ToJson(width, height, data));
 
-        // Without this Unity keeps serving the copy it imported earlier, and the next build
-        // would read the level as it was before this save.
+        // Without this Unity keeps serving the copy it imported earlier.
         AssetDatabase.ImportAsset(path);
 
         ReportSaveWarnings(unmapped, snapped, negative, shared);
@@ -255,8 +240,7 @@ public class LevelWindow : EditorWindow
         {
             GameObject child = parent.GetChild(i).gameObject;
 
-            // Everything the builder places keeps a link back to the prefab it came from, which
-            // is what makes a tile id recoverable at all. Anything else can't be written out.
+            // Only a prefab link makes a tile id recoverable, so anything else is skipped.
             GameObject source = PrefabUtility.GetCorrespondingObjectFromSource(child);
             int tileId = tilePrefabMap.GetTileId(source);
             if (tileId == 0)
@@ -286,8 +270,7 @@ public class LevelWindow : EditorWindow
 
     private static void ReportSaveWarnings(List<string> unmapped, List<string> snapped, List<string> negative, List<string> shared)
     {
-        // Worth a warning of its own rather than a line in a summary: these objects look fine in
-        // the scene right now, and the next build is what deletes them.
+        // Its own warning: these look fine now, and the next build is what deletes them.
         if (unmapped.Count > 0)
             Debug.LogWarning("Left out of the level file, so a rebuild will delete them: " + string.Join(", ", unmapped));
 
@@ -311,8 +294,7 @@ public class LevelWindow : EditorWindow
 
         for (int i = 0; i < data.Length; i++)
         {
-            // A line break per grid row, so a changed cell shows up as a one-line diff and the
-            // file stays readable enough to edit by hand.
+            // A line break per grid row, so a changed cell shows up as a one-line diff.
             if (i % width == 0)
                 json.Append("\n        ");
 

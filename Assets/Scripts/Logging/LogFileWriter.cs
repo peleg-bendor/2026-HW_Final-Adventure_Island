@@ -1,23 +1,17 @@
 using System.IO;
 using UnityEngine;
 
-// Writes a Play session's log to a file beside the project, so reading a run stops meaning copying
-// the Console out by hand. Subscribes in OnEnable and unsubscribes in OnDisable, so a scene reload
-// can't leave a second copy of this listening to the same messages.
+// Writes a Play session's log to a file beside the project, so reading a run stops meaning
+// copying the Console out by hand.
 [DefaultExecutionOrder(-100)]
 public class LogFileWriter : MonoBehaviour
 {
     [SerializeField] private string fileName = "GameLog.txt";
 
-    // Off by default: a stack trace under every ordinary line makes this file harder to read than
-    // the Console it saves a copy of. Switched on when a run needs tracing back to call sites.
+    // Off by default: a trace under every line makes this harder to read than the Console.
     [SerializeField] private bool traceEveryLine;
 
-    // Truncated once per Play session and appended to afterwards. The static is reset explicitly
-    // through RuntimeInitializeOnLoadMethod below rather than left to a scene reload to clear it,
-    // which is what makes it survive this project having no scene reloads at all: nothing here
-    // reloads on death or on game over, so a static that only a reload would reset would keep its
-    // value for the whole session.
+    // Truncated once per session, then appended; reset explicitly since no scene ever reloads.
     private static bool fileStarted;
 
     private StreamWriter writer;
@@ -36,13 +30,11 @@ public class LogFileWriter : MonoBehaviour
         {
             writer = new StreamWriter(path, fileStarted);
 
-            // Flushed per line, so stopping Play or crashing still leaves everything up to that
-            // point in the file.
+            // Flushed per line, so a crash still leaves everything up to that point in the file.
             writer.AutoFlush = true;
         }
-        // Broad on purpose. A read-only folder throws UnauthorizedAccessException rather than an
-        // IOException, and a log sink that can't open its file should go quiet, not take the game
-        // down on the way past.
+        // Broad on purpose: a read-only folder throws UnauthorizedAccessException, not IOException,
+        // and a log sink that can't open its file should go quiet rather than stop the game.
         catch (System.Exception ex)
         {
             writer = null;
@@ -72,8 +64,7 @@ public class LogFileWriter : MonoBehaviour
 
         writer.WriteLine(type + ": " + message);
 
-        // Only the kinds worth tracing back to a line of code. A stack trace under every ordinary
-        // line would make this file harder to read than the Console it saves a copy of.
+        // Warnings and errors carry their trace whatever the setting says.
         if (traceEveryLine || type != LogType.Log)
             writer.WriteLine(stackTrace.TrimEnd());
     }

@@ -10,6 +10,9 @@ public class PlayerMovement : MonoBehaviour
     // How hard he brakes with no key held, in units per second squared.
     [SerializeField] private float deceleration = 40f;
 
+    // Intent rather than motion, so pressing into a wall still animates as walking.
+    public bool IsWalking { get; private set; }
+
     private Rigidbody2D rigid;
 
     private void Awake()
@@ -35,7 +38,9 @@ public class PlayerMovement : MonoBehaviour
                 direction = 1f;
         }
 
-        if (direction != 0f)
+        IsWalking = direction != 0f;
+
+        if (IsWalking)
         {
             rigid.linearVelocity = new Vector2(direction * speed, rigid.linearVelocity.y);
 

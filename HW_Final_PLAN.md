@@ -526,7 +526,7 @@ Step 4's sprite estimate was stale against Stage 3's 82, and Stages 18 and 19 la
 needs" paragraph every other stage carries. One correction with nothing to fix: the מדורה's two
 frames come from Step 4's shared sprite-swap component, not from an Animator.
 
-### Stage 6 — The player moving in the level `[ ]`
+### Stage 6 — The player moving in the level `[x]`
 
 Stages 2 and 4 built the scene, the tools, the prefabs and a scratch level 1, so what is left here is
 only the player himself.
@@ -540,11 +540,11 @@ only the player himself.
 1. Player jump on `Space`, height varying with how long it is held. `[x]`
 1. Attack on `Z`, writing a log line and nothing else. `[x]`
 1. The player's Animator: idle, walk, jump, throw and death, driven by what the movement and jump
-   components already know rather than by a second read of the keyboard. `[ ]`
+   components already know rather than by a second read of the keyboard. `[x]`
 1. A tuning pass with the animation on, since that is the first point where the numbers can be
-   judged rather than guessed: the capsule width, the jump height and cut, the brake. `[ ]`
+   judged rather than guessed: the capsule width, the jump height and cut, the brake. `[x]`
 1. Cut every comment in the project back to the revised rules, across the seven editor tools, the
-   five logging files and `GameInstaller`. A mechanical pass, reviewed as a diff. `[ ]`
+   five logging files and `GameInstaller`. A mechanical pass, reviewed as a diff. `[x]`
 
 **What it needs: nothing from the seven, deliberately.** There is no logic here worth extracting from a
 MonoBehaviour — reading input and pushing a `Rigidbody2D` is exactly what a MonoBehaviour is for, and an
@@ -1034,6 +1034,18 @@ _(append entries here as we make design decisions.)_
   jump first, then cut, so a tap shorter than one physics step still produces the minimum jump rather
   than being swallowed. No coyote time and no jump buffering: a press while airborne is consumed and
   lost, which is what the original does and what neither source asks to change.
+- **The grounded answer carries a grace window, reversing "no coyote time".** Measured rather than
+  guessed: walking across flat, coplanar tiles, `Rigidbody2D.GetContacts` returned **zero** contacts
+  for one to four frames at irregular intervals, and on several of those frames the body's vertical
+  velocity was *positive*. Nothing in the player's code pushes him up while walking, so that is the
+  contact solver - the capsule sinks slightly into the floor each step, position correction pushes it
+  back out and leaves a little upward velocity behind, and gravity scale 3 deepens the penetration
+  that drives it. The visible symptom was a jump frame flickering during a walk. The invisible one
+  matters more: a jump pressed inside one of those gaps was refused on flat ground, silently. The
+  normal was never the problem - it read exactly 1.000 whenever there was contact at all - so the
+  `CompositeCollider2D` would not have helped. `PlayerJump` gains a cooldown longer than the window,
+  because a grace window on its own turns one press into a free double jump.
+
 - **Grounded means a contact whose normal points up.** `Rigidbody2D.GetContacts` and a test on
   `normal.y`, rather than Exercise 3's `OverlapBox` probe. That probe needed an `SC_Floor` marker on
   every tile to tell terrain from everything else, and this project's tile prefabs carry no script.
@@ -1050,6 +1062,16 @@ _(append entries here as we make design decisions.)_
   the jump apex would stop being a function of the jump speed and start being a function of a number
   tuned for horizontal feel. Braking stays explicit and applies in the air as well, which is Exercise
   3's behaviour: full air control is easier to play, and this is not a momentum game.
+- **Settled in the tuning pass: capsule 0.9 wide, jump speed 13, collision detection Discrete.**
+  The width question below was left open on purpose and closed by playing it - 0.9 is what fits
+  through a one-cell gap, and `CONVENTIONS.md` now carries that as the stated exception to sizing a
+  collider to its art. Discrete replaces Continuous because the player covers 0.12 units per physics
+  step against one-unit tiles and has nothing to tunnel through, so Continuous only bought
+  speculative contacts and the jitter that came with them. `jumpSpeed` 13 against gravity scale 3
+  puts the apex at about 2.87 units, just under three cells. Everything else kept its starting value:
+  speed 6, deceleration 40, rise cut 0.5, contact grace 0.1, jump cooldown 0.15, and the walk clip at
+  12 frames a second with no Animator speed multiplier.
+
 - **The capsule is the width of the art, 1 by 2.** A collider exactly as wide as a one-cell gap
   cannot be relied on to pass through one, and level 2 climbing bottom to top is likely to want
   narrow shafts, so 0.9 was the alternative - Exercise 3's circle of radius 0.45 was the same
