@@ -82,7 +82,7 @@ public class LevelCamera : MonoBehaviour
     // Only active objects answer, which is how this picks a level with the other root switched off.
     private static LevelDefinition FindActiveLevel()
     {
-        LevelDefinition[] found = FindObjectsByType<LevelDefinition>(FindObjectsSortMode.None);
+        LevelDefinition[] found = FindObjectsByType<LevelDefinition>(FindObjectsInactive.Exclude);
 
         if (found.Length > 1)
             GameLog.Warning(LogCategory.Game, "More than one level is active, the camera clamped to " + found[0].name);

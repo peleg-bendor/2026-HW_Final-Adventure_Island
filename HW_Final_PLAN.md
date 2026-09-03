@@ -601,15 +601,25 @@ measurement, and decisions get written down.
 
 ### Stage 8 — State model and game flow `[ ]`
 
-1. `SessionState` (פסילות, fruit count), `CarriedState` (weapon, animal), `LevelState` (כוח, which
-   enemies are dead, which collectibles are taken, player position). Plain C# classes behind interfaces.
-1. `GameFlow` with the real operations: `StartGame`, `StartLevel`, `LoseStrike`, `CompleteLevel`,
-   `GameOver`. Driven by a debug key for now.
-1. `StartLevel` and `LoseStrike` both move the player to the `PlayerStart` of the level's own
-   `LevelDefinition`, per 3.3. The marker is drawn at 40% alpha so a level can be authored against
-   where the player will actually stand, and it hides itself the moment the level starts.
+1. `SessionState` (פסילות, fruit count), a plain C# class. No `LevelState`: everything it was going
+   to hold is owned by the object that already has it, and `IResettable` is what restores them.
+   `CarriedState` waits for stage 13 - there is no weapon type and no animal type to declare a field
+   as yet, so it is unwritable rather than merely thin.
+1. `GameFlow` with the real operations: `StartGame`, `LoseStrike`, `CompleteLevel`. Driven by the
+   `1`, `2` and `3` keys for now. `GameOver` is an event rather than an operation, since nothing may
+   end a game except running out of פסילות, and entering a specific level is internal.
+1. The level transition, generic over any number of levels. `LevelDefinition` carries a
+   `levelNumber`, `GameFlow` scans once including inactive roots and orders by it, and the only
+   branch is whether a next level exists. Neither ending restarts on its own: 2.3 and 2.4 both put a
+   button between the ending and the next game, so both raise their event and stop.
+1. The player returns to the `PlayerStart` of the current level's `LevelDefinition` on both resets,
+   per 3.3 - as his own `IResettable`, rather than as something the flow does to him. The marker is
+   drawn at 40% alpha so a level can be authored against where the player will actually stand, and it
+   hides itself the moment the level starts.
 1. `IResettable`, and a reset that walks everything registered.
-1. Events for `StrikeLost`, `GameOver` and `LevelComplete`, raised here and listened to later.
+1. Events for `StrikeLost`, `GameOver`, `LevelComplete` and `GameComplete`, raised here and
+   listened to later. The last two are separate because 2.3's congratulation popup has to know the
+   difference between finishing a level and finishing the game.
 
 **What it needs: DI, and one interface that carries the whole stage.** `IResettable` is the design: a
 collectible, an enemy, the player and the כוח model each register, and the reset walks the list. A full
@@ -623,7 +633,7 @@ check would find. Worth saying at the defense that it was considered and dropped
 
 ### Stage 9 — כוח and its bar `[ ]`
 
-1. `PowerModel` — current, maximum 16, level start 11, drain 1 per 2 seconds.
+1. `PowerModel` — current, maximum 16, level start 11, drain 1 per 3 seconds.
 1. `PowerController` — ticks the drain, applies fruit, caps at maximum, raises "empty".
 1. `PowerView` — the bar.
 1. Empty raises `LoseStrike` through the flow's event rather than by calling it directly.
@@ -761,14 +771,16 @@ This stage also touches every other system, so it doubles as the integration tes
 ### Stage 18 — Level 2's mechanics `[ ]`
 
 1. Vertical camera framing.
-1. The transition, with no level-number branch anywhere in it.
 1. The completion popup, a second listener on stage 10's machinery.
 1. Carried state crossing: weapon, animal and fruit count survive; כוח resets.
+1. Level 2 authored far enough to prove the transition end to end.
 
 **What it needs: nothing new, and that is the point.** The camera comes from stage 7, the popup
-machinery from stage 10 and the carried state from stage 8; this stage only wires them to a second
-level. The one design constraint is that the transition holds no level number anywhere, because a
-branch on which level this is would be the exact thing open/closed exists to prevent.
+machinery from stage 10, the carried state from stage 13 and the transition itself from stage 8;
+this stage only wires them to a second level. **The transition moved out of here into stage 8**,
+where `CompleteLevel` had to become a real operation rather than an event that fired and did
+nothing - and once it advances the level, it may as well be generic from the start. What is left
+here is level 2's own mechanics, which is what the stage was named for.
 
 ### Stage 19 — Author both levels to spec `[ ]`
 
@@ -841,7 +853,13 @@ _(append entries here as we make design decisions.)_
   `GameInstaller` ran `InstallBindings` end to end at Play. The deprecations are
   `Object.FindObjectsOfType<T>()` at `UnityUtil.cs:130` and `ProjectContext.cs:104`; the API is
   deprecated rather than removed, Zenject's assembly only recompiles if its own files change, and an
-  unmodified copy is worth more at the defense than a patched one, so both are left alone.
+  unmodified copy is worth more at the defense than a patched one, so neither line is touched. They
+  are silenced instead, in stage 8, by `Assets/Plugins/Zenject/Zenject.rsp` holding `-nowarn:0618`.
+  Zenject already ships its own asmdef, so a response file named for that assembly scopes the
+  suppression to the library and leaves our own obsolete-API warnings reporting - which is what a
+  project-wide `csc.rsp` would have swallowed. The file has to be named for the **assembly**,
+  `Zenject`, not for the lowercase `zenject.asmdef` beside it. The cost is that a deprecation inside
+  Zenject that later becomes a removal arrives as a compile error with no warning first.
   VContainer is off the table. The reasoning that led here:
 - **Zenject for DI, gated on a compile test in Stage 2.** Lesson 12's project ships Extenject 9.2.0 as
   source under `Assets/Plugins/Zenject/`, and its `GameInstaller : MonoInstaller` inside a
@@ -1014,6 +1032,71 @@ _(append entries here as we make design decisions.)_
   argument is that a level shorter than the camera's view cannot contain it at all, so the clamp rect
   has to be at least the view's size regardless of where the tiles stop. That makes the size a design
   decision, and the cost is two numbers per level kept in step by hand.
+- **A level's place in the order is authored on the level, and the transition has one branch.**
+  `LevelDefinition` carries a `levelNumber`; `GameFlow` scans once with inactive roots included,
+  sorts by it, and `CompleteLevel` asks only whether an index past the current one exists. Three
+  alternatives lost: a serialized array of level roots is a second place to keep in step and a level
+  added without being dragged in is silently missing; sorting by name makes the naming a hidden
+  contract and puts `Level_10` before `Level_2`; hierarchy sibling order breaks the moment anyone
+  reorders the Hierarchy. Authoring the number on the root matches the decision that a level's size
+  is authored there too, so adding a third level is one root with one number and nothing else to
+  remember. It also lets `CurrentLevel` be an array lookup rather than the per-frame scene scan the
+  camera would otherwise drive.
+- **Neither ending restarts by itself.** `CompleteLevel` on the last level and `LoseStrike` on the
+  last פסילה both raise their event and stop. The first draft had the game-complete path calling
+  `StartGame` on its own, which reads as convenient and is wrong: 2.3 and 2.4 both specify a popup
+  **with a button**, so the restart is a player action in both cases and the popup would never be
+  read. Both paths now have the same shape - raise, stop, wait for something to call `StartGame` -
+  which is exactly what stage 10 wires its two popups to, so that stage gains a listener instead of
+  having to undo a stub. Until then the `3` key stands in for the button.
+- **The camera's execution order is not assumed.** `LevelCamera.Start` may ask for `CurrentLevel`
+  before `GameStarter.Start` has called `StartGame`, because Unity's order across two default-order
+  MonoBehaviours is arbitrary. So `GameFlow` treats whichever level root is already switched on as
+  the current one until a level is properly entered, and the answer is right either way rather than
+  depending on an ordering nobody guaranteed.
+
+- **`LevelState` is dropped, because this stage's own two halves disagreed.** Step 1 had it holding
+  כוח, which enemies are dead, which collectibles are taken and the player's position; the paragraph
+  below it described `IResettable`, where each of those objects owns its own state and knows how to
+  restore it. Both cannot be true. A class holding four unrelated collections duplicates facts their
+  owners already have, which is two copies of every fact and the god object the SOLID register warns
+  about; and with `IResettable` doing the work there is nothing left for it to hold - כוח is stage 9's
+  `PowerModel`, an enemy knows it is dead, a collectible knows it is taken, and the player's position
+  is his transform. The scope still exists as the thing a full reset restores. It is a verb, not a
+  noun.
+- **`IResettable.ResetTo(ResetScope)` takes a named scope rather than a bool.** The plan called for a
+  flag on one method and this is that flag with a name: `ResetTo(true)` says nothing at a call site
+  and `ResetTo(ResetScope.Full)` says everything. The Template Method rejection is unchanged and still
+  worth saying out loud. What makes the design open/closed is that each object decides what a partial
+  reset means to it - an enemy ignores `AfterStrike` and stays dead per 3.4, a collectible restores
+  itself on both per 3.5 - so the reset code never learns which kinds exist.
+- **Interfaces where there are many consumers, concrete bindings where there are not.** `IResettable`
+  and `IGameFlow` get interfaces: the first is the stage's whole design and the second is depended on
+  by the camera, the player, the HUD and later every hazard. `SessionState` and `CarriedState` are
+  bound concrete - two consumers each, no second implementation, and no tests to fake one for, which
+  is the same argument that refused `IInputService` in stage 6. This departs from step 1's "behind
+  interfaces" on purpose. Lesson 12's own installer does both on consecutive lines,
+  `Bind<IFireballBuilder>().To<FireballBuilder>()` beside `Bind<FireballDirector>()`, so neither is
+  unidiomatic to him, and being able to say why each is where it is answers better than a uniform rule.
+- **`GameFlow` owns which level is active, and the camera asks it.** `LevelCamera` currently finds the
+  level itself with `FindObjectsByType` at `Start`, and the player is about to need the same answer to
+  put himself back at `PlayerStart`. Two lookups is the small problem; the real one is stage 18, where
+  a lookup done once at `Start` is stale the moment the transition switches levels, silently and in
+  both classes at once. One owner fixes both, and it is the seam stage 18 needs anyway. The cost is
+  editing finished code from stage 7.
+- **The player returns to the start as an `IResettable`, not as something done to him.** `GameFlow`
+  holds no `Transform` and no player reference: on a reset the player puts himself at the current
+  level's `PlayerStart`, through the same machinery every collectible and enemy uses. That is what
+  keeps the flow a plain C# class with no Unity types in it beyond `LevelDefinition`, which is the
+  Clean Architecture line the course keeps making and this project's DI defense answer.
+- **Tuning numbers enter the object graph at the installer.** `Exercise Adventure Island.md` says every
+  bracketed number belongs in a serialized field because the instructor may want it changed in front of
+  you, and `SessionState` is a plain C# class with no Inspector. `GameInstaller` is a MonoBehaviour, so
+  the number is a `[SerializeField]` there and reaches the class through `.WithArguments(...)`. The
+  composition root is where configuration enters, which gives the installer a job rather than leaving
+  it a formality. Revisited at stage 9: four or five fields is where this stops being a binding list
+  and starts being a settings dump, and a `GameSettings` ScriptableObject takes over.
+
 - **The camera is 16:9 at an orthographic size of 5, and the original's framing is not reproducible.**
   Size 5 fixes the view's height at 10 world units and the width follows from the aspect - 17.8 at
   16:9, 13.3 at 4:3 - so the aspect is not cosmetic, it decides how far ahead the player can see. The
