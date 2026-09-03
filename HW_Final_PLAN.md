@@ -567,19 +567,27 @@ fact, so `PlayerMovement` supplies speed and facing and `PlayerJump` supplies gr
 velocity. A `PlayerAnimator` that read the keyboard again to decide he is walking would be a third
 copy of the input logic.
 
-### Stage 7 — Camera `[ ]`
+### Stage 7 — Camera `[x]`
 
 1. `LevelDefinition`, a component on `Level_1` and `Level_2` holding the level's width and height in
-   cells and its fall line. With the level root at the origin and Stage 4's pivot, the playable rect
-   runs from `-0.5` to `width - 0.5` across and `-0.5` to `height - 0.5` up.
+   cells. With the level root at the origin and Stage 4's pivot, the playable rect runs from `-0.5`
+   to `width - 0.5` across and `-0.5` to `height - 0.5` up. No fall line: every pit has a floor.
 1. `PlayerStart` on the `Sprite_Player_Start` prefab, which answers where the player begins and hides
    its own sprite when the level starts. Found among the level's children rather than referenced by
    field, since a serialized `Transform` would dangle the first time a rebuild replaced the marker.
-1. Follow the player, clamped so the view never leaves the level (11.4).
+1. Follow the player, clamped so the view never leaves the level (11.4), with the player sitting a
+   quarter of the way up the view rather than centred.
 1. An inspector toggle between following and framing the whole level, the second for testing.
 
 Exercise 3 has a `CameraFollow.cs`, but it is gameplay code rather than tooling and it has neither the
-clamp nor the toggle, so this is written fresh.
+clamp nor the toggle, so this is written fresh. It finds the player through a serialized reference
+rather than by tag, because Stage 6 made him one object for the whole game - the tag lookup existed
+in Exercise 3 only because Mario was rebuilt with the level and an Inspector reference would dangle.
+
+**What it needs: nothing from the seven, again deliberately.** Reading one transform and writing
+another is what a MonoBehaviour is for. `LevelDefinition` behind an interface would be an interface
+with one implementation and no second caller, and injecting the camera would be DI over a
+`[SerializeField]` that already works. The installer stays nearly empty until stage 8.
 
 **Why the size is authored rather than measured.** Nothing at runtime otherwise knows how big a level
 is, because the level file is not read at Play. Measuring the children's renderers was the first
@@ -655,8 +663,8 @@ decision. The counter is the second MVC triad.
 
 ### Stage 12 — Hazards `[ ]`
 
-1. תהום: falling past the fall line of the level's `LevelDefinition` costs a פסילה. The line sits a
-   couple of units below the level's bottom, so the player leaves the screen before he dies.
+1. תהום: a pit with a floor of spikes, which cost a פסילה on contact and are the one thing the
+   פייה does not destroy.
 1. מדורה: touch costs a פסילה; only the פייה destroys it.
 1. אבן: touch costs 3 כוח, knocks the player forward, brief immunity for the length of the shove.
 1. The shared sprite-swap component, an array of frames and an interval. The מדורה is the first
@@ -1006,6 +1014,72 @@ _(append entries here as we make design decisions.)_
   argument is that a level shorter than the camera's view cannot contain it at all, so the clamp rect
   has to be at least the view's size regardless of where the tiles stop. That makes the size a design
   decision, and the cost is two numbers per level kept in step by hand.
+- **The camera is 16:9 at an orthographic size of 5, and the original's framing is not reproducible.**
+  Size 5 fixes the view's height at 10 world units and the width follows from the aspect - 17.8 at
+  16:9, 13.3 at 4:3 - so the aspect is not cosmetic, it decides how far ahead the player can see. The
+  NES outputs 256x240 with about 224 rows visible and Adventure Island's tiles are 16px, so the
+  original shows roughly 16 tiles across by 15 up, on a framebuffer that is nearly square but was
+  stretched to 4:3 on a CRT. At 16:9 that shape cannot be matched: size 7.5 matches its height and
+  comes out 67% too wide, size 4.5 matches its width and is 40% too short, and even 4:3 at 7.5 is
+  still a quarter too wide. So faithfulness was dropped as a goal. 16:9 wins on the two things that
+  are real - the gameplay recording is a deliverable and screen capture is 16:9, and neither source
+  mentions aspect ratio at all. Player Settings needs no change: `defaultIsNativeResolution` is on and
+  the mode is fullscreen, so a build takes the monitor's resolution and the 1024x768 left in the file
+  by the template is never read. Only the Game view's own aspect has to be pinned to 16:9, so what
+  gets tuned is what gets recorded.
+- **The player sits a quarter of the way up the view, not centred.** Peleg's call: a platformer needs
+  headroom above the character more than floor below him, and the view is 10 units tall, so a quarter
+  up gives 2.5 below and 7.5 above. Held as a viewport fraction rather than an offset in units, so
+  changing `followSize` does not silently retune it. The bias is applied **before** the clamp, or
+  pushing the view up could take it past the top of the level, which is the one thing 11.4 forbids.
+  On flat ground in level 1 the bottom clamp is already binding and the bias does nothing; it takes
+  over once there is room, which is most of level 2.
+- **Follow and frame-the-whole-level are one class and one bool.** The testing view is a single branch
+  of real difference, and a base class with two subclasses for a debug toggle is the same
+  pattern-for-its-own-sake the full-versus-partial reset already rejected. Worth saying at the defense
+  that it was considered, for the same reason and with the same answer.
+- **The camera holds a serialized reference to the player, not a tag lookup.** Exercise 3's
+  `CameraFollow` used `FindGameObjectWithTag` and its own comment says why: Mario was rebuilt with the
+  level, so an Inspector reference would point at a destroyed object. Stage 6 made the player one
+  object for the whole game, at the scene root, never destroyed - so the reason is gone and the lookup
+  would be inherited ceremony. The level is still found rather than referenced, by
+  `FindObjectsByType<LevelDefinition>`, which excludes inactive objects and so answers with whichever
+  level is switched on.
+
+- **The תהום has a floor, and the spike sprite is only ever the תהום.** Peleg's design, and it
+  replaces the fall line `LevelDefinition` was going to carry. The fall line answered "how far does he
+  drop before he dies" with a number nobody can see, tuned by feel, where being wrong means either
+  dying above the floor or falling for an uncomfortably long time; a pit with a floor removes the
+  question instead. The instructor offered spikes at 00:50:15 as "עוד תהום", another kind of pit, so
+  treating them as one mechanic is his framing. The rule that keeps 9.3 intact: **the spike sprite
+  never appears as a standalone hazard**, only as a pit floor, so it is always the תהום and the פייה
+  never destroys it. Fire covers hazards on flat ground. Without that rule 9.2's blanket "destroys
+  anything he touches" would eat a pit floor, and 9.4 says outright he will collect a פייה, jump into a
+  תהום and check that it still kills.
+- **כוח drains 1 every 3 seconds, and the level sizes are what set it.** Grepping both sources for every
+  mention of כוח and of seconds turns up no rate at all: the written text says only
+  "לאט לאט הכמות כוח הזאת יורדת" and the transcript repeats it twice without one. The bar's `16` and
+  the starting `11` are unsourced too; the only number in section 4 that is his is the `20` of 4.7,
+  revised down from the written 30 on camera. He also treats the rate as a difficulty dial himself
+  (00:15:06), so filling the blank in is not bending anything. The arithmetic, against level 1 at 200
+  wide and level 2 at 50 tall: crossing them takes about 61 and 50 seconds, which at 3 seconds a unit
+  needs roughly 7 and 4 fruit, eleven in total with room for a slower player to need fifteen. At 2
+  seconds the same levels demand 23, which trips 4.7 and costs a פסילה for playing correctly.
+- **Level 1 is about 200 by 15 and level 2 about 30 by 50, provisionally.** Peleg's numbers, read off
+  the levels the instructor referenced and then cut to fit the כוח arithmetic above - the first draft
+  was 300 wide, which needs a 5-second drain to survive, and at that point 4.5's "כוח reaching zero
+  costs a פסילה" never fires in normal play. Revisited at stage 19 against finished mechanics.
+- **Twenty fruit is a floor to clear, not a ceiling to stay under.** The rule reads like an
+  anti-farming penalty and it is not one. 00:51:30: "פה רשמתי שאם לוקחים 30 פירות לפסילה, בוא נגיד 20
+  פירות, שלא צריך ממש הרבה לקחת, יהיה קל גם בשבילי. 20 פירות נותן לי פסילה, אני רוצה לראות את זה" - he
+  cut 30 to 20 so that reaching it would not take much, said it would be easy for him too, and said he
+  wants to see it. So the constraint runs the other way from how it first reads: **at least 20 fruit
+  have to be collectable in one playthrough**, or something he said he wants to watch happen cannot be
+  shown at all. Two numbers follow. About 15 fruit per level, 30 across the game, so a thorough player
+  passes 20 partway through level 2. And the game has to stay winnable after that פסילה is spent,
+  which it is - two remain. A player who takes only the eleven or so his כוח needs never triggers it,
+  which is what makes the rationing a real decision.
+
 - **Comments are cut to two lines, and stop arguing.** Peleg's call, made partway into Stage 6:
   the existing comments are tiring to read and want to be half the length. Two things were making
   them long. The four-line cap was generous, and the "X rather than Y, because Z" shape was carrying

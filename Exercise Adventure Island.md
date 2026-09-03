@@ -72,7 +72,10 @@ objects and enemies.
 ## 4. כוח and fruit
 
 1. The כוח bar holds `16` units. Each level starts the player with `11`.
-2. כוח drains by `1` unit every `2` seconds.
+2. כוח drains by `1` unit every `3` seconds. Neither source gives a rate: the written text says
+   only "לאט לאט הכמות כוח הזאת יורדת" and the transcript repeats it twice without a number, so
+   this one is ours. So are the `16` and the `11` of 4.1. The only number in this section that is
+   his is the `20` of 4.7.
 3. Two kinds of fruit. `Fruit_1` adds 1 unit of כוח, `Fruit_2` adds 2.
 4. כוח cannot go past the bar's capacity. Fruit collected at full כוח is wasted (00:14:44): "יש
    מקסימום שהוא יכול לתת לך".

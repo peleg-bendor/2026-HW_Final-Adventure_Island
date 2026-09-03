@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6794781550552724485}
   - component: {fileID: 1008718606566180260}
+  - component: {fileID: 4448597196472814466}
   m_Layer: 0
   m_Name: Sprite_Player_Start
   m_TagString: Untagged
@@ -92,3 +93,15 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &4448597196472814466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2484033995815204093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e17d582c35674264e97afc3a4fb08342, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStart
