@@ -599,7 +599,7 @@ that a level shorter than the view cannot contain the camera at all, so the clam
 least the view's size whatever the tiles do. That makes the level's size a decision rather than a
 measurement, and decisions get written down.
 
-### Stage 8 — State model and game flow `[ ]`
+### Stage 8 — State model and game flow `[x]`
 
 1. `SessionState` (פסילות, fruit count), a plain C# class. No `LevelState`: everything it was going
    to hold is owned by the object that already has it, and `IResettable` is what restores them.
@@ -613,9 +613,9 @@ measurement, and decisions get written down.
    branch is whether a next level exists. Neither ending restarts on its own: 2.3 and 2.4 both put a
    button between the ending and the next game, so both raise their event and stop.
 1. The player returns to the `PlayerStart` of the current level's `LevelDefinition` on both resets,
-   per 3.3 - as his own `IResettable`, rather than as something the flow does to him. The marker is
-   drawn at 40% alpha so a level can be authored against where the player will actually stand, and it
-   hides itself the moment the level starts.
+   per 3.3 - as his own `IResettable`, rather than as something the flow does to him, and facing
+   whichever way the marker faces. The marker is drawn at 40% alpha so a level can be authored
+   against where the player will actually stand, and it hides itself the moment the level starts.
 1. `IResettable`, and a reset that walks everything registered.
 1. Events for `StrikeLost`, `GameOver`, `LevelComplete` and `GameComplete`, raised here and
    listened to later. The last two are separate because 2.3's congratulation popup has to know the
@@ -1032,6 +1032,21 @@ _(append entries here as we make design decisions.)_
   argument is that a level shorter than the camera's view cannot contain it at all, so the clamp rect
   has to be at least the view's size regardless of where the tiles stop. That makes the size a design
   decision, and the cost is two numbers per level kept in step by hand.
+- **The start marker answers which way the player faces, by its own flip.** First written as a
+  hardcoded `FaceRight()` on the reset, which is true of both levels and still wrong: where he faces
+  is a property of the start, not of the code that puts him there. A `facesRight` field on
+  `PlayerStart` was the obvious fix and it can disagree with what the authoring aid shows. The marker
+  uses `Sprite_Player_Idle` as its sprite, so it is already a translucent picture of the player -
+  reading `transform.localScale.x` means flipping the marker in the Scene view both sets the facing
+  and displays it, with nothing that can drift apart. Per-instance scale survives the incremental
+  rebuild like any other hand-set value.
+- **The camera's snap is a flag consumed in `LateUpdate`, not work done inside `ResetTo`.** The reset
+  walks its registrations in whatever order things happened to register, so a camera that snapped
+  during its own `ResetTo` would cut to wherever the player was standing a moment earlier, and only
+  when the camera happened to register first. `LateUpdate` runs after every `Update` and so after the
+  player has been placed, whatever the registration order was. The alternative was ordering the
+  registry, which trades a one-line flag for a rule every future resettable has to know about.
+
 - **A level's place in the order is authored on the level, and the transition has one branch.**
   `LevelDefinition` carries a `levelNumber`; `GameFlow` scans once with inactive roots included,
   sorts by it, and `CompleteLevel` asks only whether an index past the current one exists. Three

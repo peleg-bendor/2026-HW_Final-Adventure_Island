@@ -43,9 +43,7 @@ public class PlayerMovement : MonoBehaviour
         if (IsWalking)
         {
             rigid.linearVelocity = new Vector2(direction * speed, rigid.linearVelocity.y);
-
-            // Scale rather than the renderer's flipX, so a child spawn point mirrors with him.
-            transform.localScale = new Vector3(direction > 0f ? 1f : -1f, 1f, 1f);
+            Face(direction > 0f);
         }
         else
         {
@@ -54,5 +52,12 @@ public class PlayerMovement : MonoBehaviour
             float braked = Mathf.MoveTowards(rigid.linearVelocity.x, 0f, deceleration * Time.fixedDeltaTime);
             rigid.linearVelocity = new Vector2(braked, rigid.linearVelocity.y);
         }
+    }
+
+    // Scale rather than the renderer's flipX, so a child spawn point mirrors with him. Public so a
+    // reset can restore his facing without knowing how facing is represented.
+    public void Face(bool right)
+    {
+        transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
     }
 }

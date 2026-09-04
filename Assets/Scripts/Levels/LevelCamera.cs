@@ -1,8 +1,9 @@
 using UnityEngine;
+using Zenject;
 
 // Keeps the camera on the player without letting the view leave the level. Framing the whole level
 // is a testing aid rather than anything the game uses.
-public class LevelCamera : MonoBehaviour
+public class LevelCamera : MonoBehaviour, IResettable
 {
     [SerializeField] private Transform target;
 
@@ -18,12 +19,25 @@ public class LevelCamera : MonoBehaviour
 
     [SerializeField] private bool frameWholeLevel;
 
+    private IGameFlow flow;
+    private IResetRegistry registry;
+
     private Camera view;
-    private LevelDefinition level;
     private Vector3 followVelocity;
+
+    // True to begin with, so the first frame opens on the player rather than sliding in from
+    // wherever the camera was saved.
+    private bool snapNextFrame = true;
 
     // Read once rather than hardcoded, so moving the camera in the Editor leaves no stale depth.
     private float cameraZ;
+
+    [Inject]
+    public void Construct(IGameFlow flow, IResetRegistry registry)
+    {
+        this.flow = flow;
+        this.registry = registry;
+    }
 
     private void Awake()
     {
@@ -37,34 +51,46 @@ public class LevelCamera : MonoBehaviour
             GameLog.Warning(LogCategory.Game, "No target assigned, the camera will not follow");
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        level = FindActiveLevel();
-
-        if (level == null)
+        if (registry == null)
         {
-            GameLog.Warning(LogCategory.Game, "No active LevelDefinition found, the camera will not be clamped");
+            GameLog.Warning(LogCategory.Game, "No IResetRegistry injected, the camera will glide instead of cutting");
             return;
         }
 
-        // Snapped on the first frame, so Play opens on the player instead of sliding in from
-        // wherever the camera was last saved.
-        Apply(0f);
+        registry.Register(this);
+    }
+
+    private void OnDisable()
+    {
+        if (registry != null)
+            registry.Unregister(this);
+    }
+
+    // Flagged rather than snapped here, because the reset walks its list in registration order and
+    // the player may not have moved yet. LateUpdate always runs after he has.
+    public void ResetTo(ResetScope scope)
+    {
+        snapNextFrame = true;
     }
 
     private void LateUpdate()
     {
-        Apply(smoothTime);
+        Apply(snapNextFrame ? 0f : smoothTime);
+        snapNextFrame = false;
     }
 
     private void Apply(float smoothing)
     {
+        LevelDefinition level = flow != null ? flow.CurrentLevel : null;
+
         if (view == null || level == null)
             return;
 
         if (frameWholeLevel)
         {
-            FrameLevel();
+            FrameLevel(level);
             return;
         }
 
@@ -73,24 +99,13 @@ public class LevelCamera : MonoBehaviour
         if (target == null)
             return;
 
-        Vector3 wanted = FollowPosition();
+        Vector3 wanted = FollowPosition(level);
         transform.position = smoothing > 0f
             ? Vector3.SmoothDamp(transform.position, wanted, ref followVelocity, smoothing)
             : wanted;
     }
 
-    // Only active objects answer, which is how this picks a level with the other root switched off.
-    private static LevelDefinition FindActiveLevel()
-    {
-        LevelDefinition[] found = FindObjectsByType<LevelDefinition>(FindObjectsInactive.Exclude);
-
-        if (found.Length > 1)
-            GameLog.Warning(LogCategory.Game, "More than one level is active, the camera clamped to " + found[0].name);
-
-        return found.Length > 0 ? found[0] : null;
-    }
-
-    private Vector3 FollowPosition()
+    private Vector3 FollowPosition(LevelDefinition level)
     {
         Rect area = level.PlayableArea;
         float halfHeight = view.orthographicSize;
@@ -115,7 +130,7 @@ public class LevelCamera : MonoBehaviour
     }
 
     // Sized to whichever axis needs more room, so the whole rect fits at any aspect.
-    private void FrameLevel()
+    private void FrameLevel(LevelDefinition level)
     {
         Rect area = level.PlayableArea;
 

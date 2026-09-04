@@ -2617,6 +2617,7 @@ GameObject:
   - component: {fileID: 230441458}
   - component: {fileID: 230441460}
   - component: {fileID: 230441459}
+  - component: {fileID: 230441461}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -2851,6 +2852,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerGround
   contactGrace: 0.1
+--- !u!114 &230441461
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 230441450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4221f5236eaf60f45bc339a3fab86d40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerReset
 --- !u!1001 &234365579
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14039,6 +14052,10 @@ PrefabInstance:
     - target: {fileID: 2484033995815204093, guid: 3a5d7035013a8334ba71187c238556ff, type: 3}
       propertyPath: m_Name
       value: Sprite_Player_Start
+      objectReference: {fileID: 0}
+    - target: {fileID: 6794781550552724485, guid: 3a5d7035013a8334ba71187c238556ff, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6794781550552724485, guid: 3a5d7035013a8334ba71187c238556ff, type: 3}
       propertyPath: m_LocalPosition.x
