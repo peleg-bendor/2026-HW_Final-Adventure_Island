@@ -651,14 +651,26 @@ course keeps making, demonstrated rather than asserted.
 
 ### Stage 10 — Popups and restart `[ ]`
 
-1. Game Over popup with a restart button.
-1. Restart: session cleared, carried cleared, back to level 1, no scene load.
-1. The פסילות display.
+1. A `Player` marker component, and the exit door of 2.2: touching it calls `CompleteLevel` on the
+   flow. Small, and it is what replaces the debug key, so the whole loop can be played rather than
+   typed.
+1. Both popups in one step, since the second is the first duplicated: the Game Over popup of 2.4 and
+   the congratulation popup of 2.3, the latter moved forward from stage 18 now that the door makes
+   the ending reachable here. `Popup` holds the wait, `Popups` maps a game event to a scene object,
+   and `GameFlow` awaits `IPopups`. `Time.timeScale` to 0 while either is up and back to 1 at the top
+   of `StartGame`, which deletes `PowerController`'s `running` flag and its two subscriptions. A
+   private guard in the flow, so a debug key pressed under a popup cannot start a second sequence.
+   Restart clears the session and re-enters level 1 with no scene load.
+1. The פסילות display: one `Sprite_Strike` icon and a count, as the original draws it.
 
-**What it needs: Async, second home.** `await popup.ShowAsync(...)` returns which button was pressed. A
-coroutine cannot return a value — it needs a callback or a shared field — and a `TaskCompletionSource`
-bridging a button click to an `await` is short enough to read on screen in the code video. Different
-justification from the respawn timer, so the two uses give two answers rather than one repeated twice.
+**What it needs: Async, second home — and the original justification for it was wrong.** Step 5 said
+"await returns which button was pressed; a coroutine returns nothing". Both popups have exactly one
+button, 2.3's and 2.4's alike, so there is no *which* and that answer collapses the moment it is
+pushed on. The real difference is structural: **a coroutine needs a MonoBehaviour to run on**, and the
+code that waits here is `GameFlow`, a plain C# class, where a coroutine is not awkward but impossible.
+A `TaskCompletionSource` bridging a button click to an `await` is still short enough to read on screen.
+And it is a different answer from stage 14's respawn timer, which is "a disabled GameObject stops its
+coroutines" - two uses, two reasons, which is what having two homes was for.
 
 This stage is placed early on purpose: it is the first point the whole loop can run end to end — die,
 lose a פסילה, level resets, die twice more, game over, popup, restart, session clears — which proves the
@@ -777,7 +789,6 @@ This stage also touches every other system, so it doubles as the integration tes
 ### Stage 18 — Level 2's mechanics `[ ]`
 
 1. Vertical camera framing.
-1. The completion popup, a second listener on stage 10's machinery.
 1. Carried state crossing: weapon, animal and fruit count survive; כוח resets.
 1. Level 2 authored far enough to prove the transition end to end.
 
@@ -807,6 +818,11 @@ comments and log lines against `CONVENTIONS.md`. Same shape as Exercise 3's Stag
 
 Worth remembering here: the instructor runs an automated SOLID check over the submitted code and
 grades against the worst thing it finds, not the average.
+
+Also decided here: whether `DebugFlowKeys` ships. Keys `1` and `2` force a strike and a level
+completion, which is development speed rather than anything the game needs, and they let anyone
+holding the build skip the game. Nothing forbids them; the question is only whether they belong in a
+submission.
 
 ### Stage 21 — Two video scripts `[ ]`
 
@@ -1038,6 +1054,49 @@ _(append entries here as we make design decisions.)_
   argument is that a level shorter than the camera's view cannot contain it at all, so the clamp rect
   has to be at least the view's size regardless of where the tiles stop. That makes the size a design
   decision, and the cost is two numbers per level kept in step by hand.
+- **The flow waits on the popup, which is what makes the Task earned rather than decorative.**
+  `GameFlow` takes an injected popup interface and awaits it, so the sequence *game over, wait for
+  the player, restart* sits with the other game rules instead of in a UI script. The alternative was
+  a MonoBehaviour presenter listening to the `GameOver` event, which is tidier and has no
+  fire-and-forget anywhere - and a coroutine would do it identically, which is exactly the problem.
+  Async is one of the seven and the instructor said outright he asks "why not a coroutine", so tidiness
+  is the wrong thing to buy here. **The price is real and worth saying out loud:** everything that
+  calls `LoseStrike` is synchronous - `PowerController.Tick` today, every hazard's trigger later - so
+  none of them can await, and the flow starts the sequence without blocking. That is fire-and-forget,
+  and swallowed exceptions are its known cost.
+- **`Time.timeScale` goes to 0 while a popup is up.** One line stops `FixedUpdate`, so movement and
+  jumping stop with no edit to either component, and it zeroes `Time.deltaTime`, so stage 9's drain
+  stops on its own - **which lets `PowerController`'s `running` flag and its two event subscriptions be
+  deleted**. A fix that removes code. The alternative was the `Playing`/`GameOver`/`Won` state this log
+  predicted stage 10 would want, and it loses on the same ground it was proposed on: every
+  input-reading component would have to check it, which is one condition duplicated across three
+  classes today and more with every stage, and it would not stop physics anyway. The known risk of a
+  global is a path that forgets to restore it, so `StartGame` sets it back to 1 unconditionally at the
+  top and a restart always unfreezes whatever happened.
+- **A `Player` marker component identifies him to triggers, not a tag.** The door is the first thing
+  that needs to ask "was that the player", and every hazard, collectible, token and egg needs the same
+  thing, so it is decided once here. A tag is the familiar answer - Exercise 3 used one, `CompareTag`
+  is the documented fast path - and it loses on three counts: it is a magic string, it is set in the
+  Inspector and so can be silently lost when an object is recreated, and **most callers need the player
+  object rather than the fact**, so a tag hands them a `GameObject` they immediately `GetComponent` on
+  anyway. The project defines no tags at all today, so the marker also avoids adding a project setting
+  that has to be right in the submission.
+- **The strikes display is an icon and a number, not a row of icons.** Checking the original: it draws
+  a face sprite followed by a count, not one icon per life. So `StrikesView` is a static `Image` beside
+  a `TextMeshProUGUI`, which is Exercise 2's `HealthView` shape and structurally nothing like
+  `PowerView`'s repeated children. The near-duplicate this was going to be extracted for does not
+  exist. Where it does appear is stage 11: the fruit counter is also an icon and a number, so that is
+  the second use case and the place a shared view would be earned.
+
+- **The exit door had no stage, and lands in stage 10.** Requirement 2.2 - a level ends when the
+  player reaches a cave door - was never assigned to anything. Grepping the plan finds the door only
+  as art in stage 3, as a prefab and tile id 8 in stage 4, and as a trigger in the composite-collider
+  entry; no stage ever made it do anything. Stage 10 is the right home because it is the stage whose
+  point is running the whole loop end to end, and the door is what turns `CompleteLevel` from a debug
+  key into something the player does. It is small - a trigger that calls one method on the flow -
+  which is presumably why it slipped through: every other requirement of that size hangs off a
+  larger one, and this one hangs off nothing.
+
 - **The bar's proportions were measured off the original, and its size has to divide.**
   `Sprite_Power_Line.png` is a 3x16 source upscaled 3x - one pixel of olive border, one of cream
   fill, one of border across - so a rendered width that is not a multiple of 3 gives a five-pixel
@@ -1319,3 +1378,82 @@ _(append entries here as we make design decisions.)_
   build keeps a marker that hasn't moved, so the break would only appear after the start point was
   edited, which is the worst time to find it. The same component hides its own sprite when the level
   starts, since the 40% alpha exists for authoring only.
+
+
+- **Stage 10's six steps are three, and the `Time.timeScale` step dissolved into the popups.** Peleg's
+  call. Freezing time was written as a step of its own, and it is one line at each end of a sequence
+  that does not exist until the popups do, so it was never separable from them. The two popups merged
+  for the opposite reason: the congratulation popup is the game over popup duplicated with different
+  text plus one more method on `IPopups`, so keeping them apart meant building the machinery, testing
+  it against one caller, and then adding the second caller in a step holding nothing else. Splitting
+  them also left a hole, since deleting `PowerController`'s `running` flag depends on *both* endings
+  freezing time - a step that froze only one would either keep dead code for a step or leave the
+  drain running after level 2.
+- **Two popups, three classes: `Popup`, `Popups` and `IPopups`.** `Popup` is a one-button panel that
+  switches itself on, hands back a `Task` and completes it when its button is clicked; `Popups` is the
+  only thing that knows which scene object is the game over one; `GameFlow` depends on `IPopups`. The
+  alternative was one class with one panel, two serialized message strings and a label rewritten per
+  call - fewer objects and less to build in the Canvas. It loses on two things that are not about
+  design purity: the words the player reads become a `[SerializeField] private string` default in
+  code, and the Hierarchy stops naming `Popup_GameOver` and `Popup_Congratulation`. **What to claim at
+  the defense, and what not to.** SRP and DIP are real here - three separable responsibilities, and a
+  flow that depends on an interface rather than a MonoBehaviour, which is the only reason it can be a
+  plain C# class at all. OCP is not: a third popup adds a method to the interface rather than an
+  implementation of it. ISP is not either, since `IPopups` has one consumer that uses all of it. The
+  single-class version would pass a SOLID reading too.
+- **The popups are hidden by `Popups.Awake`, and the first attempt at that was a bug worth keeping.**
+  The panels should not depend on being left switched off in the saved scene: that means authoring
+  their layout switched on and shipping whichever state they were last left in, and a scene opening
+  with GAME OVER over the game is one forgotten checkbox away. The obvious answer was for `Popup` to
+  hide itself on `Awake`, the way `PlayerStart` hides its marker - and it deadlocked the game.
+  **`Awake` does not run at scene load for an object that is inactive in the scene; it runs the first
+  time that object becomes active**, which is inside the `SetActive(true)` that shows the popup. So
+  the panel was shown, `Awake` fired, and it hid itself again inside the same call, handing back a
+  `Task` that nothing could complete with time already frozen at 0. `PlayerStart` never hit this
+  because its object is active and only its `SpriteRenderer` is switched off. The hiding moved to
+  `Popups.Awake`, which is on the always-active `Canvas` and so runs exactly once at load.
+- **What survives `Time.timeScale = 0` was measured rather than assumed.** `FixedUpdate` stops, so
+  `PlayerMovement` stops with no edit to it; `LevelCamera.LateUpdate` still runs but `SmoothDamp`
+  reads `Time.deltaTime` and interpolates by zero; `PowerController` still ticks and drains nothing;
+  the Animator is on scaled time and freezes on the frame he died. The button keeps working because
+  the scene's `InputSystemUIInputModule` runs on the Input System's default
+  `ProcessEventsInDynamicUpdate` - there is no input settings asset in the project, so that default is
+  load-bearing, and `ProcessEventsInFixedUpdate` would freeze the button that unfreezes the game.
+  **The one thing that broke:** `Update` keeps *reading* input even though nothing acts on it, so
+  `PlayerJump` latched a press made under the popup and spent it on the first physics step after the
+  restart - and since `Time.time` is frozen too, `PlayerGround`'s contact grace still held the contact
+  from before the death, so he really did jump on respawn. `PlayerJump` gained a `ClearInput` that
+  `PlayerReset` calls, rather than a second `IResettable` on the player, since `PlayerReset` already
+  coordinates his reset across components. The honest limit, worth stating at the defense: freezing
+  time stops things *acting*, not *reading*.
+- **`async void` with a `try`/`catch`, which is the opposite of the usual C# advice.** Everything that
+  calls `LoseStrike` is synchronous, so the sequence is started without being awaited, and there are
+  two ways to do that. `private async Task` called without `await` swallows every exception into a
+  Task nobody observes. `async void` rethrows on the synchronization context, which Unity logs - so
+  here it is the one that reports faults rather than hiding them, and the catch makes that explicit
+  instead of relying on it. Worth saying out loud, because "never use async void" is the answer a
+  grader expects and the reasoning is what makes it wrong in this one place.
+- **A private `ending` flag in `GameFlow`, and it is not the state machine this log rejected.** With a
+  popup up, `Update` still runs, so `DebugFlowKeys` still reads the keyboard: key `1` under the game
+  over popup calls `LoseStrike` again, and since strikes are already zero it logs a second game over
+  and shows a second popup, replacing the `TaskCompletionSource` and orphaning the first `await`
+  forever. Key `2` does the same to the congratulation popup. One private bool, set when a sequence
+  starts and cleared by `StartGame`, closes both. The rejected `Playing`/`GameOver`/`Won` state failed
+  on the objection that every input-reading component would have to consult it; nothing outside
+  `GameFlow` ever reads this one. It also keeps `Popup` simple, since it never has to survive being
+  shown twice. **Debug key `3` is deleted rather than guarded**, because the guard cannot cover it:
+  `StartGame` is what *clears* the flag, so pressing `3` under a popup unfreezes and re-enters level 1
+  while the popup stays on screen with its `Task` still pending, and the button then starts a second
+  game. `DebugFlowKeys` said itself that key `3` stood in for the popup button, and the button now
+  exists. Keys `1` and `2` stay for now: the only way to lose a strike by playing is waiting out the
+  drain, which is about 100 seconds per game over in the one stage whose point is running the loop
+  over and over. The better lever is `Level_1`'s starting כוח set to 1, which reaches a game over in
+  about nine seconds through `PowerController.Spend` rather than through a synthetic call. Whether
+  either key ships is stage 20's.
+- **The popups' text is English.** `GAME OVER` and a `Restart` button, matching the original rather
+  than the course's language. Hebrew on screen would need TMP's right-to-left mode and a font asset
+  carrying Hebrew glyphs, which the default TMP font does not have, and the Hebrew that matters is
+  already carried by the requirements document and the video script. TextMeshPro itself ships inside
+  `com.unity.ugui` on Unity 6, so the namespace compiles with nothing installed, but the essential
+  resources are a separate import that writes about 2MB of font assets into `Assets/` and ships with
+  the submission.

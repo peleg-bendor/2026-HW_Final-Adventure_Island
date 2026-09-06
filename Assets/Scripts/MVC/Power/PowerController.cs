@@ -12,9 +12,6 @@ public class PowerController : ITickable, IInitializable, IResettable
     private readonly float drainSeconds;
 
     private float sinceLastDrain;
-    private bool running;
-
-    
 
     public PowerController(IPowerModel model, IPowerView view, IGameFlow flow, IResetRegistry registry, float drainSeconds)
     {
@@ -30,13 +27,13 @@ public class PowerController : ITickable, IInitializable, IResettable
     public void Initialize()
     {
         registry.Register(this);
-        flow.GameOver += Stop;
-        flow.GameComplete += Stop;
     }
 
+    // No check for whether the game is running: a popup freezes time, so Time.deltaTime is zero
+    // and the drain stops without being told to.
     public void Tick()
     {
-        if (running == false || drainSeconds <= 0f)
+        if (drainSeconds <= 0f)
             return;
 
         sinceLastDrain += Time.deltaTime;
@@ -79,13 +76,7 @@ public class PowerController : ITickable, IInitializable, IResettable
 
         model.SetTo(level != null ? level.StartingPower : model.Capacity);
         sinceLastDrain = 0f;
-        running = true;
         Publish();
-    }
-
-    private void Stop()
-    {
-        running = false;
     }
 
     private void Publish()

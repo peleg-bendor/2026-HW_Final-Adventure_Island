@@ -1,14 +1,15 @@
 using UnityEngine;
 using Zenject;
 
-// Puts the player back at the current level's start whenever a reset runs. His own IResettable
-// rather than something the flow does to him, which is what keeps a Transform out of the flow.
+// Restores the player whenever a reset runs: position, facing, velocity and buffered input. His own
+// IResettable rather than something the flow does to him, which keeps a Transform out of the flow.
 public class PlayerReset : MonoBehaviour, IResettable
 {
     private IResetRegistry registry;
     private IGameFlow flow;
     private Rigidbody2D rigid;
     private PlayerMovement movement;
+    private PlayerJump jump;
 
     [Inject]
     public void Construct(IResetRegistry registry, IGameFlow flow)
@@ -21,12 +22,16 @@ public class PlayerReset : MonoBehaviour, IResettable
     {
         rigid = GetComponent<Rigidbody2D>();
         movement = GetComponent<PlayerMovement>();
+        jump = GetComponent<PlayerJump>();
 
         if (rigid == null)
             GameLog.Warning(LogCategory.Player, "No Rigidbody2D found, the player will keep his velocity across a reset");
 
         if (movement == null)
             GameLog.Warning(LogCategory.Player, "No PlayerMovement found, the player will keep his facing across a reset");
+
+        if (jump == null)
+            GameLog.Warning(LogCategory.Player, "No PlayerJump found, a jump pressed under a popup will fire after the restart");
     }
 
     private void OnEnable()
@@ -50,6 +55,11 @@ public class PlayerReset : MonoBehaviour, IResettable
     // starting a level puts him there too.
     public void ResetTo(ResetScope scope)
     {
+        // Before the start is looked up, since clearing his input is worth doing even when there
+        // is nowhere to put him.
+        if (jump != null)
+            jump.ClearInput();
+
         PlayerStart start = flow != null && flow.CurrentLevel != null ? flow.CurrentLevel.PlayerStart : null;
 
         if (start == null)

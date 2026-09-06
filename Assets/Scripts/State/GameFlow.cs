@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 // The game's operations in one place, as a plain C# class: what starting a game, losing a strike
@@ -7,14 +8,20 @@ using UnityEngine;
 public class GameFlow : IGameFlow, IResetRegistry
 {
     private readonly SessionState session;
+    private readonly IPopups popups;
     private readonly List<IResettable> resettables = new List<IResettable>();
 
     private LevelDefinition[] levels;
     private int currentIndex = -1;
 
-    public GameFlow(SessionState session)
+    // True from the moment an ending starts until a new game begins. Nothing outside this class
+    // reads it, which is what keeps it from being a state machine everything has to consult.
+    private bool ending;
+
+    public GameFlow(SessionState session, IPopups popups)
     {
         this.session = session;
+        this.popups = popups;
     }
 
     public event Action StrikeLost;
@@ -44,6 +51,10 @@ public class GameFlow : IGameFlow, IResetRegistry
 
     public void StartGame()
     {
+        // Restored unconditionally, so a restart always unfreezes whatever left the game frozen.
+        Time.timeScale = 1f;
+        ending = false;
+
         session.Restart();
         GameLog.Info(LogCategory.Game, "Game started - " + session.StrikesRemaining + " strikes");
         EnterLevel(0);
@@ -51,6 +62,12 @@ public class GameFlow : IGameFlow, IResetRegistry
 
     public void LoseStrike()
     {
+        if (ending)
+        {
+            GameLog.Info(LogCategory.Game, "Strike ignored - the game is already over");
+            return;
+        }
+
         session.LoseStrike();
         StrikeLost?.Invoke();
 
@@ -58,6 +75,7 @@ public class GameFlow : IGameFlow, IResetRegistry
         {
             GameLog.Info(LogCategory.Game, "Game over - no strikes left");
             GameOver?.Invoke();
+            EndGame(popups.ShowGameOverAsync);
             return;
         }
 
@@ -69,6 +87,12 @@ public class GameFlow : IGameFlow, IResetRegistry
     // change when a level is added or removed.
     public void CompleteLevel()
     {
+        if (ending)
+        {
+            GameLog.Info(LogCategory.Game, "Level completion ignored - the game is already over");
+            return;
+        }
+
         GameLog.Info(LogCategory.Game, "Level complete");
         LevelComplete?.Invoke();
 
@@ -80,10 +104,30 @@ public class GameFlow : IGameFlow, IResetRegistry
             return;
         }
 
-        // Stops here rather than restarting. Both endings wait for something to call StartGame,
-        // because 2.3 and 2.4 both put a button between the ending and the next game.
         GameLog.Info(LogCategory.Game, "Game complete - every level finished");
         GameComplete?.Invoke();
+        EndGame(popups.ShowCongratulationAsync);
+    }
+
+    // Started rather than awaited, since nothing that ends a game can await. The popup is passed
+    // unstarted so that time is already frozen by the time it appears.
+    private async void EndGame(Func<Task> showPopup)
+    {
+        ending = true;
+
+        try
+        {
+            Time.timeScale = 0f;
+            await showPopup();
+            StartGame();
+        }
+        catch (Exception error)
+        {
+            // Unfrozen rather than left as it was, since a hard-locked game hides the error above it.
+            GameLog.Error(LogCategory.Game, "Ending failed - " + error.Message);
+            Time.timeScale = 1f;
+            ending = false;
+        }
     }
 
     private void EnterLevel(int index)

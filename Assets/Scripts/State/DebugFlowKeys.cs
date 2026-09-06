@@ -2,8 +2,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Zenject;
 
-// Drives the flow from the keyboard while nothing in the game can. Key 3 stands in for the button
-// on the game over and congratulation popups, which is the only thing that restarts a game.
+// Forces a strike and a level completion from the keyboard, so the loop can be tested without
+// waiting out the power drain or walking to a door.
 public class DebugFlowKeys : MonoBehaviour
 {
     private IGameFlow flow;
@@ -24,8 +24,5 @@ public class DebugFlowKeys : MonoBehaviour
 
         if (Keyboard.current.digit2Key.wasPressedThisFrame)
             flow.CompleteLevel();
-
-        if (Keyboard.current.digit3Key.wasPressedThisFrame)
-            flow.StartGame();
     }
 }

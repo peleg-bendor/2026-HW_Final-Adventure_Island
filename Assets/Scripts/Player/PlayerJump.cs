@@ -90,4 +90,12 @@ public class PlayerJump : MonoBehaviour
 
         rigid.linearVelocity = new Vector2(rigid.linearVelocity.x, rigid.linearVelocity.y * riseCutFactor);
     }
+
+    // Cleared on a reset, because Update keeps reading the keyboard while the game is frozen and a
+    // press made under a popup would be spent on the first physics step after the restart.
+    public void ClearInput()
+    {
+        jumpRequested = false;
+        cutRequested = false;
+    }
 }

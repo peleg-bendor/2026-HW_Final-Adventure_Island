@@ -17,6 +17,7 @@ public class GameInstaller : MonoInstaller
     public override void InstallBindings()
     {
         Container.Bind<SessionState>().AsSingle().WithArguments(startingStrikes);
+        Container.Bind<IPopups>().To<Popups>().FromComponentInHierarchy().AsSingle();
         Container.Bind(typeof(IGameFlow), typeof(IResetRegistry)).To<GameFlow>().AsSingle();
 
         Container.Bind<IPowerModel>().To<PowerModel>().AsSingle().WithArguments(powerCapacity);
