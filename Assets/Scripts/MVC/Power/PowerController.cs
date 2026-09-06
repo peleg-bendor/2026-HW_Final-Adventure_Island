@@ -1,23 +1,25 @@
 using UnityEngine;
 using Zenject;
 
-// Drives power: drains it as time passes, applies what fruit adds, and spends a strike when it
+// Drives power: drains it as time passes, applies what fruit gives, and spends a strike when it
 // empties. A plain C# class on ITickable, so none of the rules need a MonoBehaviour.
-public class PowerController : ITickable, IInitializable, IResettable
+public class PowerController : ITickable, IInitializable, IResettable, IPower
 {
     private readonly IPowerModel model;
     private readonly IPowerView view;
     private readonly IGameFlow flow;
+    private readonly ILevels levels;
     private readonly IResetRegistry registry;
     private readonly float drainSeconds;
 
     private float sinceLastDrain;
 
-    public PowerController(IPowerModel model, IPowerView view, IGameFlow flow, IResetRegistry registry, float drainSeconds)
+    public PowerController(IPowerModel model, IPowerView view, IGameFlow flow, ILevels levels, IResetRegistry registry, float drainSeconds)
     {
         this.model = model;
         this.view = view;
         this.flow = flow;
+        this.levels = levels;
         this.registry = registry;
         this.drainSeconds = drainSeconds;
     }
@@ -47,7 +49,7 @@ public class PowerController : ITickable, IInitializable, IResettable
         Spend(1);
     }
 
-    public int Add(int amount)
+    public int Gain(int amount)
     {
         int gained = model.Add(amount);
 
@@ -72,7 +74,7 @@ public class PowerController : ITickable, IInitializable, IResettable
 
     public void ResetTo(ResetScope scope)
     {
-        LevelDefinition level = flow.CurrentLevel;
+        LevelDefinition level = levels.Current;
 
         model.SetTo(level != null ? level.StartingPower : model.Capacity);
         sinceLastDrain = 0f;

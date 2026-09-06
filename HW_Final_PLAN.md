@@ -677,22 +677,23 @@ This stage is placed early on purpose: it is the first point the whole loop can 
 lose a פסילה, level resets, die twice more, game over, popup, restart, session clears — which proves the
 no-scene-reload architecture before any content is built on it.
 
-### Stage 11 — Fruit and the counter `[ ]`
+### Stage 11 — Fruit and the counter `[x]`
 
+1. Three refactors first, none of them this stage's own work: `IPower`, `ResetRegistry` and
+   `Levels`. All three touch `GameFlow`, which this stage had to edit anyway.
 1. `Fruit_1` and `Fruit_2` of 4.3, built as the prefabs `Sprite_Fruit_Common` and
    `Sprite_Fruit_Super`, adding 1 and 2 כוח. The requirement's names are what the video says; the
    prefab names are what the tile map holds.
 1. The fruit counter, and a פסילה at every multiple of 20 (4.7).
-1. The counter display: `Count_Fruit`, stage 10's `Count_Strikes` widget with a different icon.
-   **Decide here whether a read-only `ISessionState` is earned.** Both displays read the session and
-   neither writes to it, while `GameFlow` needs `LoseStrike` and `Restart` - which is a real interface
-   segregation case rather than a decorative one. It was deliberately not built at stage 10, where
-   there was one reader; this is the second.
+1. The counter display: `Count_Fruit`, stage 10's `Count_Strikes` widget with a different icon,
+   turning red for the five fruit before the next פסילה. `ISessionState` was decided here and built:
+   both displays read the session and neither writes to it, while `GameFlow` needs `LoseStrike` and
+   `Restart`.
 
 **What it needs: the collectible base, and MVC again.** Eight things in this game are picked up by
-touching them — two fruit, three animal tokens, two weapons, the פייה — and all eight share detect, apply,
-consume, notify, with only the apply step differing. That is Template Method by its nature rather than by
-decision. The counter is the second MVC triad.
+touching them — two fruit, three animal tokens, two weapons, the פייה — and all eight share detect,
+consume and come back, with only the apply step differing. That is Template Method by its nature
+rather than by decision. The counter is the second MVC triad.
 
 ### Stage 12 — Hazards `[ ]`
 
@@ -1481,3 +1482,95 @@ _(append entries here as we make design decisions.)_
   an interface meant for restoring state on something that has none, and it would stay silent on game
   over; polling `SessionState` in `Update` reads sixty times a second a value that changes three times
   a game. Stage 11's fruit counter needs the same event to zero itself.
+
+- **A SOLID and Clean Architecture audit before stage 11's own work, and three refactors out of it.**
+  Peleg asked whether the design held up, and taking the unflattering answer rather than the
+  flattering one turned up three things. **`FruitCollectible` would have depended on the concrete
+  `PowerController`**, a MonoBehaviour reaching straight into a controller, which is the exact shape
+  DIP exists to stop - so `IPower` with `Gain` and `Spend`, earned twice over because stage 12's אבן
+  needs `Spend`. Its verbs differ from `IPowerModel`'s `Add` and `Remove` deliberately: two identical
+  `Add` methods at two layers is a question every reader of the fruit code would have to ask.
+  **`GameFlow` was doing four jobs** - the operations, the ending sequence, the level list and the
+  registry of resettables - so the registry became `ResetRegistry` behind `IResetRegistry` and a new
+  `IResetRunner`, and the level list became `Levels` behind `ILevels`. The ending sequence stayed,
+  because moving it out would undo the reason the Task is earned. **`ILevels` paid three ways**: it
+  took a third of `GameFlow` away, it let `PlayerReset`, `LevelCamera` and `PowerController` stop
+  depending on the class that can end the game when all they wanted was `CurrentLevel`, and it moved
+  the `LevelDefinition` leak off the core game interface onto one whose subject is levels. The test
+  for the whole refactor was that the log came out identical.
+- **What the audit found and deliberately did not fix, which is the more useful half at a defense.**
+  `IGameFlow` has ten members and no client uses both halves - operations or events, never both - so a
+  member-counting checker will name it; splitting it into `IGameFlow` and `IGameEvents` was rejected
+  because the two would always travel together with the same lifetime and the same implementation,
+  which is bookkeeping rather than segregation. `IGameFlow.CurrentLevel` returning a MonoBehaviour was
+  the Clean Architecture crack, and moving it to `ILevels` was the fix; inventing an `ILevel` to hide
+  one property would have been worse code sold as better architecture. The rule applied throughout:
+  three classes beat one only while each still has a name you can say in a sentence.
+- **`TakeFruit` is an operation on the flow, not on a fruit controller.** Peleg pushed on whether
+  strikes and fruit belong in `GameFlow` at all, and the test that settles it is whether a method
+  decides what happens to the game or only stores a number. Storing is `SessionState`'s and always
+  was: `LoseStrike` touches the count in one line and spends the rest deciding between ending the game
+  and resetting the level. `TakeFruit` is the weaker of the two and its whole claim is 4.7 - strip the
+  every-twenty rule away and it belongs to a fruit controller. It stays because of what the split
+  costs: fruit → `Fruit.Take` → `StrikeOwed` → `LoseStrike` → `GameOver` → popup is five hops through
+  three classes, where it is now two methods in one file, and "what happens when I take my twentieth
+  fruit" is exactly what an oral defense asks. The payoff is that `FruitController` and
+  `StrikesController` came out line for line the same shape, both pure readers, which is what earned
+  `ISessionState`.
+- **The collectible base was built with one subclass, knowingly against `CONVENTIONS.md` rule 5.**
+  `Fruit_1` and `Fruit_2` differ by a number, so they are one class on two prefabs, and the other
+  seven collectibles arrive at stages 13, 15, 16 and 17. Rule 5 exists to stop speculative
+  abstraction, and eight named subclasses written down in a requirements document are not
+  speculation. Template Method also has to be placed somewhere, and a base with eight real subclasses
+  is the strongest placement available.
+- **The template's steps are detect, *consume*, apply - and the obvious order was wrong.** Applying
+  first breaks the twentieth fruit: `PickUp` costs a פסילה, the פסילה runs the reset, the reset brings
+  every collectible back, and then the template deactivates the one just taken. One fruit vanishes
+  from an otherwise fully restored level, once every twenty. Consuming first lets the reset put it
+  back with the rest. Stage 12 has the same shape - a hazard runs the reset from inside a trigger
+  callback.
+- **A collectible registers in `Awake` and releases in `OnDestroy`, unlike every other `IResettable`.**
+  `PlayerReset` and `LevelCamera` use `OnEnable`/`OnDisable`; a collectible cannot, because it switches
+  itself off when taken, so `OnDisable` would drop the very object the reset has to bring back and the
+  fruit would silently never return. Safe because Zenject's `SceneContext` carries
+  `executionOrder: -9999` in its meta file, so injection finishes before any default-order `Awake`,
+  and a level 2 object's whole activation happens inside `EnterLevel`'s `SetActive(true)` before
+  `ResetAll` runs. **The hazard this creates, for whoever writes the next subclass:** a subclass
+  declaring its own `Awake` hides the base's, Unity calls only the subclass's, and registration stops
+  with no warning of any kind. Nothing deriving from `Collectible` may declare `Awake`.
+- **`PickUp()` takes no parameter.** Passing the `Player` through was the obvious signature and no
+  collectible turned out to want it: fruit goes to `IPower`, a weapon will go to a weapon holder, the
+  פייה to an invincibility component, all injected. The marker component is still what identifies him
+  at the trigger; nothing needs the object afterwards. If stage 15 disagrees, adding the parameter
+  touches the subclasses that exist by then.
+- **Two counter views, not a shared base - reversing what this log predicted.** Stage 10 recorded that
+  the fruit counter would be "the place a shared view would be earned". Written out, `StrikesView` is
+  eighteen lines and what `FruitView` shares is a serialized field, a null check and one line of
+  formatting; a `CountView` base with two one-line subclasses is three types doing the work of two,
+  and there is no third counter coming - 12.1, 12.2 and 12.3 are פסילות, fruit and the bar, and the
+  bar is a different shape entirely.
+- **The fruit counter turns red for the five before a פסילה, and the view owns the threshold.**
+  Peleg's addition, and it earns its place beyond decoration: the instructor said he wants to *see*
+  the twenty-fruit rule happen, and a number that reddens makes that legible in a recording instead of
+  ticking over unremarked. The rule is `count % 20 >= 15`, so red at 15-19, 35-39 and 55-59 and never
+  at a multiple of twenty, where the פסילה has already been paid. **The split that made it fit:**
+  Zenject's `WithArguments` matches by type, so a controller taking both the period and the margin
+  would have two ambiguous `int`s. So the controller hands the view *how many fruit remain before the
+  next פסילה* - a fact - and the view decides at what distance that turns red, which is a display
+  choice. `fruitPerStrike` moved from a `const` in `GameFlow` to a `[SerializeField, Min(1)]` on
+  `GameInstaller`, beside `startingStrikes` and `drainSeconds`; the `Min` is what keeps a zero out of
+  the modulo without a runtime guard in two classes.
+- **Fruit variety is baked when the tile is placed, not rolled at Play.** The first version randomised
+  in `Awake`, which meant the Scene view showed nine identical apples and the game showed a mix.
+  Peleg's call, and it is the better fit: `CONVENTIONS.md` already says the diff-build exists so that
+  "the file records what is where, and the scene instance records which one it is", and a chosen
+  sprite is exactly that. `SpriteVariant.PickOne` is called by both level tools on any tile carrying
+  the component, so neither tool learns anything about fruit, and
+  `PrefabUtility.RecordPrefabInstancePropertyModifications` is what makes the choice a saved override
+  rather than a change that vanishes on the next scene load. Painting over a tile that already holds
+  the same prefab re-rolls it instead of doing nothing, reported separately from placements so the
+  Console does not claim work it did not do. The cost: `Save Level` writes tile ids only, so building
+  a level into an empty parent re-rolls everything.
+- **Both counters read `00`, matching the original's HUD.** Read off a screenshot of Adventure Island:
+  a face icon and `03` top left, a fruit icon and `00` top right, the meters centred. `x3` was chosen
+  first and reversed once the screenshot settled it.

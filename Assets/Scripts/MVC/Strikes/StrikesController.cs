@@ -1,14 +1,14 @@
 using Zenject;
 
-// Keeps the strikes display in step with the session. SessionState is the model and already owns
+// Keeps the strikes display in step with the session. ISessionState is the model and already owns
 // the count, so all this decides is when the view is told.
 public class StrikesController : IInitializable
 {
-    private readonly SessionState session;
+    private readonly ISessionState session;
     private readonly IStrikesView view;
     private readonly IGameFlow flow;
 
-    public StrikesController(SessionState session, IStrikesView view, IGameFlow flow)
+    public StrikesController(ISessionState session, IStrikesView view, IGameFlow flow)
     {
         this.session = session;
         this.view = view;

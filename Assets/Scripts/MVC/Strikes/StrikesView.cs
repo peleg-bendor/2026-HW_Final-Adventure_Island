@@ -16,6 +16,6 @@ public class StrikesView : MonoBehaviour, IStrikesView
     public void ShowStrikes(int remaining)
     {
         if (count != null)
-            count.text = "x" + remaining;
+            count.text = remaining.ToString("00");
     }
 }

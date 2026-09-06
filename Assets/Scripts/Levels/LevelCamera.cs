@@ -20,6 +20,7 @@ public class LevelCamera : MonoBehaviour, IResettable
     [SerializeField] private bool frameWholeLevel;
 
     private IGameFlow flow;
+    private ILevels levels;
     private IResetRegistry registry;
 
     private Camera view;
@@ -33,9 +34,9 @@ public class LevelCamera : MonoBehaviour, IResettable
     private float cameraZ;
 
     [Inject]
-    public void Construct(IGameFlow flow, IResetRegistry registry)
+    public void Construct(ILevels levels, IResetRegistry registry)
     {
-        this.flow = flow;
+        this.levels = levels;
         this.registry = registry;
     }
 
@@ -83,7 +84,7 @@ public class LevelCamera : MonoBehaviour, IResettable
 
     private void Apply(float smoothing)
     {
-        LevelDefinition level = flow != null ? flow.CurrentLevel : null;
+        LevelDefinition level = levels != null ? levels.Current : null;
 
         if (view == null || level == null)
             return;

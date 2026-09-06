@@ -1,6 +1,6 @@
 // What survives a death and a level change: the strikes left and the fruit taken so far. Cleared
 // only by restarting the game, which is why it is not an IResettable.
-public class SessionState
+public class SessionState : ISessionState
 {
     private readonly int startingStrikes;
 
@@ -12,12 +12,12 @@ public class SessionState
 
     public int StrikesRemaining { get; private set; }
 
-    public int FruitTaken { get; private set; }
+    public int FruitCount { get; private set; }
 
     public void Restart()
     {
         StrikesRemaining = startingStrikes;
-        FruitTaken = 0;
+        FruitCount = 0;
     }
 
     // Never below zero, so a second call after the last strike cannot make the count negative and
@@ -30,6 +30,6 @@ public class SessionState
 
     public void TakeFruit()
     {
-        FruitTaken++;
+        FruitCount++;
     }
 }

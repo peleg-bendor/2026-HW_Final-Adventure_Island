@@ -29,3 +29,7 @@ MonoBehaviour:
     prefab: {fileID: 4451844323785586048, guid: 9f9c4cd6ae3f359439b1e701f9cc323f, type: 3}
   - tileId: 8
     prefab: {fileID: 8707060295188842107, guid: 5ee0e89ec710046428d94d2604f665b2, type: 3}
+  - tileId: 9
+    prefab: {fileID: 1134538214614230627, guid: 5c64fbea873f8944a8782a48adad0a22, type: 3}
+  - tileId: 10
+    prefab: {fileID: 8524726894388455609, guid: 94b4c36ccb784dc4dad47afdbdc02f6d, type: 3}

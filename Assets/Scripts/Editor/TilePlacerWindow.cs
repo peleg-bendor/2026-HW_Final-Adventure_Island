@@ -23,6 +23,7 @@ public class TilePlacerWindow : EditorWindow
     private Vector3 paintedCell;
     private int strokeUndoGroup;
     private int strokePlaced;
+    private int strokeVaried;
     private int strokeErased;
     private string strokePrefabName;
 
@@ -145,6 +146,7 @@ public class TilePlacerWindow : EditorWindow
         painting = true;
         strokeUndoGroup = Undo.GetCurrentGroup();
         strokePlaced = 0;
+        strokeVaried = 0;
         strokeErased = 0;
     }
 
@@ -158,6 +160,9 @@ public class TilePlacerWindow : EditorWindow
 
         if (strokePlaced > 0)
             Debug.Log("Placed " + strokePlaced + " x " + strokePrefabName);
+
+        if (strokeVaried > 0)
+            Debug.Log("Varied " + strokeVaried + " x " + strokePrefabName);
 
         if (strokeErased > 0)
             Debug.Log("Erased " + strokeErased + " object(s)");
@@ -173,11 +178,10 @@ public class TilePlacerWindow : EditorWindow
             return;
         }
 
+        strokePrefabName = prefab.name;
+
         if (Place(prefab, cell))
-        {
-            strokePrefabName = prefab.name;
             strokePlaced++;
-        }
     }
 
     private List<TilePrefabMap.Entry> UsableEntries()
@@ -214,10 +218,16 @@ public class TilePlacerWindow : EditorWindow
 
     private bool Place(GameObject prefab, Vector3 cell)
     {
-        // Left alone when the cell already holds this prefab, so dragging back rebuilds nothing.
+        // A cell already holding this prefab is not rebuilt, so dragging back over it costs
+        // nothing. If the prefab draws one of several sprites, painting it again rolls a new one.
         Transform occupant = FindInCell(cell);
         if (occupant != null && PrefabUtility.GetCorrespondingObjectFromSource(occupant.gameObject) == prefab)
+        {
+            if (PickVariant(occupant.gameObject))
+                strokeVaried++;
+
             return false;
+        }
 
         ClearCell(cell);
 
@@ -229,9 +239,28 @@ public class TilePlacerWindow : EditorWindow
         }
 
         tile.transform.localPosition = cell;
+        PickVariant(tile);
 
         // PrefabUtility, not Instantiate, so the tile keeps the link that gives it its id.
         Undo.RegisterCreatedObjectUndo(tile, "Place Tile");
+        return true;
+    }
+
+    // Answers with whether the tile had variants at all, so a stroke over plain ground reports
+    // nothing.
+    private static bool PickVariant(GameObject tile)
+    {
+        SpriteVariant variant = tile.GetComponent<SpriteVariant>();
+
+        if (variant == null)
+            return false;
+
+        SpriteRenderer renderer = tile.GetComponent<SpriteRenderer>();
+
+        if (renderer != null)
+            Undo.RecordObject(renderer, "Vary Tile");
+
+        variant.PickOne();
         return true;
     }
 

@@ -183,6 +183,11 @@ public class LevelWindow : EditorWindow
 
         tile.transform.localPosition = new Vector3(cell.x, cell.y, 0f);
 
+        // Varied here rather than at Play, so what the Scene view shows is what runs.
+        SpriteVariant variant = tile.GetComponent<SpriteVariant>();
+        if (variant != null)
+            variant.PickOne();
+
         Undo.RegisterCreatedObjectUndo(tile, "Build Level");
         return true;
     }

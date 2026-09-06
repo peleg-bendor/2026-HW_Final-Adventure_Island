@@ -1,54 +1,38 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-// The game's operations in one place, as a plain C# class: what starting a game, losing a strike
-// and finishing a level actually do. MonoBehaviours drive it and listen to it, not contain it.
-public class GameFlow : IGameFlow, IResetRegistry
+// The game's operations in one place, as a plain C# class: what starting a game, losing a strike,
+// taking fruit and finishing a level actually do. MonoBehaviours drive it and listen to it.
+public class GameFlow : IGameFlow
 {
     private readonly SessionState session;
+    private readonly ILevels levels;
+    private readonly IResetRunner resets;
     private readonly IPopups popups;
-    private readonly List<IResettable> resettables = new List<IResettable>();
 
-    private LevelDefinition[] levels;
-    private int currentIndex = -1;
+    // How much fruit costs a strike. The count is not cleared when it fires.
+    private readonly int fruitPerStrike;
 
     // True from the moment an ending starts until a new game begins. Nothing outside this class
     // reads it, which is what keeps it from being a state machine everything has to consult.
     private bool ending;
 
-    public GameFlow(SessionState session, IPopups popups)
+    public GameFlow(SessionState session, ILevels levels, IResetRunner resets, IPopups popups, int fruitPerStrike)
     {
         this.session = session;
+        this.levels = levels;
+        this.resets = resets;
         this.popups = popups;
+        this.fruitPerStrike = fruitPerStrike;
     }
 
     public event Action GameStarted;
     public event Action StrikeLost;
+    public event Action FruitTaken;
     public event Action GameOver;
     public event Action LevelComplete;
     public event Action GameComplete;
-
-    public LevelDefinition CurrentLevel
-    {
-        get
-        {
-            EnsureLevels();
-            return currentIndex >= 0 && currentIndex < levels.Length ? levels[currentIndex] : null;
-        }
-    }
-
-    public void Register(IResettable resettable)
-    {
-        if (resettable != null && resettables.Contains(resettable) == false)
-            resettables.Add(resettable);
-    }
-
-    public void Unregister(IResettable resettable)
-    {
-        resettables.Remove(resettable);
-    }
 
     public void StartGame()
     {
@@ -59,7 +43,14 @@ public class GameFlow : IGameFlow, IResetRegistry
         session.Restart();
         GameLog.Info(LogCategory.Game, "Game started - " + session.StrikesRemaining + " strikes");
         GameStarted?.Invoke();
-        EnterLevel(0);
+
+        if (levels.EnterFirst() == false)
+        {
+            GameLog.Warning(LogCategory.Game, "No level to enter, the scene holds no LevelDefinition");
+            return;
+        }
+
+        resets.ResetAll(ResetScope.Full);
     }
 
     public void LoseStrike()
@@ -82,7 +73,21 @@ public class GameFlow : IGameFlow, IResetRegistry
         }
 
         GameLog.Info(LogCategory.Game, "Strike lost - " + session.StrikesRemaining + " remaining");
-        ResetAll(ResetScope.AfterStrike);
+        resets.ResetAll(ResetScope.AfterStrike);
+    }
+
+    // No guard of its own: the only thing it can start is a strike, and LoseStrike already refuses
+    // one while an ending is running.
+    public void TakeFruit()
+    {
+        session.TakeFruit();
+        FruitTaken?.Invoke();
+
+        if (session.FruitCount % fruitPerStrike != 0)
+            return;
+
+        GameLog.Info(LogCategory.Game, "Fruit reached " + session.FruitCount + " - a strike is owed");
+        LoseStrike();
     }
 
     // The only branch in the transition is whether another level exists, so nothing here has to
@@ -98,11 +103,9 @@ public class GameFlow : IGameFlow, IResetRegistry
         GameLog.Info(LogCategory.Game, "Level complete");
         LevelComplete?.Invoke();
 
-        EnsureLevels();
-
-        if (currentIndex + 1 < levels.Length)
+        if (levels.EnterNext())
         {
-            EnterLevel(currentIndex + 1);
+            resets.ResetAll(ResetScope.Full);
             return;
         }
 
@@ -129,54 +132,6 @@ public class GameFlow : IGameFlow, IResetRegistry
             GameLog.Error(LogCategory.Game, "Ending failed - " + error.Message);
             Time.timeScale = 1f;
             ending = false;
-        }
-    }
-
-    private void EnterLevel(int index)
-    {
-        EnsureLevels();
-
-        if (index < 0 || index >= levels.Length)
-        {
-            GameLog.Warning(LogCategory.Game, "No level to enter, the scene holds no LevelDefinition");
-            return;
-        }
-
-        for (int i = 0; i < levels.Length; i++)
-            levels[i].gameObject.SetActive(i == index);
-
-        currentIndex = index;
-        ResetAll(ResetScope.Full);
-        GameLog.Info(LogCategory.Game, "Level started: " + levels[index].name);
-    }
-
-    // Copied before walking, so a resettable that registers or unregisters while being reset cannot
-    // change the list underneath the loop.
-    private void ResetAll(ResetScope scope)
-    {
-        IResettable[] snapshot = resettables.ToArray();
-
-        foreach (IResettable resettable in snapshot)
-            resettable.ResetTo(scope);
-    }
-
-    // Scanned once, inactive roots included, and ordered by each level's own number. Whichever root
-    // is already switched on counts as current, so asking before a level is entered still answers.
-    private void EnsureLevels()
-    {
-        if (levels != null)
-            return;
-
-        levels = UnityEngine.Object.FindObjectsByType<LevelDefinition>(FindObjectsInactive.Include);
-        Array.Sort(levels, (first, second) => first.LevelNumber.CompareTo(second.LevelNumber));
-
-        for (int i = 0; i < levels.Length; i++)
-        {
-            if (i > 0 && levels[i].LevelNumber == levels[i - 1].LevelNumber)
-                GameLog.Warning(LogCategory.Game, "Two levels share number " + levels[i].LevelNumber + ", their order is arbitrary");
-
-            if (currentIndex < 0 && levels[i].gameObject.activeInHierarchy)
-                currentIndex = i;
         }
     }
 }

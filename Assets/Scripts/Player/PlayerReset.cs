@@ -6,16 +6,16 @@ using Zenject;
 public class PlayerReset : MonoBehaviour, IResettable
 {
     private IResetRegistry registry;
-    private IGameFlow flow;
+    private ILevels levels;
     private Rigidbody2D rigid;
     private PlayerMovement movement;
     private PlayerJump jump;
 
     [Inject]
-    public void Construct(IResetRegistry registry, IGameFlow flow)
+    public void Construct(IResetRegistry registry, ILevels levels)
     {
         this.registry = registry;
-        this.flow = flow;
+        this.levels = levels;
     }
 
     private void Awake()
@@ -60,7 +60,7 @@ public class PlayerReset : MonoBehaviour, IResettable
         if (jump != null)
             jump.ClearInput();
 
-        PlayerStart start = flow != null && flow.CurrentLevel != null ? flow.CurrentLevel.PlayerStart : null;
+        PlayerStart start = levels != null && levels.Current != null ? levels.Current.PlayerStart : null;
 
         if (start == null)
         {
