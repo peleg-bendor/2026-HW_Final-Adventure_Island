@@ -46,7 +46,7 @@ public class PlayerReset : MonoBehaviour, IResettable
             registry.Unregister(this);
     }
 
-    // The same for both scopes: losing a פסילה returns him to the current level's start, and
+    // The same for both scopes: losing a strike returns him to the current level's start, and
     // starting a level puts him there too.
     public void ResetTo(ResetScope scope)
     {

@@ -1,19 +1,25 @@
 using UnityEngine;
 
-// A level's authored facts, on its root object. Authored rather than measured: the tiles describe the
-// art rather than the level, and the level file's own size only ever grows.
+// A level's authored facts, on its root object. Authored rather than measured: the tiles describe
+// the art rather than the level, and the level file's own size only ever grows.
 public class LevelDefinition : MonoBehaviour
 {
     [SerializeField] private int widthInCells = 32;
     [SerializeField] private int heightInCells = 15;
 
-    // Where this level falls in the order. Held here rather than in a list somewhere else, so adding
-    // a level is one root with one number and nothing to keep in step.
+    // Where this level falls in the order. Held here rather than in a list elsewhere, so adding a
+    // level is one root with one number and nothing to keep in step.
     [SerializeField] private int levelNumber = 1;
+
+    // How much power this level opens with. Authored per level rather than shared, so a level can
+    // be made harder by starting the player short of time.
+    [SerializeField] private int startingPower = 11;
 
     private PlayerStart playerStart;
 
     public int LevelNumber { get { return levelNumber; } }
+
+    public int StartingPower { get { return startingPower; } }
 
     // Half a cell out from the outermost cell centres, since every sprite is anchored at the middle
     // of its bottom cell.

@@ -44,7 +44,11 @@ next exercise leaves it, `README.md` and `.gitignore` behind. Copy all four by h
 10. No references to plan stages, lesson numbers, or the plan file.
 11. A comment naming another class, event or method is a reference. Renaming that thing means
     updating the comment with it.
-12. If in doubt, write it so a human reading the file cold understands it. That outranks the rules
+12. **Code is English throughout**, comments and log messages included. The Hebrew that reaches the
+    video - the power bar, a strike, the object and enemy names - belongs in the requirements
+    document and the video script. Right-to-left text renders unpredictably in the Console and in a
+    diff, and the words have plain English equivalents.
+13. If in doubt, write it so a human reading the file cold understands it. That outranks the rules
     above where they conflict.
 
 ## Logging
@@ -125,8 +129,8 @@ them from its implementation.
 
 In the Hierarchy the scene root holds `Main Camera`, `SceneContext` with `GameInstaller` as its only
 child, `Scripts` for logic-only manager objects, `Logging` for `LogSettings` and `LogFileWriter`,
-`Level_1` and `Level_2`, and `Canvas` holding the `Txt_` GUI objects with the `EventSystem` uGUI adds
-beside it. Both levels exist in the one scene with one active at a time, because nothing in this
+`Level_1` and `Level_2`, and `Canvas` holding the GUI objects, each prefixed with what it is - `Txt_` for a label,
+`Bar_` for a meter - with the `EventSystem` uGUI adds beside it. Both levels exist in the one scene with one active at a time, because nothing in this
 project loads a scene.
 
 The levels are data-driven. `Assets/Levels/Level01.txt` and `Level02.txt` hold one tile id per cell,

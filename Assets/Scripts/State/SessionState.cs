@@ -1,4 +1,4 @@
-// What survives a death and a level change: the פסילות left and the fruit taken so far. Cleared
+// What survives a death and a level change: the strikes left and the fruit taken so far. Cleared
 // only by restarting the game, which is why it is not an IResettable.
 public class SessionState
 {

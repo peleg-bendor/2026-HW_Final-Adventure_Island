@@ -631,12 +631,18 @@ subclasses, and it would be one boolean of real difference. A flag on one method
 a base class and two subclasses for one branch is pattern-for-its-own-sake and exactly what the SOLID
 check would find. Worth saying at the defense that it was considered and dropped.
 
-### Stage 9 — כוח and its bar `[ ]`
+### Stage 9 — כוח and its bar `[x]`
 
-1. `PowerModel` — current, maximum 16, level start 11, drain 1 per 3 seconds.
-1. `PowerController` — ticks the drain, applies fruit, caps at maximum, raises "empty".
-1. `PowerView` — the bar.
-1. Empty raises `LoseStrike` through the flow's event rather than by calling it directly.
+1. `PowerModel` — current and maximum, with `Add` reporting how much actually landed so 4.4's
+   wasted fruit can be told from a real gain.
+1. `PowerController` — a plain C# class on Zenject's `ITickable`. Ticks the drain, applies fruit,
+   caps at the maximum, and stops while the game is over.
+1. `PowerView` — the bar, built at startup as one `Sprite_Strength_Line` per unit of capacity, so
+   sixteen hand-made children cannot fall out of step with the number.
+1. Empty calls `LoseStrike` on the flow rather than touching `SessionState`, so the strike
+   bookkeeping stays in one place.
+1. `LevelDefinition` gains the level's starting כוח, and `GameInstaller` gains the four numbers that
+   describe rules rather than things.
 
 **What it needs: MVC**, in the same shape as Exercise 2's coin counter with its `ICoinsModel` and
 `ICoinsView`, which he has already seen and accepted. The controller is a plain C# class ticked through
@@ -1032,6 +1038,62 @@ _(append entries here as we make design decisions.)_
   argument is that a level shorter than the camera's view cannot contain it at all, so the clamp rect
   has to be at least the view's size regardless of where the tiles stop. That makes the size a design
   decision, and the cost is two numbers per level kept in step by hand.
+- **The bar's proportions were measured off the original, and its size has to divide.**
+  `Sprite_Power_Line.png` is a 3x16 source upscaled 3x - one pixel of olive border, one of cream
+  fill, one of border across - so a rendered width that is not a multiple of 3 gives a five-pixel
+  border on one side and four on the other, and a height that is not a multiple of 16 does the same
+  top to bottom. Measuring the NES screenshot put the bar at about 22% of the screen's width and 4.2%
+  of its height with gaps roughly as wide as the lines; the first attempt was three times too tall
+  and packed too tightly. Settled at a 30x96 line with 24 of spacing, which keeps both divisors and
+  runs the bar to 840px on a 1920 reference - twice the original's share of the width, which reads
+  better on a modern screen than a faithful 420 would.
+- **The Canvas scaler moved from Constant Pixel Size to Scale With Screen Size, 1920x1080 at match
+  0.5.** The template left it measuring the HUD in real screen pixels, so a bar tuned on one monitor
+  would be a different size in a build, in the Game view at another aspect, and in the recording that
+  gets graded. Caught before the bar was tuned rather than after.
+- **The view builds its own lines rather than being handed sixteen children.** `PowerView`
+  instantiates one line per unit of the capacity it is given, so the bar cannot fall out of step with
+  a changed capacity - sixteen hand-placed children would silently disagree the moment the number
+  moved. An empty slot switches off the `Image` rather than the GameObject, so it keeps its place in
+  the row and the bar stays the same width however full it is.
+
+- **The כוח controller is a plain C# class on Zenject's `ITickable`.** Exercise 2's
+  `HealthController` was a MonoBehaviour and he graded it, so this goes further on purpose: the
+  controller has no MonoBehaviour anywhere in it, which demonstrates the course's "logic out of
+  MonoBehaviours" line rather than asserting it. The risk is that `Lesson 12.md` shows he used only
+  `Bind/To/AsSingle`, `FromComponentInHierarchy` and `[Inject]` - `ITickable` was never on camera. It
+  works here without setup because `SceneContext` binds a `SceneKernel` onto itself with `NonLazy`,
+  and that MonoBehaviour's `Update` drives `TickableManager.Tick`. Worth being able to say that
+  sentence, because "what calls Tick" is the obvious question. **And worth claiming accurately:** the
+  controller still reads `Time.deltaTime`, so it is MonoBehaviour-free, not Unity-free. Making it
+  Unity-free needs an injected clock with one implementation and no tests, which is the same thing
+  stage 6 refused for `IInputService`.
+- **A level's starting כוח is authored on the level, not shared.** Peleg's call, wanting level 2 to
+  open at 9 against level 1's 11. 4.1 reads as one shared number until you notice the instructor
+  treating it as a difficulty dial at 00:15:06 - "ואז יש שלבים שהקושי שלהם זה לתת לך ממש קצת זמן
+  בהתחלה" - so per level is the closer reading, not a departure. It lands on `LevelDefinition` beside
+  the width, height and level number for the same reason those are there, and the controller reads
+  `CurrentLevel.StartingPower` on reset. `EnterLevel` activates the new root before it walks the
+  resettables, so the level is already the new one when כוח is restored.
+- **The four rule numbers stay as fields on `GameInstaller`, reversing an argument for a settings
+  asset.** The case for a `GameSettings` ScriptableObject rested on two claims and both failed on
+  checking. "A dozen more numbers are coming" was wrong - grepping the requirements, every bracketed
+  value except these four describes a *thing* rather than a *rule*, so it belongs on that thing's
+  prefab: the אבן's 3 כוח, the פייה's 10 seconds, each fruit's value, every enemy speed and range. And
+  "scene diffs would be noisy" was hollow, because levels are edited in this scene constantly and
+  `Scene_Game.unity` already churns on nearly every commit. What was left - swapping a whole
+  difficulty asset - nothing asks for. So `startingStrikes`, `powerCapacity`, `drainSeconds` and
+  `fruitPerStrike` are four serialized fields on the installer, and the line that keeps them from
+  growing is that a number describing a rule goes here while a number describing an object goes on
+  the object. Promoting them to an asset later is twenty minutes and touches one file.
+- **The drain stops while the game is over.** Not obvious until it runs: a controller that keeps
+  ticking calls `LoseStrike` again three seconds after the game-over screen, on a session with zero
+  strikes, which clamps and re-raises `GameOver` on a loop forever. It stops on `GameOver` and
+  `GameComplete` and starts again when its own `ResetTo` runs. The larger version is a real game state
+  on the flow - `Playing`, `GameOver`, `Won` - which stage 10 will want anyway so a popup can stop
+  input; generalising the four-line version then costs nothing, and building it now would be
+  speculation.
+
 - **The start marker answers which way the player faces, by its own flip.** First written as a
   hardcoded `FaceRight()` on the reset, which is true of both levels and still wrong: where he faces
   is a property of the start, not of the code that puts him there. A `facesRight` field on

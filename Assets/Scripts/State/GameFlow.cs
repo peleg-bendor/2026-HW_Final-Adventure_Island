@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// The game's operations in one place, as a plain C# class: what starting a game, losing a strike and
-// finishing a level actually do. MonoBehaviours drive it and listen to it rather than containing it.
+// The game's operations in one place, as a plain C# class: what starting a game, losing a strike
+// and finishing a level actually do. MonoBehaviours drive it and listen to it, not contain it.
 public class GameFlow : IGameFlow, IResetRegistry
 {
     private readonly SessionState session;

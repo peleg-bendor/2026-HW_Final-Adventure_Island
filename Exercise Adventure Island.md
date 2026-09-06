@@ -71,7 +71,9 @@ objects and enemies.
 
 ## 4. כוח and fruit
 
-1. The כוח bar holds `16` units. Each level starts the player with `11`.
+1. The כוח bar holds `16` units. Each level starts the player with `11`, **authored per level**
+   rather than shared: the instructor treats the opening amount as a difficulty dial
+   (00:15:06), "ואז יש שלבים שהקושי שלהם זה לתת לך ממש קצת זמן בהתחלה". Level 2 starts at `9`.
 2. כוח drains by `1` unit every `3` seconds. Neither source gives a rate: the written text says
    only "לאט לאט הכמות כוח הזאת יורדת" and the transcript repeats it twice without a number, so
    this one is ours. So are the `16` and the `11` of 4.1. The only number in this section that is
