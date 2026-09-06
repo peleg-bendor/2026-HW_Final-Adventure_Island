@@ -24,6 +24,7 @@ public class GameFlow : IGameFlow, IResetRegistry
         this.popups = popups;
     }
 
+    public event Action GameStarted;
     public event Action StrikeLost;
     public event Action GameOver;
     public event Action LevelComplete;
@@ -57,6 +58,7 @@ public class GameFlow : IGameFlow, IResetRegistry
 
         session.Restart();
         GameLog.Info(LogCategory.Game, "Game started - " + session.StrikesRemaining + " strikes");
+        GameStarted?.Invoke();
         EnterLevel(0);
     }
 

@@ -4,6 +4,7 @@ using System;
 // while what only needs restoring depends on IResetRegistry instead.
 public interface IGameFlow
 {
+    event Action GameStarted;
     event Action StrikeLost;
     event Action GameOver;
     event Action LevelComplete;

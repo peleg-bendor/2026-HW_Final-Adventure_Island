@@ -129,8 +129,9 @@ them from its implementation.
 
 In the Hierarchy the scene root holds `Main Camera`, `SceneContext` with `GameInstaller` as its only
 child, `Scripts` for logic-only manager objects, `Logging` for `LogSettings` and `LogFileWriter`,
-`Level_1` and `Level_2`, and `Canvas` holding the GUI objects, each prefixed with what it is - `Txt_` for a label,
-`Bar_` for a meter - with the `EventSystem` uGUI adds beside it. Both levels exist in the one scene with one active at a time, because nothing in this
+`Level_1` and `Level_2`, and `Canvas` holding the GUI objects, each prefixed with what it is - `Txt_` for a label, `Img_` for
+an image, `Btn_` for a button, `Bar_` for a meter, `Count_` for an icon with a number beside it and
+`Popup_` for a panel that covers the game - with the `EventSystem` uGUI adds beside it. Both levels exist in the one scene with one active at a time, because nothing in this
 project loads a scene.
 
 The levels are data-driven. `Assets/Levels/Level01.txt` and `Level02.txt` hold one tile id per cell,

@@ -166,7 +166,8 @@ both scratch testing grounds until item 14; nothing before that is the level any
    loop can be run end to end: die, lose a פסילה, level resets, die twice more, game over, popup,
    restart, session state clears. That proves the no-scene-reload architecture before any content is
    built on top of it, and it is the riskiest requirement in the project. The level-2 completion popup
-   cannot exist yet and is added at item 13 as a second listener on machinery that already works.
+   was expected to wait for item 13; the exit door made the ending reachable here, so both popups were
+   built together instead.
 1. Fruit and the counter. Closes the כוח economy, including the every-20 rule.
 1. Hazards — the pit, then fire, then the rock with its knockback.
 1. Weapons and projectiles, with the pool. Tested against rocks, which is a real test: the boomerang
@@ -649,7 +650,7 @@ check would find. Worth saying at the defense that it was considered and dropped
 Zenject's `ITickable`, so no MonoBehaviour is involved at all — which is the Clean Architecture line the
 course keeps making, demonstrated rather than asserted.
 
-### Stage 10 — Popups and restart `[ ]`
+### Stage 10 — Popups and restart `[x]`
 
 1. A `Player` marker component, and the exit door of 2.2: touching it calls `CompleteLevel` on the
    flow. Small, and it is what replaces the debug key, so the whole loop can be played rather than
@@ -663,8 +664,8 @@ course keeps making, demonstrated rather than asserted.
    Restart clears the session and re-enters level 1 with no scene load.
 1. The פסילות display: one `Sprite_Strike` icon and a count, as the original draws it.
 
-**What it needs: Async, second home — and the original justification for it was wrong.** Step 5 said
-"await returns which button was pressed; a coroutine returns nothing". Both popups have exactly one
+**What it needs: Async, second home — and the original justification for it was wrong.** The first
+draft of this stage said "await returns which button was pressed; a coroutine returns nothing". Both popups have exactly one
 button, 2.3's and 2.4's alike, so there is no *which* and that answer collapses the moment it is
 pushed on. The real difference is structural: **a coroutine needs a MonoBehaviour to run on**, and the
 code that waits here is `GameFlow`, a plain C# class, where a coroutine is not awkward but impossible.
@@ -682,7 +683,11 @@ no-scene-reload architecture before any content is built on it.
    `Sprite_Fruit_Super`, adding 1 and 2 כוח. The requirement's names are what the video says; the
    prefab names are what the tile map holds.
 1. The fruit counter, and a פסילה at every multiple of 20 (4.7).
-1. The counter display.
+1. The counter display: `Count_Fruit`, stage 10's `Count_Strikes` widget with a different icon.
+   **Decide here whether a read-only `ISessionState` is earned.** Both displays read the session and
+   neither writes to it, while `GameFlow` needs `LoseStrike` and `Restart` - which is a real interface
+   segregation case rather than a decorative one. It was deliberately not built at stage 10, where
+   there was one reader; this is the second.
 
 **What it needs: the collectible base, and MVC again.** Eight things in this game are picked up by
 touching them — two fruit, three animal tokens, two weapons, the פייה — and all eight share detect, apply,
@@ -1457,3 +1462,22 @@ _(append entries here as we make design decisions.)_
   `com.unity.ugui` on Unity 6, so the namespace compiles with nothing installed, but the essential
   resources are a separate import that writes about 2MB of font assets into `Assets/` and ships with
   the submission.
+
+- **The strikes display is MVC with an existing model.** `SessionState` is the model - a plain C#
+  class, no Unity types, owning the count and its one rule - so only the view and the controller are
+  new. Writing a `StrikesModel` beside it would put the number of strikes in two places, and the first
+  thing to decrement one and not the other would make them disagree. The alternative worth naming,
+  because it is the version where every counter owns a model: split `SessionState` into a
+  `StrikesModel` and a `FruitModel`, have `GameFlow` depend on both, and delete it. That buys a
+  textbook triad per counter and loses the thing `SessionState` exists to say - that these are the two
+  numbers surviving a death and a level change, which is why it is not an `IResettable`. **The
+  controller is thin and saying so is better than pretending otherwise:** two subscriptions and one
+  push. Folding it into the view would save a class and an interface at the cost of putting the flow
+  and the session inside a MonoBehaviour.
+- **`IGameFlow` gains `GameStarted`, which was a gap rather than an addition.** The flow announced
+  every transition except the one that begins a game, so nothing could tell a display that the count
+  had gone back to three. `StrikeLost` covers the way down, including the drop to zero under the game
+  over popup where no reset runs. Two alternatives lose: making the controller `IResettable` misuses
+  an interface meant for restoring state on something that has none, and it would stay silent on game
+  over; polling `SessionState` in `Update` reads sixty times a second a value that changes three times
+  a game. Stage 11's fruit counter needs the same event to zero itself.

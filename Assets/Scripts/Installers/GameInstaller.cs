@@ -24,6 +24,9 @@ public class GameInstaller : MonoInstaller
         Container.Bind<IPowerView>().To<PowerView>().FromComponentInHierarchy().AsSingle();
         Container.BindInterfacesAndSelfTo<PowerController>().AsSingle().WithArguments(drainSeconds);
 
+        Container.Bind<IStrikesView>().To<StrikesView>().FromComponentInHierarchy().AsSingle();
+        Container.BindInterfacesTo<StrikesController>().AsSingle();
+
         GameLog.Info(LogCategory.Game, "Zenject container built");
     }
 }
