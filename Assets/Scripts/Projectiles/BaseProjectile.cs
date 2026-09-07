@@ -6,10 +6,20 @@ public abstract class BaseProjectile : MonoBehaviour
 {
     private float speed;
     private float lift;
+    private float range;
     private float maxSeconds;
     private float launchedAt;
 
     protected Rigidbody2D Body { get; private set; }
+
+    protected float Speed { get { return speed; } }
+
+    // How far it travels before it does whatever it does at that distance. Zero means it has none,
+    // which is the axe.
+    protected float Range { get { return range; } }
+
+    // Where this flight began, so a projectile with a range can tell how far it has come.
+    protected Vector2 LaunchOrigin { get; private set; }
 
     protected virtual void Awake()
     {
@@ -21,10 +31,11 @@ public abstract class BaseProjectile : MonoBehaviour
 
     // Called once by the builder, before this is ever handed out. The numbers come from a recipe
     // rather than from the prefab, since there is only ever one kind of each projectile.
-    public void Configure(float speed, float lift, float gravityScale, float maxSeconds)
+    public void Configure(float speed, float lift, float gravityScale, float range, float maxSeconds)
     {
         this.speed = speed;
         this.lift = lift;
+        this.range = range;
         this.maxSeconds = maxSeconds;
 
         if (Body != null)
@@ -44,9 +55,17 @@ public abstract class BaseProjectile : MonoBehaviour
 
         Body.angularVelocity = 0f;
         Body.linearVelocity = new Vector2(direction * speed, lift);
+        LaunchOrigin = origin;
         launchedAt = Time.time;
 
+        OnLaunched();
         GameLog.Verbose(LogCategory.Projectile, name + " launched");
+    }
+
+    // Where a subclass clears its own leftovers from the last flight, for the same reason the
+    // velocity and the clock are cleared above.
+    protected virtual void OnLaunched()
+    {
     }
 
     // The base owns Update so the timeout cannot be forgotten. Steering goes in Fly, because a

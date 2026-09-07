@@ -132,8 +132,12 @@ objects and enemies.
 ### Axe
 
 6. Thrown in an arc, as in the original.
-7. There is a delay between throws and a limit on how many are in flight at once (00:31:21). There is
-   no ammunition count.
+7. There is a limit on how many are in flight at once: `3` axes, and `1` boomerang since it returns
+   to him. There is no ammunition count. The written text and 00:31:21 both mention a delay between
+   throws as well, and 00:31:35 describes the two as one observation -- "אתם לא יכולים לזרוק 10 אלף,
+   אתם זורקים איזה שלוש, אחת, שתיים, שלוש" -- and the three is his own number. **No separate cooldown is
+   implemented**: a throw is read on the frame the key goes down, so one press throws one axe and the
+   cap of three is the rate limit. Decided by playing it.
 8. Thrown axes are **pooled**. He asked for this by name while watching the game (00:35:02): "ופה אני
    רוצה שיהיה פולינג".
 9. An axe that hits the ground returns to the pool. One that hits an enemy kills it and returns. The

@@ -7,4 +7,5 @@ using UnityEngine;
 public class ProjectilePrefabs
 {
     public GameObject axe;
+    public GameObject boomerang;
 }

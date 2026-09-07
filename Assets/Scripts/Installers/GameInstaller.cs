@@ -29,6 +29,7 @@ public class GameInstaller : MonoInstaller
         Container.Bind<ILevels>().To<Levels>().AsSingle();
         Container.Bind(typeof(IResetRegistry), typeof(IResetRunner)).To<ResetRegistry>().AsSingle();
         Container.Bind<IPopups>().To<Popups>().FromComponentInHierarchy().AsSingle();
+        Container.Bind<Player>().FromComponentInHierarchy().AsSingle();
         Container.Bind<IPlayerGuard>().To<PlayerGuard>().FromComponentInHierarchy().AsSingle();
         Container.Bind<IPlayerShove>().To<PlayerMovement>().FromComponentInHierarchy().AsSingle();
         Container.Bind<IGameFlow>().To<GameFlow>().AsSingle().WithArguments(fruitPerStrike);
@@ -43,9 +44,11 @@ public class GameInstaller : MonoInstaller
         Container.Bind<IFruitView>().To<FruitView>().FromComponentInHierarchy().AsSingle();
         Container.BindInterfacesTo<FruitController>().AsSingle().WithArguments(fruitPerStrike);
 
+        Container.Bind<ProjectilePrefabs>().FromInstance(projectilePrefabs).AsSingle();
         Container.Bind<IProjectileBuilder>().To<ProjectileBuilder>().AsSingle().WithArguments(projectileParent);
         Container.BindInterfacesAndSelfTo<ProjectilePool>().AsSingle();
-        Container.BindInterfacesAndSelfTo<ProjectileDirector>().AsSingle().WithArguments(projectilePrefabs);
+        Container.BindInterfacesAndSelfTo<ProjectileDirector>().AsSingle();
+        Container.BindInterfacesAndSelfTo<WeaponSlot>().AsSingle();
 
         GameLog.Info(LogCategory.Game, "Zenject container built");
     }

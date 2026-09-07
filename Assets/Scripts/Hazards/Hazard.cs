@@ -70,7 +70,6 @@ public abstract class Hazard : MonoBehaviour, IDestructible, IResettable
         Hurt();
     }
 
-    // Nothing throws anything yet, so this has no caller until the boomerang exists.
     public bool TryDestroy(Destroyer by)
     {
         if ((DestroyedBy & by) == 0)

@@ -11,6 +11,7 @@ public class ProjectileBuilder : IProjectileBuilder
     private float speed;
     private float lift;
     private float gravityScale;
+    private float range;
     private float maxSeconds;
 
     public ProjectileBuilder(DiContainer container, Transform parent)
@@ -32,6 +33,11 @@ public class ProjectileBuilder : IProjectileBuilder
     public void SetGravity(float gravityScale)
     {
         this.gravityScale = gravityScale;
+    }
+
+    public void SetRange(float range)
+    {
+        this.range = range;
     }
 
     public void SetMaxSeconds(float maxSeconds)
@@ -62,7 +68,7 @@ public class ProjectileBuilder : IProjectileBuilder
         if (parent != null)
             instance.transform.SetParent(parent);
 
-        projectile.Configure(speed, lift, gravityScale, maxSeconds);
+        projectile.Configure(speed, lift, gravityScale, range, maxSeconds);
         instance.SetActive(false);
         return projectile;
     }

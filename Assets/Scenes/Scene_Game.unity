@@ -3178,7 +3178,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05276232a99238e4095728e1014346ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
-  throwOffset: {x: 0.6, y: 1.2}
+  throwOffset: {x: 0.6, y: 0}
 --- !u!95 &230441458
 Animator:
   serializedVersion: 7
@@ -21763,6 +21763,7 @@ GameObject:
   - component: {fileID: 1552637342}
   - component: {fileID: 1552637344}
   - component: {fileID: 1552637343}
+  - component: {fileID: 1552637345}
   m_Layer: 0
   m_Name: Scripts
   m_TagString: Untagged
@@ -21809,6 +21810,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e7b094beea7e93478954aed127755bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameStarter
+--- !u!114 &1552637345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1552637341}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b4b7662494dae240a635ac94f667d05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DebugWeaponKeys
 --- !u!1001 &1558368379
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -28793,6 +28806,7 @@ MonoBehaviour:
   drainSeconds: 3
   projectilePrefabs:
     axe: {fileID: 2555223053577254324, guid: 96e2cfd298a2523448d1e07c62c9649b, type: 3}
+    boomerang: {fileID: 198139132375361699, guid: e6c101e10ecb64540b86541e43faa714, type: 3}
   projectileParent: {fileID: 334172705}
 --- !u!4 &2110033036
 Transform:

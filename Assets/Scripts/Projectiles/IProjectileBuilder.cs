@@ -7,6 +7,7 @@ public interface IProjectileBuilder
     void SetSpeed(float speed);
     void SetLift(float lift);
     void SetGravity(float gravityScale);
+    void SetRange(float range);
     void SetMaxSeconds(float maxSeconds);
 
     BaseProjectile Build(GameObject prefab);

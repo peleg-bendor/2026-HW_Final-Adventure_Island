@@ -720,7 +720,7 @@ The riding rule lives in one place too: the player's damage entry point checks w
 ridden, and if so dismounts and destroys the hazard instead of applying it (5.5, 5.8, 7.10). One rule, one
 site, rather than repeated in every hazard.
 
-### Stage 13 — Weapons and projectiles `[ ]`
+### Stage 13 — Weapons and projectiles `[x]`
 
 1. `BaseProjectile` and its fixed lifecycle.
 1. `ProjectileAxe`, thrown in an arc; `ProjectileBoomerang`, returning to the player's current position.
@@ -1675,7 +1675,7 @@ _(append entries here as we make design decisions.)_
 - **A weapon is carried, a projectile is in flight, and they are different folders.** Peleg's call,
   reversing `CONVENTIONS.md`'s `Player/Projectiles/`: a נחש's fireball and a red animal's fire have
   no weapon behind them at all, so `Projectiles/` sits at the top level beside `Enemies/` and
-  `Hazards/`, and `Player/Weapons/` keeps the slot, the two weapon types and the pickups. Everything
+  `Hazards/`, and `Player/Weapons/` keeps the slot and the keys that fill it. Everything
   that makes an axe a weapon - the egg, the slot, the key, the cap - lives outside the thing flying
   through the air.
 - **One thin `BaseProjectile`, and the rule for what is allowed in it.** Peleg argued the four
@@ -1734,3 +1734,58 @@ _(append entries here as we make design decisions.)_
   without either being threaded through the builder as a setter. The cost is one class depending on
   the container, which is the service-locator shape DI usually avoids - it is the standard Zenject
   idiom for a factory, and the alternative is a builder that carries dependencies as well as numbers.
+- **`Range` is on the base, and the axe is the one that does not use it.** The boomerang turns at
+  its range, and stage 14's נחש fireball and stage 15's mount fire both stop at theirs, so three of
+  the four use it and the axe passes zero. Keeping it off the base was the alternative, and it needs
+  either a cast in the builder to reach a boomerang-only setter or a generic `Build<T>`; both trade
+  a settled shape for one unused float on one subclass. The base also records `LaunchOrigin`, since
+  it owns the launch and a range is measured from it.
+- **`OnLaunched` is the third hook, and it exists for the pooling invariant.** The base clears the
+  velocity, the angular velocity and the clock; a subclass's own leftovers - the boomerang's
+  "have I turned yet" - are cleared in `OnLaunched` for the same reason. That makes the Template
+  three varying steps against a fixed sequence: `OnLaunched`, `Fly` and `OnHit`.
+- **The boomerang re-aims every frame rather than turning at a rate.** 6.11 says it returns to the
+  player's *current* position, and re-aiming makes that literally true and unmissable. A turn rate
+  is a fourth number to tune whose only effect is to let it fail. It injects the `Player` marker
+  concretely, which is the stated exception to putting a MonoBehaviour behind an interface: the rule
+  exists because a MonoBehaviour carries members a consumer has no business calling, and the marker
+  has none. It is only reachable at all because the builder instantiates through the container.
+- **Catching only counts once it has turned.** It is launched overlapping the player and would
+  otherwise be caught on the frame it is thrown - the same guard, for the same reason, that Exercise
+  3's boomerang needed. Its own comment there says so.
+- **The slot holds a projectile prefab, not a name for a weapon.** Nothing in this game needs to know
+  which weapon he has: 3.6 takes it on a פסילה, 6.4 keeps it while riding, and 12.1 to 12.3 are the
+  only displays and none of them is a weapon. A `WeaponType` enum was the obvious alternative and it
+  costs a map from the enum back to a prefab, which is the switch this whole stage has been avoiding.
+  It also collapses the director's public surface to one `Throw(prefab, origin, direction)`, so
+  adding a projectile stops growing that class - Peleg's question, and the honest half of the answer.
+  The other half: the *recipes* still grow one method each, which is what a Director is, and the
+  point they would stop being worth it is around eight or ten, where moving them into one asset per
+  projectile beats a file that grows linearly. Four is fixed by the requirements.
+- **`WeaponSlot` is a plain C# class subscribing to `GameStarted` and `StrikeLost`.** That is 3.6 and
+  6.3 in two lines and it is why `CarriedState` is not written. It follows `StrikesController`'s
+  idiom exactly - subscribe in `Initialize`, never unsubscribe, because both live for the scene.
+- **No throw cooldown, decided by playing it.** 6.7 names a delay as well as a cap, and the cap turns
+  out to be the whole of it: a throw is read on the frame the key goes down, so one press is one axe
+  and three axes need three presses. Peleg watched it before deciding, which is better evidence than
+  the arithmetic about frame times that argued the other way. `Exercise Adventure Island.md` 6.7 now
+  records the decision rather than describing a delay the code does not have.
+- **The weapon pickup lives in `Collectibles/` with the rest of the family.** It was going to sit in
+  `Player/Weapons/` beside the slot, which splits `Collectible`'s subclasses across two folders for
+  no gain - the fruit, the weapons, the three tokens and the פייה are one Template family, and "show
+  me the Template" should open one folder.
+- **The player answers where his middle is, and that is the marker's one member.** Every sprite is
+  anchored at the middle of its bottom cell, so `transform.position` is the player's *feet* - which
+  is why the boomerang left from above his middle and came back to his shins. Both the throw offset
+  and the return target want the same fact, and holding it as two numbers in two files is how they
+  drifted apart. `Player.Middle` reads `Collider2D.bounds.center`, so it cannot disagree with
+  wherever his body actually is, and the launch and the return agree by construction. The cost is
+  small and worth admitting: the argument for injecting `Player` concretely was that a marker has no
+  members a consumer could misuse, and it has one now.
+- **The boomerang's loop is two recipe numbers, not a curve in code.** Giving it lift and a little
+  gravity makes the way out an arc while the way back stays a straight line to his middle, and two
+  different paths between the same two points read as a loop. `Fly` overwrites the velocity once it
+  is returning, so gravity only ever acts on the outbound leg. The alternative was driving the
+  position along a parametric ellipse, which fights 6.11 directly - a precomputed path cannot track
+  a player who has moved. Mirroring the loop the other way is two sign flips, a negative lift and a
+  negative gravity scale so it falls upward; tried and reverted, the arc rises.
