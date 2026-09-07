@@ -1574,3 +1574,46 @@ _(append entries here as we make design decisions.)_
 - **Both counters read `00`, matching the original's HUD.** Read off a screenshot of Adventure Island:
   a face icon and `03` top left, a fruit icon and `00` top right, the meters centred. `x3` was chosen
   first and reversed once the screenshot settled it.
+
+- **`IDestructible` is one method, and `Destroyer` is a `[Flags]` enum.** Every object answers "what
+  is allowed to destroy me" as a single value - the אבן is `Boomerang | AnimalAttack | Riding |
+  Fairy`, the מדורה is `Fairy | Riding`, the רוח רפאים is `Fairy` alone - and `TryDestroy(Destroyer)`
+  is the only way to destroy anything, so no caller can read the rule and then ignore it. The
+  rejected shape was a `DestroyedBy` property beside a `Destroy()` method, which reads more like data
+  and puts the bitwise test into the axe, the boomerang, three animal attacks and the פייה, which is
+  the scattered conditional the interface exists to remove. The `bool` return is used rather than
+  decorative: 6.9 needs an axe to tell a rock it bounced off from an enemy it killed. `Riding` is a
+  separate value from `AnimalAttack` because 7.8 and 5.8 disagree - an animal's attack leaves a
+  מדורה standing and riding into one destroys it. `Fairy` appears in every answer but the spikes',
+  which looks redundant and is not: each type's one line then states its whole requirement. The
+  visitor version, where each destroyer is a type and the target accepts it, removes the bitwise test
+  and costs five classes and a method per target. The mandate for all of this is his own, at
+  00:18:44: "למה זה חשוב? כי מבחינת פיתוחים מאחורי הקלעים זה חשוב, איך שאתם בונים את זה מאחורה".
+- **The תהום is not a `Hazard` and does not implement `IDestructible`, which is what makes 9.3 free.**
+  `Spikes` is a standalone `MonoBehaviour` that costs a פסילה and never consults the player's guard.
+  Both protections then come out exact with no exception written anywhere: the **פייה** survives a
+  contact if and only if `TryDestroy(Fairy)` returned true, and there is nothing in a תהום to
+  destroy; the **animal** absorbs a hit from anything that implements `IDestructible` at all, and
+  spikes don't. The uniform alternative - `Spikes : Hazard` answering `Destroyer.None` - keeps the
+  פייה rule working and breaks the animal one, because "is it destructible" becomes true for spikes,
+  so it needs a second per-type flag that exists solely for one subclass to say no. That flag is the
+  cost the structural version avoids, and 9.4 is the requirement he said outright he will go looking
+  for. The price paid instead: `Spikes` shares no base with `Fire` and `Rock`, duplicating about six
+  lines of trigger and player detection. **It still lives in `Hazards/`**, because folders here group
+  by domain and not by hierarchy - section 5 of the requirements is titled Hazards and holds all
+  three - and `Collectibles/SpriteVariant.cs` already set that precedent by not being a `Collectible`.
+- **`IPlayerGuard` is built two stages before either protection exists.** The riding rule and the
+  fairy rule live in one component on the player, and every `Hazard` consults it before applying its
+  effect. Today it absorbs nothing. The alternative was hazards applying their effects directly and
+  the consult being inserted later, which means editing `Fire`, `Rock` and six enemies to add one
+  line each in exactly the right place - and a miss is silent, in the stage where a dozen other
+  things are being tested. `TryAbsorb` answers whether the contact was *survived* rather than whether
+  the source was destroyed, because 7.10 and 8.21 disagree: riding into a רוח רפאים costs the animal
+  and leaves the ghost standing.
+- **Temporary code carried by stage 12, to be removed when its stage arrives.** Stage 13: the comment
+  on `Hazard.TryDestroy` saying it has no caller until the boomerang exists - the method itself ships
+  unexercised, which is the accepted cost of settling the interface before the things that call it.
+  Stage 15: `PlayerGuard.TryAbsorb` returns `false` unconditionally, and the animal fills in the
+  first of its two branches. Stage 17: the פייה fills in the second. Neither the class comment nor
+  the log line inside it says "not yet", deliberately, so that forgetting leaves no false statement
+  in the code.

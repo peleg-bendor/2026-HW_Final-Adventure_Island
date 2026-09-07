@@ -23,6 +23,8 @@ public class GameInstaller : MonoInstaller
         Container.Bind<ILevels>().To<Levels>().AsSingle();
         Container.Bind(typeof(IResetRegistry), typeof(IResetRunner)).To<ResetRegistry>().AsSingle();
         Container.Bind<IPopups>().To<Popups>().FromComponentInHierarchy().AsSingle();
+        Container.Bind<IPlayerGuard>().To<PlayerGuard>().FromComponentInHierarchy().AsSingle();
+        Container.Bind<IPlayerShove>().To<PlayerMovement>().FromComponentInHierarchy().AsSingle();
         Container.Bind<IGameFlow>().To<GameFlow>().AsSingle().WithArguments(fruitPerStrike);
 
         Container.Bind<IPowerModel>().To<PowerModel>().AsSingle().WithArguments(powerCapacity);
@@ -35,7 +37,6 @@ public class GameInstaller : MonoInstaller
         Container.Bind<IFruitView>().To<FruitView>().FromComponentInHierarchy().AsSingle();
         Container.BindInterfacesTo<FruitController>().AsSingle().WithArguments(fruitPerStrike);
 
-        GameLog.Info(LogCategory.Game, "Fruit reached the container"); // remove me
         GameLog.Info(LogCategory.Game, "Zenject container built");
     }
 }

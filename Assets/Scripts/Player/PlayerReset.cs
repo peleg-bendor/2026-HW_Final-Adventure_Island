@@ -28,7 +28,7 @@ public class PlayerReset : MonoBehaviour, IResettable
             GameLog.Warning(LogCategory.Player, "No Rigidbody2D found, the player will keep his velocity across a reset");
 
         if (movement == null)
-            GameLog.Warning(LogCategory.Player, "No PlayerMovement found, the player will keep his facing across a reset");
+            GameLog.Warning(LogCategory.Player, "No PlayerMovement found, the player will keep his facing and a running shove across a reset");
 
         if (jump == null)
             GameLog.Warning(LogCategory.Player, "No PlayerJump found, a jump pressed under a popup will fire after the restart");
@@ -55,10 +55,13 @@ public class PlayerReset : MonoBehaviour, IResettable
     // starting a level puts him there too.
     public void ResetTo(ResetScope scope)
     {
-        // Before the start is looked up, since clearing his input is worth doing even when there
-        // is nowhere to put him.
+        // Before the start is looked up, since clearing what he is carrying into the reset is worth
+        // doing even when there is nowhere to put him.
         if (jump != null)
             jump.ClearInput();
+
+        if (movement != null)
+            movement.ClearShove();
 
         PlayerStart start = levels != null && levels.Current != null ? levels.Current.PlayerStart : null;
 

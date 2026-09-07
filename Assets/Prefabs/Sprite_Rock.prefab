@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3145703174567443166}
   - component: {fileID: 4318861461483772902}
   - component: {fileID: 8695777136738001210}
+  - component: {fileID: 5110517112976877814}
   m_Layer: 0
   m_Name: Sprite_Rock
   m_TagString: Untagged
@@ -139,3 +140,18 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &5110517112976877814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3705642295006891283}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8dc17f1e23a06d4c9be9098ea4af416, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Rock
+  powerCost: 3
+  shoveSpeed: 20
+  shoveSeconds: 0.3

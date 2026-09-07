@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// The player's horizontal movement and which way he faces. Jump and attack are separate
-// components, because they answer to different keys and own state that outlives a frame.
-public class PlayerMovement : MonoBehaviour
+// The player's horizontal movement and which way he faces, whether the keys asked for it or a
+// hazard did. Jump and attack are separate components, because they own state that outlives a frame.
+public class PlayerMovement : MonoBehaviour, IPlayerShove
 {
     [SerializeField] private float speed = 6f;
 
@@ -13,7 +13,12 @@ public class PlayerMovement : MonoBehaviour
     // Intent rather than motion, so pressing into a wall still animates as walking.
     public bool IsWalking { get; private set; }
 
+    // True while a shove is still running, which is what stops a run of rocks charging once each.
+    public bool IsShoving { get { return Time.time < shoveUntil; } }
+
+
     private Rigidbody2D rigid;
+    private float shoveUntil = float.NegativeInfinity;
 
     private void Awake()
     {
@@ -27,6 +32,14 @@ public class PlayerMovement : MonoBehaviour
     {
         if (rigid == null)
             return;
+
+        // Neither the keys nor the brake run while a shove is in progress, or the walk speed would
+        // erase it inside a step.
+        if (IsShoving)
+        {
+            IsWalking = false;
+            return;
+        }
 
         float direction = 0f;
 
@@ -59,5 +72,25 @@ public class PlayerMovement : MonoBehaviour
     public void Face(bool right)
     {
         transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
+    }
+
+    // Horizontal only, so a shove taken mid-jump does not cancel a rise he has already paid for.
+    public void Shove(float shoveSpeed, float seconds)
+    {
+        if (rigid == null)
+        {
+            GameLog.Warning(LogCategory.Player, "No Rigidbody2D found, the player cannot be shoved");
+            return;
+        }
+
+        shoveUntil = Time.time + seconds;
+        rigid.linearVelocity = new Vector2(Mathf.Sign(transform.localScale.x) * shoveSpeed, rigid.linearVelocity.y);
+    }
+
+    // Cleared on a reset, or he arrives at the start with the tail of a shove still running and no
+    // control until it expires.
+    public void ClearShove()
+    {
+        shoveUntil = float.NegativeInfinity;
     }
 }
