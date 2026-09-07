@@ -120,7 +120,10 @@ instead: `Builder/`, `Factory/` and `Pooling/`. Grouping by pattern is worse org
 scatters the projectile system across four folders - and it is kept anyway, because the code video
 is what gets graded and "show me the Factory" has to be answerable by opening one folder. The rest
 are `Editor/`, `Logging/`, `Installers/`, `State/`, `Levels/`, `Player/` with `Projectiles/` and
-`Weapons/` beneath it, `Enemies/`, `Animals/`, `Collectibles/`, `Hazards/`, `UI/` and `Extensions/`.
+`Weapons/` beneath it, `Enemies/`, `Animals/`, `Collectibles/`, `Hazards/`, `Animation/`, `UI/` and
+`Extensions/`. `Animation/` is the exception to grouping by domain: it holds the sprite-cycling
+component, which goes on hazards, enemies, animals and a projectile alike and so belongs to none of
+them.
 
 There is no `Interfaces/` folder. An interface lives beside the thing implementing it. Exercise 3
 had few enough to collect in one place; this project has `IResettable`, `IDestructible`,

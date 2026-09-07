@@ -695,7 +695,7 @@ touching them — two fruit, three animal tokens, two weapons, the פייה — 
 consume and come back, with only the apply step differing. That is Template Method by its nature
 rather than by decision. The counter is the second MVC triad.
 
-### Stage 12 — Hazards `[ ]`
+### Stage 12 — Hazards `[x]`
 
 1. תהום: a pit with a floor of spikes, which cost a פסילה on contact and are the one thing the
    פייה does not destroy.
@@ -1617,3 +1617,49 @@ _(append entries here as we make design decisions.)_
   first of its two branches. Stage 17: the פייה fills in the second. Neither the class comment nor
   the log line inside it says "not yet", deliberately, so that forgetting leaves no false statement
   in the code.
+- **The shove lives on `PlayerMovement`, behind `IPlayerShove`.** `PlayerMovement.FixedUpdate` writes
+  `linearVelocity.x` on every step - the walk speed while a key is held, a 40 u/s² brake when none is
+  - so an impulse written by the אבן is gone within two frames. It gains `Shove` and a suspension it
+  checks at the top of `FixedUpdate`, which keeps one class in charge of his horizontal velocity; a
+  separate `PlayerShove` component disabling `PlayerMovement` was the alternative, and two things
+  writing one field is where every platformer velocity bug comes from. **Direction is his own
+  facing**, so the signature is `Shove(speed, seconds)` and the אבן never computes a direction -
+  "forward" is the player's idea of forward, and it is right from either approach. The sign of
+  `player.x - rock.x` was the alternative and it is unstable when he lands on top. The interface
+  rather than the component because **every MonoBehaviour in the installer is already bound behind
+  one** - `IPopups`, `IPowerView`, `IStrikesView`, `IFruitView`, `IPlayerGuard` - while the plain C#
+  classes are bound concrete; the line that describes what is already there is that a MonoBehaviour
+  carries members a consumer has no business calling and `SessionState` does not.
+- **Shove before spend, which is stage 11's trap arriving from the other side.** `IPower.Spend` can
+  empty the bar, and `PowerController` calls `LoseStrike` at zero, which runs the reset and teleports
+  the player to `PlayerStart` - all synchronously, inside the אבן's own trigger callback. Spending
+  first would then fling him across the level from the start point with his controls suspended.
+  Shoving first means a fatal אבן does not shove at all, because `PlayerReset` zeroes his velocity
+  and clears the suspension on the way past. `Collectible` had to consume *before* applying for the
+  same underlying reason and it produced the opposite order.
+- **The immunity is read off the player and only the אבן asks.** First written as a per-instance
+  `ignoreUntil` on the אבן, which is what "you cannot hit it again" reads like and is wrong on the
+  map: `Level01.txt` has three אבנים side by side, a shove of 10 for 0.3s carries three cells, and
+  the log showed one contact costing nine כוח. So `IPlayerShove` answers `IsShoving` and the אבן asks
+  before charging. It is not a global immunity, which is the thing 5.2 forbids - fire and spikes
+  never ask, so being flung into a מדורה still kills. **Contact is `OnTriggerStay2D` as well as
+  `OnTriggerEnter2D`**, or a player pinned inside an אבן by a wall sits there safely forever; the
+  אבן's own `IsShoving` check is what turns that into one charge every 0.3s rather than one a frame.
+  2D sends Enter and Stay together on the step a contact begins, so `Hazard` applies once a frame at
+  most - without that a מדורה costs two פסילות for one touch. That guard is also why
+  `PlayerGuard`'s log line was deleted: per-contact became per-frame, which convention 1 forbids.
+- **`SpriteCycleAnimator` reads `Time.time` and holds no timer.** `(int)(Time.time / interval) %
+  frames.Length`, with the last shown index cached so the renderer is written only when the frame
+  changes. Peleg's call that a row of מדורות should flicker together, and reading the clock rather
+  than counting per instance makes that true by construction instead of by their having been switched
+  on at the same moment. An Animator was the alternative and it costs a controller and a clip asset
+  per object - twenty-two assets for eleven things - to say what an array and one float say here,
+  where the player keeps his Animator because idle, walk, rise and fall are real states with real
+  transitions and a מדורה has one state and two pictures. It lives in `Assets/Scripts/Animation/`,
+  the one folder not named for a domain, because it goes on hazards, enemies, animals and a
+  projectile alike.
+- **The מדורה's collider is sized to its shorter frame.** The tall flame is 1.5 units and the short
+  one 1.31, and a collider fixed at 1.5 stands nine source pixels above the flame for half of every
+  cycle, killing the player on a gap he can see he cleared. Size Y 1.3 at offset Y 0.15 puts the
+  error the forgiving way, which is the direction 8.5 asks for. The average of the two heights was
+  the other option and it halves the unfairness rather than removing it.
