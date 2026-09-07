@@ -17,6 +17,12 @@ public class GameInstaller : MonoInstaller
     // How long one unit of power lasts, in seconds.
     [SerializeField] private float drainSeconds = 3f;
 
+    // The prefabs the projectile builder makes copies of.
+    [SerializeField] private ProjectilePrefabs projectilePrefabs;
+
+    // Where the pooled projectiles are parked in the Hierarchy, so they do not litter the root.
+    [SerializeField] private Transform projectileParent;
+
     public override void InstallBindings()
     {
         Container.BindInterfacesAndSelfTo<SessionState>().AsSingle().WithArguments(startingStrikes);
@@ -36,6 +42,10 @@ public class GameInstaller : MonoInstaller
 
         Container.Bind<IFruitView>().To<FruitView>().FromComponentInHierarchy().AsSingle();
         Container.BindInterfacesTo<FruitController>().AsSingle().WithArguments(fruitPerStrike);
+
+        Container.Bind<IProjectileBuilder>().To<ProjectileBuilder>().AsSingle().WithArguments(projectileParent);
+        Container.BindInterfacesAndSelfTo<ProjectilePool>().AsSingle();
+        Container.BindInterfacesAndSelfTo<ProjectileDirector>().AsSingle().WithArguments(projectilePrefabs);
 
         GameLog.Info(LogCategory.Game, "Zenject container built");
     }

@@ -348,11 +348,15 @@ injected fields are private, carry no `[SerializeField]`, and never appear in th
 they are created and destroyed constantly. Exercise 3's pool handled one projectile class; four
 copies of that class would be the worst spot in this codebase, so this one takes a prefab."*
 
-**Builder — projectile construction, with a Director holding the recipes.** *"A projectile has six
-settings and there are five recipes. The Director is where 'an axe is this, a boomerang is that'
-lives, so a new projectile is a new recipe rather than another six-argument constructor call."* The
+**Builder — projectile construction, with a Director holding the recipes.** *"A projectile is a few
+numbers and there are four recipes. The Director is where 'an axe is this, a boomerang is that'
+lives, so a new projectile is a new recipe rather than another multi-argument constructor call."* The
 probe to expect is "isn't this the laser again" — it is the same home, and the answer is that the
-laser had one recipe where this has five, and the pool is no longer one class per projectile type.
+laser had one recipe where this has four, and the pool is no longer one class per projectile type.
+**Counted at stage 13 and corrected here: four, not five.** The projectiles in this game are the axe,
+the boomerang, the נחש's fireball and the red animal's fire; the arc and the return are behaviours in
+subclasses rather than recipes of their own. Two of the four exist before stage 15, so the sentence
+is only fully true from there.
 
 **Factory — drops and egg contents, two callers.** *"8.3 and 10.3 both say what drops is configured
 and never rolled, so an enemy holds a drop type and an egg holds a drop type, and neither knows how
@@ -1005,12 +1009,16 @@ _(append entries here as we make design decisions.)_
   one real advantage is bulk terrain, and the answer to that is drag-to-paint in our own tool rather
   than a second application. **The file format stays Tiled's**, so the decision costs nothing to
   reverse.
-- **Tile ids are contiguous, grouped by kind in order.** 1 the start marker, 2 to 4 the earth tiles,
-  5 to 8 spikes, אבן, מדורה and the door, 9 to 14 the six enemies, 15 the ביצה, 16 and 17 the two
-  fruit tiers, 18 to 23 the weapons, tokens and the פייה. Banding with gaps was the first proposal
-  and its only argument was Tiled's consecutive GIDs, which stopped mattering when Tiled went. The
-  cost of no gaps is that a placeable added later appends rather than slotting into its group, since
-  renumbering would mean rewriting every level file by hand.
+- **Tile ids are contiguous and append in the order things were built.** Banding with gaps was the
+  first proposal and its only argument was Tiled's consecutive GIDs, which stopped mattering when
+  Tiled went. The cost of no gaps is that a placeable added later appends rather than slotting into
+  its group, since renumbering would mean rewriting every level file by hand - and that cost has
+  already been paid once. The original plan was 9 to 14 for the six enemies, 15 the ביצה, 16 and 17
+  the fruit; the fruit arrived at stage 11 before any enemy existed, so `TilePrefabMap.asset` now
+  reads 1 the start marker, 2 to 4 the earth tiles, 5 to 8 spikes, אבן, מדורה and the door, and
+  **9 and 10 the two fruit tiers**. Everything after that appends as it is built: the weapon pickups
+  at stage 13, then the enemies, the ביצה, the tokens and the פייה. The asset is the record; this
+  entry is not.
 - **A per-instance value is a field when it gets passed on and a subclass when it gets branched on.**
   The ביצה holds a `DropType` and hands it to the factory without ever asking what it is, so one
   prefab. The spider's static-or-moving is a `moveRange` float where zero means static, which needs
@@ -1663,3 +1671,66 @@ _(append entries here as we make design decisions.)_
   cycle, killing the player on a gap he can see he cleared. Size Y 1.3 at offset Y 0.15 puts the
   error the forgiving way, which is the direction 8.5 asks for. The average of the two heights was
   the other option and it halves the unfairness rather than removing it.
+
+- **A weapon is carried, a projectile is in flight, and they are different folders.** Peleg's call,
+  reversing `CONVENTIONS.md`'s `Player/Projectiles/`: a נחש's fireball and a red animal's fire have
+  no weapon behind them at all, so `Projectiles/` sits at the top level beside `Enemies/` and
+  `Hazards/`, and `Player/Weapons/` keeps the slot, the two weapon types and the pickups. Everything
+  that makes an axe a weapon - the egg, the slot, the key, the cap - lives outside the thing flying
+  through the air.
+- **One thin `BaseProjectile`, and the rule for what is allowed in it.** Peleg argued the four
+  projectiles share nothing, and he is right about everything except flight and reuse. The test
+  applied to each member: *would the object still need this if you deleted everything about where it
+  came from?* Launch, travel, time out, go back to the pool - yes. Weapons, slots, eggs, enemies -
+  no. The alternative was four independent classes behind an `IPooledProjectile` interface, and it
+  loses on two counts: the pool has to hand back a common type either way, so the interface is a base
+  class with no compiler help; and the clearing of a previous flight's velocity and timer would be
+  written four times, at three different stages, which is exactly the pooling bug Exercise 3's own
+  `BaseProjectile` comment warns about. **`OnHit` is abstract with no default**, so each subclass
+  states its own effect rather than inheriting one - an axe destroys, a fireball harms the player, and
+  a shared default would assert a kinship that is not there. The intermediate `DestroyingProjectile`
+  that would have held the three destroying subclasses was rejected for the same reason: the mount's
+  fire and the נחש's fire fly alike and are opposites in the only way that matters.
+- **`Update` lives on the base and `Fly` is the hook.** A subclass declaring its own `Update` would
+  hide the base's and silently stop the timeout, which is the same trap `Collectible` has with
+  `Awake`. The boomerang's steering goes in `Fly`.
+- **Every projectile is a trigger, including the axe.** A dynamic body with a trigger collider still
+  falls under gravity and still reports overlaps with static colliders, so the axe arcs and detects
+  the ground without any physics response. The alternative was a solid axe reading terrain from
+  `OnCollisionEnter2D`, and it fails on the player: his capsule is the one other non-trigger collider
+  in the game, so a thrown axe would shove him. **Terrain is then `other.isTrigger == false`**, since
+  every hazard, pickup and door in this project is a trigger and the player is excluded by his marker
+  component. That answers 6.9's "the projectile has to tell the two apart" with no physics layer, no
+  `SC_Floor` marker and no `LayerMask` - the same argument `PlayerGround` makes for using contacts.
+- **8.2 costs nothing, the way 9.3 did.** An enemy's projectile must never kill another enemy, which
+  he called "חשוב מאוד" and a code-design point (00:41:09). `Destroyer` has no value for an enemy's
+  shot, so a נחש's fireball never calls `TryDestroy` at all and a צפרדע jumping into one cannot die.
+  The second requirement this project satisfies by leaving something out.
+- **The recipes are constants in `ProjectileDirector`, and the pool is filled at startup.** Four
+  options were weighed: constants in the Director, serialized fields on `GameInstaller`, a
+  ScriptableObject recipe per projectile, and serialized fields on each projectile prefab. The last
+  is the baseline a grader will imagine and it is the version with no Builder and no Director in it.
+  The installer dies on arithmetic - four projectiles times five numbers against a class that has
+  four fields, and `WithArguments` matches by type so a run of floats would be ambiguous. The
+  ScriptableObject is the real contender and it loses on one thing: if a recipe is already an asset
+  holding five numbers, the shortest honest path is for the projectile to read the asset, and the
+  Builder becomes a hop that copies fields. **Constants are the only option where the Builder is
+  load-bearing**, because the numbers exist nowhere else. The convention that a number describing an
+  object goes on the object does not reach here: it exists to protect *per-instance* configuration
+  that a level rebuild would lose, and a projectile is never placed in a level and never varies
+  between copies. The cost, worth stating rather than hiding: retuning an axe needs a recompile.
+  **Filling the pool at startup** then makes the cap and the pool's size the same number by
+  construction, and lets the claim be the strong one - after startup this game never instantiates a
+  projectile. It also removes a temporal coupling, since a lazily-creating pool would have to call
+  the builder while the director's setters were still loaded.
+- **The cap is his number, not ours.** 00:31:35: "אתם לא יכולים לזרוק 10 אלף, אתם זורקים איזה שלוש,
+  אחת, שתיים, שלוש" - three axes, and he describes the cap and the delay of 6.7 as the same
+  observation. One boomerang, since it returns to the player and having two in the air has no
+  meaning. Whether a throw cooldown is kept on top of the cap is stage 13 step 3's, and the argument
+  for keeping it is that a cap alone lets all three leave in the same frame, which reads as a bug in
+  the recording he watches first.
+- **The builder instantiates through the `DiContainer`.** A pooled projectile is then injected like
+  anything else, which is what lets the boomerang take the player and a fireball take `IGameFlow`
+  without either being threaded through the builder as a setter. The cost is one class depending on
+  the container, which is the service-locator shape DI usually avoids - it is the standard Zenject
+  idiom for a factory, and the alternative is a builder that carries dependencies as well as numbers.

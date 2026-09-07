@@ -119,11 +119,12 @@ Scripts are grouped under `Assets/Scripts/` by domain, with three folders named 
 instead: `Builder/`, `Factory/` and `Pooling/`. Grouping by pattern is worse organisation - it
 scatters the projectile system across four folders - and it is kept anyway, because the code video
 is what gets graded and "show me the Factory" has to be answerable by opening one folder. The rest
-are `Editor/`, `Logging/`, `Installers/`, `State/`, `Levels/`, `Player/` with `Projectiles/` and
-`Weapons/` beneath it, `Enemies/`, `Animals/`, `Collectibles/`, `Hazards/`, `Animation/`, `UI/` and
-`Extensions/`. `Animation/` is the exception to grouping by domain: it holds the sprite-cycling
-component, which goes on hazards, enemies, animals and a projectile alike and so belongs to none of
-them.
+are `Editor/`, `Logging/`, `Installers/`, `State/`, `Levels/`, `Player/` with `Weapons/` beneath it,
+`Projectiles/`, `Enemies/`, `Animals/`, `Collectibles/`, `Hazards/`, `Animation/`, `UI/` and
+`Extensions/`. Two of those are not domains. `Animation/` holds the sprite-cycling component, which
+goes on hazards, enemies, animals and a projectile alike. `Projectiles/` sits at the top rather than
+under `Player/` because a weapon is something the player carries while a projectile is something in
+flight, and a snake's fireball and an animal's fire have no weapon behind them at all.
 
 There is no `Interfaces/` folder. An interface lives beside the thing implementing it. Exercise 3
 had few enough to collect in one place; this project has `IResettable`, `IDestructible`,
@@ -132,7 +133,8 @@ them from its implementation.
 
 In the Hierarchy the scene root holds `Main Camera`, `SceneContext` with `GameInstaller` as its only
 child, `Scripts` for logic-only manager objects, `Logging` for `LogSettings` and `LogFileWriter`,
-`Level_1` and `Level_2`, and `Canvas` holding the GUI objects, each prefixed with what it is - `Txt_` for a label, `Img_` for
+`Projectiles` holding the pooled projectiles built at startup, `Level_1` and `Level_2`, and `Canvas`
+holding the GUI objects, each prefixed with what it is - `Txt_` for a label, `Img_` for
 an image, `Btn_` for a button, `Bar_` for a meter, `Count_` for an icon with a number beside it and
 `Popup_` for a panel that covers the game - with the `EventSystem` uGUI adds beside it. Both levels exist in the one scene with one active at a time, because nothing in this
 project loads a scene.

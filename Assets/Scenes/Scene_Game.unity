@@ -3178,6 +3178,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05276232a99238e4095728e1014346ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
+  throwOffset: {x: 0.6, y: 1.2}
 --- !u!95 &230441458
 Animator:
   serializedVersion: 7
@@ -4990,6 +4991,37 @@ MonoBehaviour:
   targetViewportY: 0.25
   smoothTime: 0.15
   frameWholeLevel: 0
+--- !u!1 &334172704
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 334172705}
+  m_Layer: 0
+  m_Name: Projectiles
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &334172705
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 334172704}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &335796254
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5651,19 +5683,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LogSettings
   levels:
   - category: 0
-    level: 3
+    level: 2
   - category: 1
     level: 2
   - category: 2
     level: 2
   - category: 3
-    level: 2
+    level: 3
   - category: 4
     level: 2
   - category: 5
     level: 2
   - category: 6
-    level: 3
+    level: 2
   - category: 7
     level: 2
 --- !u!4 &394089012
@@ -28759,6 +28791,9 @@ MonoBehaviour:
   fruitPerStrike: 20
   powerCapacity: 16
   drainSeconds: 3
+  projectilePrefabs:
+    axe: {fileID: 2555223053577254324, guid: 96e2cfd298a2523448d1e07c62c9649b, type: 3}
+  projectileParent: {fileID: 334172705}
 --- !u!4 &2110033036
 Transform:
   m_ObjectHideFlags: 0
@@ -29348,6 +29383,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 330585546}
   - {fileID: 1552637342}
+  - {fileID: 334172705}
   - {fileID: 919321203}
   - {fileID: 1914944073}
   - {fileID: 310805045}
