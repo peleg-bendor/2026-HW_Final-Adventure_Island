@@ -1,7 +1,7 @@
 using UnityEngine;
 
-// A bat that hangs still while the player is looking at it and drifts at him the moment his back is
-// turned. The one thing here that goes through walls, and the one only a fairy can destroy.
+// A ghost that hangs still while the player is looking at it and drifts at him the moment his back
+// is turned. The one thing here that goes through walls, and the one only a fairy can destroy.
 public class Ghost : Enemy
 {
     // How fast it drifts, in units per second. Slower than he walks, so he can always leave.

@@ -736,7 +736,7 @@ animal fire, and the arc and return behaviours between them — which is more va
 single laser had. Exercise 3's `LaserPoolManager` handled one type; four copies of that class is exactly
 what the SOLID check finds, so the pool takes a prefab instead.
 
-### Stage 14 — Enemies `[ ]`
+### Stage 14 — Enemies `[x]`
 
 Six steps, one enemy each, because each is one prefab, one tile id and one `Behave` and there is
 nothing to be gained by testing two at once. The base and the respawn timer arrive with the first
@@ -2135,3 +2135,27 @@ _(append entries here as we make design decisions.)_
   00:41:32 has it jumping "really high and really far" and "almost landing on you or landing on you",
   which is a committed leap that overshoots, not a homing move that creeps up. The clamp is
   two-sided, so standing next to a frog makes it leap clean past you and turn round for the next one.
+
+- **The רוח רפאים is the simplest of the six, and it is where two earlier decisions paid.** 8.22's
+  "stop chasing past a set distance" is `activationRange` verbatim - the instructor's own description
+  at 00:44:04 is "give it a range, it works out the distance and knows when to leave him", which is
+  what the base already does for every enemy, so the ghost adds no field for it. And `DestroyedBy`
+  being abstract rather than defaulting to "everything" is what lets this one say `Destroyer.Fairy`
+  and nothing else, where five files say the long line; a virtual default would have hidden the one
+  answer that differs. Its whole behaviour is a facing test, a sprite swap and a `MoveTowards`.
+- **The ghost goes through walls on purpose, and it is the only thing that may.** No sweep, no ground,
+  no `Feet` - the machinery the צפרדע needed is absent here, and the two sit next to each other in the
+  folder where the difference reads at a glance.
+- **`Player.FacesRight` landed five steps after it was designed, which is the deferral working.** It
+  was specified in this stage's opening discussion and deliberately held back, on the same test that
+  kept drops out of the base: a member with no caller is dead code, and adding it later is two small
+  edits with no chance of a silent miss. The ghost is its only consumer, and `Enemy.PlayerFacesRight`
+  keeps it so that no subclass ever holds the player.
+- **Stage 14 closed with all six running in one level, which was its own test.** Each enemy had only
+  ever been played alone in a level built for it, while `Enemy` changed five times underneath them -
+  `Feet` moved and became lazy, `HalfWidth` and `HalfHeight` arrived, `IsTerrain` went private,
+  `SweepToTerrain` was added and `PlayerFacesRight` after it. The regression run put one of each in
+  level 1 and came out with no warnings and no errors, with touches from four types, kills on two,
+  a respawn, the ghost's freeze and chase, and two fireballs landing. **Two things it could not
+  show**: the jumping נחש, which logs nothing while it hops and was never touched, and 8.16, which is
+  a requirement satisfied by nothing happening.
