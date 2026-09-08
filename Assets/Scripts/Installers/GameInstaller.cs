@@ -17,6 +17,9 @@ public class GameInstaller : MonoInstaller
     // How long one unit of power lasts, in seconds.
     [SerializeField] private float drainSeconds = 3f;
 
+    // How long a destroyed enemy stays gone, the same for every enemy there is.
+    [SerializeField] private RespawnDelay respawnDelay;
+
     // The prefabs the projectile builder makes copies of.
     [SerializeField] private ProjectilePrefabs projectilePrefabs;
 
@@ -43,6 +46,8 @@ public class GameInstaller : MonoInstaller
 
         Container.Bind<IFruitView>().To<FruitView>().FromComponentInHierarchy().AsSingle();
         Container.BindInterfacesTo<FruitController>().AsSingle().WithArguments(fruitPerStrike);
+
+        Container.Bind<RespawnDelay>().FromInstance(respawnDelay).AsSingle();
 
         Container.Bind<ProjectilePrefabs>().FromInstance(projectilePrefabs).AsSingle();
         Container.Bind<IProjectileBuilder>().To<ProjectileBuilder>().AsSingle().WithArguments(projectileParent);

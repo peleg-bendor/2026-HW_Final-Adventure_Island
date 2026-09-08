@@ -381,7 +381,8 @@ inconsistency it finds — but say it that way rather than claiming all three we
 **Async & Tasks — enemy respawn, and the popup flow.** *"A killed enemy is deactivated, and Unity
 stops coroutines on a disabled GameObject, so an enemy cannot run its own countdown as a coroutine at
 all — it would have needed a separate manager holding timers on its behalf. A Task is not tied to the
-object's lifetime, and one CancellationToken cancels every pending respawn when the level resets."*
+object's lifetime, and each enemy's own CancellationToken cancels its pending respawn when the level
+resets and again when the object is destroyed."*
 And for the popup: *"await returns which button was pressed; a coroutine returns nothing."* The
 answer in the other direction, which is the one he said he asks: *"the פייה's ten seconds is a
 coroutine, because it runs on an object that stays alive throughout, needs no cancellation and
@@ -737,15 +738,33 @@ what the SOLID check finds, so the pool takes a prefab instead.
 
 ### Stage 14 — Enemies `[ ]`
 
-1. The `Enemy` base: spawn, behave, take damage, die, drop, wait, return.
-1. עכביש, ציפור, jumping נחש, shooting נחש, צפרדע, רוח רפאים.
-1. The respawn timer.
-1. The shooting נחש's projectile, reusing stage 13's pool and builder.
-1. Each enemy's `IDestructible` answer.
+Six steps, one enemy each, because each is one prefab, one tile id and one `Behave` and there is
+nothing to be gained by testing two at once. The base and the respawn timer arrive with the first
+of them; every later step is a subclass and a prefab. The six take **tile ids 11 to 16**.
 
-**What it needs: Template, Async and Pooling.** Six subclasses sharing one fixed lifecycle where only
-`Behave` and the destructible answer vary is the strongest Template in the project. The respawn timer is
-the Async home, for the reason above.
+1. The `Enemy` base and its fixed lifecycle, and עכביש. Static or moving is one prefab and a
+   `moveRange` where zero means static (8.7). This step is where the respawn timer, the contact
+   rule and both reset scopes are settled and tested.
+1. ציפור: leftward at a constant speed while dipping and rising, with speed, dip and wavelength
+   per instance so a dip of zero flies straight (8.9). Switches itself off at the level's left
+   edge (8.11).
+1. נחש, the jumper: stand, hop forward, stand, repeat (8.12).
+1. נחש, the shooter: fires while the player is in range and stops when he leaves it, which is
+   8.14 and 8.15 answered by the same number. Its fireball is a fourth recipe in
+   `ProjectileDirector`, a fourth `BaseProjectile` subclass and a fourth entry in the pool.
+1. צפרדע: jumps higher and further than the נחש, toward the player, on a randomized interval
+   (8.17, 8.18).
+1. רוח רפאים: static while the player faces it, chases when his back is turned, stops past its
+   range (8.20, 8.22). The one enemy that answers `Fairy` alone, and the one whose two sprites are
+   states rather than animation frames.
+
+**What it needs: Template, Async and Pooling.** Six subclasses against one fixed sequence with four
+hooks — `OnAwake`, `Behave`, `DestroyedBy` and `OnSpawned` — is the strongest Template in the
+project, and it comes out the same shape as `BaseProjectile`'s `Fly`, `OnHit` and `OnLaunched`, which
+answers better than two hierarchies that merely happen to both be base classes. A subclass cannot
+reorder the steps, so a new enemy type cannot forget to respawn. The respawn timer is the Async home,
+for the reason above: a killed enemy is deactivated, and Unity stops coroutines on a disabled
+GameObject.
 
 ### Stage 15 — Animals `[ ]`
 
@@ -1789,3 +1808,148 @@ _(append entries here as we make design decisions.)_
   position along a parametric ellipse, which fights 6.11 directly - a precomputed path cannot track
   a player who has moved. Mirroring the loop the other way is two sign flips, a negative lift and a
   negative gravity scale so it falls upward; tried and reverted, the arc rises.
+
+- **`Enemy` is its own base and not a `Hazard`, although `Hazard`'s own header describes one.**
+  "Something dangerous to touch that can also be destroyed" is an enemy exactly, and deriving would
+  bring the contact detection, the guard consult, `TryDestroy` and the registration for free. It
+  loses on the two steps that are *fixed* in `Hazard`: an enemy has to change `TryDestroy`, which
+  now drops something and starts a timer, and `ResetTo`, which now leaves a dead one dead - and a
+  subclass that overrides a template's fixed steps is not a subclass of that template. `Hurt` goes
+  the wrong way too, abstract in `Hazard` because fire and rock differ and identical across all six
+  enemies. The precedent is `Spikes`, which duplicated its trigger code rather than joining for a
+  structural reason of the same kind. **The price, stated rather than hidden:** the player detection
+  and the `lastTouchFrame` guard exist in two files now, and that guard was a real fix - without it
+  one touch costs two פסילות, because 2D sends Enter and Stay together on the step a contact begins.
+- **Enemies are kinematic, trigger-only, and moved by writing the position.** Every enemy collider
+  has to be a trigger, or `ProjectileAxe` reads it as ground: its terrain test is
+  `other.isTrigger == false`, so a solid רוח רפאים would stop an axe that is not allowed to kill it.
+  A trigger collider on a dynamic body then falls through the world, which rules physics out for the
+  hopping נחש and the צפרדע - so all six run on arithmetic instead, which every one of them was
+  already going to be: oscillate, sine, hop, stand, parabola, chase. The `Rigidbody2D` is Kinematic
+  and exists only so that Unity is not rebuilding the static collider tree around a moving collider
+  every frame. The collider goes on the prefab root, since `GetComponent<IDestructible>()` is what
+  every destroyer calls.
+- **One `activationRange` on the base, and it is four requirements rather than an optimisation.**
+  The base skips `Behave` while the player is further away than that, and that single field answers
+  8.14's "starting when the player comes into view", 8.15's stop condition for the shooter, 8.17's
+  "triggered when the player comes close" and 8.22's "stops chasing past a set distance" - so no
+  subclass ever asks how far away the player is. It is also what makes the ציפור playable at all: a
+  bird placed at cell 150 that starts flying at level load has left the level before the player is
+  within fifty cells of it, and the same is true of a נחש hopping forward for two minutes. Default
+  about 12 units against a camera 17.8 wide, so an enemy wakes shortly before it is on screen; zero
+  means always active, which is the static עכביש. **The consequence worth saying out loud:** a bird
+  the player outruns parks off-camera instead of despawning. It is invisible, it is what keeps the
+  stretch ahead from being empty on arrival, and the bird's own edge check still makes 8.11 literally
+  true when it does get there.
+- **Each enemy owns its own `CancellationTokenSource`, which reverses Step 3's "one token".** Stage 1
+  wrote that one `CancellationToken` cancels every pending respawn, and that implies a shared source
+  and a class to own it. Per-enemy wins on three things: the source is created fresh at each death so
+  it can never be a stale cancelled one, it is cancelled in `OnDestroy` as well as on a full reset,
+  which is what stops a continuation touching a destroyed object when Play mode ends, and it keeps
+  the enemy self-contained - which is the whole Async argument, since the alternative being argued
+  against is a manager holding timers on the enemy's behalf. **The defense sentence changes with it**:
+  "a token cancels its pending respawn when the level resets", not "one token cancels every".
+- **Destroyed and switched off are different states, and the ציפור is why.** 3.4 keeps *killed*
+  enemies dead across a פסילה; a bird that left at the level's left edge was not killed. So the flag
+  is `destroyed`, set only by `Die`, and it is the only thing `AfterStrike` consults. The other half
+  of the same rule: **a living enemy goes back to its authored position on a פסילה**. 3.4 says
+  nothing about the ones still alive, and leaving them where they stand means the level after two
+  deaths has every mobile enemy bunched wherever it happened to be, with the stretch about to be
+  replayed empty. It is the line the `Full` path already runs, so it costs nothing.
+- **`DestroyedBy` stays abstract although five of the six answers are identical.** Five enemies say
+  `Axe | Boomerang | AnimalAttack | Riding | Fairy` and the רוח רפאים says `Fairy` alone, so a
+  virtual default would save four lines and make the ghost conspicuous. Abstract wins for `Hazard`'s
+  own reason - every subclass states its whole rule where a reader can see it, and "show me the
+  Template" opens six files that each answer - and for one more: a `Destroyer` value added later
+  cannot be granted to five enemies by silence.
+- **Drops stay out of stage 14 entirely, which is the opposite call to stage 12's `IPlayerGuard`.**
+  The guard was built two stages early because a miss would have meant editing `Fire`, `Rock` and six
+  enemies to insert one line each in exactly the right place. A drop is *one line in the base*, so
+  nothing is saved by stubbing it, and an empty `Drop` nobody overrides is dead code against code
+  quality rule 5. `DropType` and `IDropFactory` arrive with stage 16 and the base gains its call
+  then. **The trap to carry to that stage:** the drop has to be spawned as a sibling and not a child,
+  or it is switched off with the enemy that dropped it.
+- **The נחש's fireball consults the guard and answers `IDestructible`, and 8.2 still costs nothing.**
+  The requirement he called "חשוב מאוד" is satisfied by omission exactly as stage 13 predicted - the
+  fireball never calls `TryDestroy`, because `Destroyer` has no value for an enemy's shot, so a
+  צפרדע jumping into one cannot die. What it does need is 7.10: a ridden animal absorbs a hit and
+  *both* disappear, and `IPlayerGuard.TryAbsorb` takes an `IDestructible`, so the fireball is one and
+  its line is `Riding | Fairy` - riding into it and a פייה take it out of the air, and nothing else
+  can. The consult ships unexercised, since `TryAbsorb` returns false until stage 15, which is the
+  same accepted cost as `Hazard.TryDestroy` shipping with no caller in stage 12.
+- **The shooting נחש gets the fireball prefab from an injected `ProjectilePrefabs`, not a serialized
+  field.** `WeaponCollectible` holds a serialized prefab and that is right, because the slot passes on
+  whatever it is handed without ever comparing it. The pool is keyed on prefab *reference*, so a
+  serialized field on the נחש prefab pointing at a different asset than `GameInstaller`'s means `Get`
+  returns null and the נחש silently never fires. One source for that reference removes the failure
+  rather than documenting it.
+- **`Player` gains `FacesRight`, and the marker's justification erodes a little further.** 8.20 needs
+  "is the player looking at me", and reading `player.transform.localScale.x` from the רוח רפאים
+  reaches around the marker to the thing it exists to represent. Same shape as `Middle`: a fact about
+  the player read off whatever actually holds it, so it cannot drift. The cost is that the argument
+  for injecting `Player` concretely - a marker has no members a consumer could misuse - is now
+  answering for two members rather than none.
+- **The respawn runs on real time and nothing is done about it.** `Task.Delay` ignores
+  `Time.timeScale`, so a respawn can complete while a popup has the game frozen at zero. Both popups
+  end in `StartGame`, which runs a `Full` reset that reactivates every enemy - so the only thing a
+  respawn under a popup can do is arrive at the state the restart was about to produce anyway.
+  Worth being able to say at the defense, since "your timer does not pause" is the obvious probe and
+  the answer is that there is no pause in this game that does not end in a full reset.
+- **The enemies take tile ids 11 to 16, and the weapon pickups take none.** `Sprite_Axe.prefab` and
+  `Sprite_Boomerang.prefab` carry the `Sprite_` prefix, which the naming rules reserve for things
+  placed in a level, so they looked owed 11 and 12 first. Checked rather than assumed: neither
+  appears anywhere in `Scene_Game.unity` and neither is in `TilePrefabMap.asset` - stage 13's `A`
+  and `B` keys stood in for both, and 10.3 has weapons coming out of eggs. If stage 16 decides they
+  are painted after all they append at 17 and 18, which the append rule already allows, so nothing is
+  lost by taking 11 to 16 now. **A note for stage 16:** if a weapon only ever drops, those two
+  prefabs are misnamed and lose the prefix.
+
+- **`OnAwake` is a fourth hook, and the static עכביש is what asked for it.** A spider that hangs
+  still shows one frame and a spider that drops and rises cycles two, so `SpriteCycleAnimator` has to
+  be switched off when `moveRange` is zero - and the base owns `Awake`, so a subclass has nowhere to
+  cache a component or read its own configuration once. The alternatives both lose. Ticking the
+  cycler's own checkbox per instance is a second hand-set value that can disagree with `moveRange`,
+  which is the failure `PlayerStart`'s facing and the fireball's prefab reference were both redesigned
+  to remove. Making `Awake` `protected virtual` the way `BaseProjectile` does lets a subclass forget
+  `base.Awake()` and silently lose its registration, which is the exact trap `Collectible` made
+  `Awake` private to close. So the base's private `Awake` calls an empty `OnAwake`, and the subclass
+  cannot skip the registration or reorder it. **It only ever disables the cycler, never enables one**,
+  because `SpriteCycleAnimator.Awake` switches itself off when it has no frames and component order
+  within a GameObject is not guaranteed - re-enabling would resurrect a component that had already
+  decided it could not run.
+- **`Spider`, not `EnemySpider`.** `Hazards/` holds `Fire`, `Rock` and `Spikes` under `Hazard` with
+  no prefix, and that is the closer precedent than `Projectiles/`, where `ProjectileAxe` is prefixed
+  only because a bare `Axe` would collide with the weapon the player carries. Six of `Enemy`, `Spider`,
+  `Bird`, `SnakeJumper`, `SnakeShooter`, `Frog` and `Ghost` in a folder already called `Enemies/` reads
+  better than the prefix repeated seven times. **The prefabs keep `Sprite_Enemy_`**, matching the
+  sprite files they are built from and grouping the six together in a flat `Prefabs/` folder that is
+  about to hold twenty.
+- **The base answers questions about the player rather than handing him over.** `Enemy` injects the
+  `Player` marker and exposes `PlayerPosition` and `PlayerFacesRight`; no subclass holds him. Handing
+  the marker down as a protected property was the alternative, and this way the one place that depends
+  on `Player` is the base, the ghost's "is he looking at me" is read through the same member as the
+  activation range, and a subclass cannot start asking him for anything else.
+
+- **The respawn delay is a rule and lives on the installer, not on the enemy.** It was first written
+  as `minRespawnSeconds` and `maxRespawnSeconds` per prefab, which is wrong by this project's own
+  test: a number describing a rule enters at the composition root and a number describing an object
+  goes on the object, and 8.4 states one delay for every enemy there is. `activationRange` and the
+  ציפור's speed stay on their prefabs under the same test, since those really do differ per enemy.
+  `Enemy` is a scene MonoBehaviour, so `WithArguments` cannot reach it - it is not created from a
+  binding - and two bare floats would be ambiguous by type anyway. So the route is the one
+  `ProjectilePrefabs` already established: a `[Serializable]` class serialized on `GameInstaller`,
+  bound `FromInstance`, injected. The cost is one more class for two numbers, and it buys the second
+  use of a pattern that was previously a one-off.
+- **The עכביש measures its drop instead of carrying a range, which removes a number rather than
+  guarding one.** `moveRange` was authored per instance and nothing stopped it running the spider
+  through the floor - Peleg found that immediately. Clamping the range against the geometry was the
+  obvious fix and it keeps a field whose only correct value is the one the level already knows. So
+  the spider casts a ray down from its authored position at every spawn and stops at the first
+  non-trigger collider, which is terrain and nothing else - every hazard, pickup and door in this
+  game is a trigger, and the spider's own collider is one too, so it excludes itself with no
+  self-check. That is the same terrain test `ProjectileAxe` and `PlayerGround` already make, now in a
+  third place, and it is the argument against ever adding a `Ground` layer. What survives is `moves`
+  and `moveSpeed`. With nothing solid below it the spider warns and hangs still, rather than dropping
+  out of the level. **The cost:** `Physics2D.RaycastAll` allocates, so this is a per-spawn allocation
+  rather than a free one, and the nearest hit is picked explicitly rather than trusting the returned
+  order.

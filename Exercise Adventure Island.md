@@ -183,7 +183,8 @@ objects and enemies.
    rolled at runtime**, and "drops nothing" is one of the options (00:46:39). The original game has
    no randomness in it at all (00:37:46).
 1. A destroyed enemy comes back where it died after a countdown. **This delay is random**, suggested
-   `10` to `20` seconds (00:44:49). It is the only randomness he asked for.
+   `10` to `20` seconds (00:44:49). One of the two things he asked to be random, the other being
+   the צפרדע's jump timing in 8.18. Nothing else in the game is rolled.
 1. The game should not be difficult (00:43:21): "לא שהמשחק יהיה קשה. המשחק לא צריך להיות קשה. מה
    שמעניין אותי לראות שזה עובד".
 
