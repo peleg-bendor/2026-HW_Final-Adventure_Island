@@ -13,6 +13,7 @@ public class Spider : Enemy
     private float feet;
     private float travel;
     private float spawnedAt;
+    private bool warnedNoFloor;
 
     // An axe, a boomerang, an animal or a fairy, which is every enemy except the ghost.
     protected override Destroyer DestroyedBy
@@ -80,7 +81,13 @@ public class Spider : Enemy
 
         if (float.IsInfinity(nearest))
         {
-            GameLog.Warning(LogCategory.Enemy, "No floor under " + name + ", it hangs still");
+            // Said once rather than at every reset: the level's shape does not change while it runs.
+            if (warnedNoFloor == false)
+            {
+                warnedNoFloor = true;
+                GameLog.Warning(LogCategory.Enemy, "No floor under " + name + " at " + Home + ", it hangs still");
+            }
+
             return 0f;
         }
 
