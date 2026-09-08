@@ -65,6 +65,12 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         get { return player != null ? player.Middle : (Vector2)transform.position; }
     }
 
+    // Which way he is looking, which is the whole of the ghost's rule.
+    protected bool PlayerFacesRight
+    {
+        get { return player != null && player.FacesRight; }
+    }
+
     // Every sprite in this project is drawn facing right, so a positive scale is a rightward one.
     protected bool FacesRight { get { return transform.localScale.x > 0f; } }
 
@@ -170,7 +176,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     }
 
     // Nothing starts moving, shooting or chasing until he is close enough, which is what keeps a
-    // bird from swooping at nobody.
+    // bird from swooping at nobody and what makes a ghost give up.
     private bool IsPlayerNear()
     {
         if (activationRange <= 0f)

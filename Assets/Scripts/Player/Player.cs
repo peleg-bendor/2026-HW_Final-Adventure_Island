@@ -1,7 +1,8 @@
 using UnityEngine;
 
-// Identifies the player to anything that has to ask what touched it, and answers where the middle
-// of his body is. A marker rather than a tag, since most callers want the object and not the answer.
+// Identifies the player to anything that has to ask what touched it, and answers where the middle of
+// his body is and which way he is looking. A marker rather than a tag, since most callers want the
+// object and not the answer.
 public class Player : MonoBehaviour
 {
     private float middleOffset;
@@ -24,5 +25,11 @@ public class Player : MonoBehaviour
     public Vector2 Middle
     {
         get { return (Vector2)transform.position + Vector2.up * middleOffset; }
+    }
+
+    // Read off his scale, which is what PlayerMovement.Face writes, so the two cannot disagree.
+    public bool FacesRight
+    {
+        get { return transform.localScale.x > 0f; }
     }
 }

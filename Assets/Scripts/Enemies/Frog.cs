@@ -154,10 +154,6 @@ public class Frog : Enemy
         velocity = new Vector2((landX - jumpFrom.x) / jumpSeconds, 4f * jumpHeight / jumpSeconds);
 
         Show(jumpingSprite);
-
-        GameLog.Verbose(LogCategory.Enemy, name + " leaps from " + jumpFrom.ToString("0.00") +
-            " - aiming at x " + landX.ToString("0.00") + ", he is at x " +
-            PlayerPosition.x.ToString("0.00") + ", speed " + velocity.ToString("0.00"));
     }
 
     // Its whole flight, swept a frame at a time. Twice per frame, so what is left of the frame after
@@ -193,31 +189,25 @@ public class Frog : Enemy
                 return;
             }
 
-            Deflect(hit, contact);
+            Deflect(hit);
             remaining *= 1f - travelled / step.magnitude;
         }
     }
 
     // A ceiling takes its climb and leaves its travel; a wall takes its travel and leaves its fall.
-    private void Deflect(RaycastHit2D hit, Vector2 at)
+    private void Deflect(RaycastHit2D hit)
     {
         if (hit.normal.y < -FloorNormal)
         {
-            if (velocity.y > 0f)
-                GameLog.Verbose(LogCategory.Enemy, name + " hit a ceiling at " + at.ToString("0.00") +
-                    " - climb spent, still travelling at " + velocity.x.ToString("0.00"));
-
             velocity.y = Mathf.Min(velocity.y, 0f);
             return;
         }
 
-        if (Mathf.Approximately(velocity.x, 0f) == false)
-            GameLog.Verbose(LogCategory.Enemy, name + " hit a wall at " + at.ToString("0.00") +
-                " - travel spent, dropping at " + velocity.y.ToString("0.00"));
-
         velocity.x = 0f;
     }
 
+    // One line a jump, carrying both what it wanted and what it got, so a leap cut short by a wall
+    // or a ceiling still shows without the contacts themselves being logged.
     private void Land(Vector2 at)
     {
         transform.position = new Vector3(at.x, at.y, transform.position.z);
@@ -226,9 +216,8 @@ public class Frog : Enemy
         Show(idleSprite);
         WaitAgain();
 
-        GameLog.Verbose(LogCategory.Enemy, name + " landed at " + at.ToString("0.00") +
-            " - wanted x " + landX.ToString("0.00") + ", went " + (at.x - jumpFrom.x).ToString("0.00") +
-            " of " + (landX - jumpFrom.x).ToString("0.00"));
+        GameLog.Verbose(LogCategory.Enemy, name + " landed at x " + at.x.ToString("0.0") +
+            " - leapt from " + jumpFrom.x.ToString("0.0") + ", aimed at " + landX.ToString("0.0"));
     }
 
     private void WarnLost()
@@ -238,7 +227,7 @@ public class Frog : Enemy
 
         warnedLost = true;
         GameLog.Warning(LogCategory.Enemy, "No ground under " + name + " at x " +
-            transform.position.x.ToString("0.00") + ", its jump had nowhere to land");
+            transform.position.x.ToString("0.0") + ", its jump had nowhere to land");
     }
 
     private void Show(Sprite sprite)
