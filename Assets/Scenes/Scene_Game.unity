@@ -5635,11 +5635,11 @@ MonoBehaviour:
   - category: 0
     level: 2
   - category: 1
-    level: 2
+    level: 3
   - category: 2
     level: 2
   - category: 3
-    level: 3
+    level: 0
   - category: 4
     level: 2
   - category: 5

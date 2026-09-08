@@ -59,6 +59,8 @@ public class Bird : Enemy
             swooping = true;
             swoopStartedAt = Time.time;
             Face(false);
+            GameLog.Verbose(LogCategory.Enemy, name + " swooped - he was " +
+                Vector2.Distance(transform.position, PlayerPosition).ToString("0.0") + " away");
         }
 
         Swoop();
