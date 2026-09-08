@@ -2112,3 +2112,26 @@ _(append entries here as we make design decisions.)_
   option, and it keeps the flat claim true at the price of pointing `Projectiles/` at `Enemies/` and
   a "two flames per shooter" multiplier that is itself derived from speed, range and interval - a
   better-informed guess rather than no guess.
+
+- **The צפרדע is a velocity that collisions modify, and it took three wrong turns to get there.** The
+  first version had no terrain check at all and sailed through earth; the second sampled the planned
+  arc before take-off and shortened it, which Peleg rejected twice in the same words he used for the
+  נחש - it should jump where it likes and bump into what is in the way, not work out a route through
+  it; the third swept horizontally only, so a leap straight up went through a ceiling. What works is
+  a `Vector2 velocity` integrated per frame with the whole body swept along it: a floor lands it, a
+  ceiling takes its climb and leaves its travel, a wall takes its travel and leaves its fall. Two
+  sweeps a frame, so what is left of a frame after a bump is spent going the new way rather than lost
+  against the surface. **It reproduces the old arc exactly when nothing is in the way** - `vx =
+  distance/seconds`, `vy = 4·height/seconds` and `g = 8·height/seconds²` integrate to
+  `height·4t(1−t)` - so only the obstructed cases changed.
+- **A ceiling shortens a leap, and that is not a bug.** Measured off the log rather than argued: a
+  frog that hits a roof 1.1 units up has only that 1.1 to fall back, which at `g = 29.6` takes 0.27
+  seconds against the 0.9 a clear jump has, so it covers a third of the ground. The alternative is to
+  lower the arc when there is a roof overhead, which is the route-finding the whole design refuses.
+- **The צפרדע aims at the player's exact x, which collapsed to Zeno's paradox.** With him standing
+  still the leaps ran 12 → 6.08 → 3.72 → 3.43 → 3.25 → 3.15 → 3.09 → 3.05 → 3.00, halving the gap
+  each time, and then it hopped straight up on the spot for ever - `speed (0.00, 13.33)`, `went 0.00
+  of 0.00`. **A minimum leap distance fixes it and is closer to the source than what it replaced**:
+  00:41:32 has it jumping "really high and really far" and "almost landing on you or landing on you",
+  which is a committed leap that overshoots, not a homing move that creeps up. The clamp is
+  two-sided, so standing next to a frog makes it leap clean past you and turn round for the next one.

@@ -1,16 +1,29 @@
 using UnityEngine;
 
-// A frog that watches the player and leaps at him on a timer he cannot read. It aims at where he
-// was when it took off, so it lands on him when he holds still and near him when he does not.
+// A frog that watches the player and leaps at him on a timer he cannot read. It jumps where it
+// likes and is stopped by whatever it runs into; it never works out a way around the terrain.
 public class Frog : Enemy
 {
-    // How high the arc rises above the take-off, in units. Never zero: the arc is also the fall.
+    // How far inside its own edges the sweep sits, so it never starts overlapping the floor it is
+    // standing on and never comes to rest inside what it hit.
+    private const float SkinWidth = 0.02f;
+
+    // A flight longer than this has nothing under it to land on, which means a broken level.
+    private const float MaxFlightSeconds = 5f;
+
+    // How far from level a surface has to be before it counts as a floor or a ceiling rather than
+    // a wall.
+    private const float FloorNormal = 0.5f;
+
+    // How high the arc rises above the take-off, in units. Never zero: it also sets the weight.
     [SerializeField, Min(0.1f)] private float jumpHeight = 3f;
 
-    // The furthest it will leap, in units. It aims at the player and stops at this.
+    // The shortest and furthest it will leap, in units. It aims at the player between the two, so
+    // standing next to one makes it jump clean past rather than creep up in halves.
+    [SerializeField, Min(0f)] private float minJumpDistance = 3f;
     [SerializeField, Min(0f)] private float maxJumpDistance = 6f;
 
-    // How long the level part of a jump takes, in seconds. A drop past it takes as long as it takes.
+    // How long a clear leap takes, in seconds. One that hits something takes as long as it takes.
     [SerializeField, Min(0.05f)] private float jumpSeconds = 0.9f;
 
     // The shortest and longest wait between jumps, in seconds. Rolled fresh every time, which is the
@@ -34,8 +47,8 @@ public class Frog : Enemy
     private float jumpStartedAt;
     private Vector2 jumpFrom;
     private float landX;
-    private float landY;
-    private bool warnedNoGround;
+    private Vector2 velocity;
+    private bool warnedLost;
 
     // An axe, a boomerang, an animal or a fairy, which is every enemy except the ghost.
     protected override Destroyer DestroyedBy
@@ -54,6 +67,18 @@ public class Frog : Enemy
         get { return crouching || jumping; }
     }
 
+    // Its own body, held a hair inside its edges so a sweep does not catch on what it rests against.
+    private Vector2 SweptSize
+    {
+        get { return new Vector2((HalfWidth - SkinWidth) * 2f, (HalfHeight - SkinWidth) * 2f); }
+    }
+
+    // Taken from the arc, so an undisturbed leap traces the same parabola the old one did.
+    private float Gravity
+    {
+        get { return 8f * jumpHeight / (jumpSeconds * jumpSeconds); }
+    }
+
     protected override void OnAwake()
     {
         art = GetComponent<SpriteRenderer>();
@@ -66,6 +91,7 @@ public class Frog : Enemy
     {
         crouching = false;
         jumping = false;
+        velocity = Vector2.zero;
         Show(idleSprite);
         WaitAgain();
     }
@@ -74,7 +100,14 @@ public class Frog : Enemy
     {
         if (jumping)
         {
-            Jump();
+            if (Time.time - jumpStartedAt > MaxFlightSeconds)
+            {
+                WarnLost();
+                Land(transform.position);
+                return;
+            }
+
+            Move();
             return;
         }
 
@@ -106,8 +139,8 @@ public class Frog : Enemy
         Show(crouchSprite);
     }
 
-    // Aimed at where he is now, not where he will be. He moves during the flight, which is what
-    // makes it land on him sometimes and beside him the rest of the time.
+    // Aimed his way but never for less than a full leap, or the distance left would halve with every
+    // jump and the frog would end up hopping on the spot. Nothing is checked about what lies between.
     private void Launch()
     {
         crouching = false;
@@ -115,50 +148,97 @@ public class Frog : Enemy
         jumpStartedAt = Time.time;
         jumpFrom = transform.position;
 
-        float toPlayer = PlayerPosition.x - jumpFrom.x;
-        landX = jumpFrom.x + Mathf.Clamp(toPlayer, -maxJumpDistance, maxJumpDistance);
-        landY = GroundUnderTarget();
+        float direction = PlayerPosition.x > jumpFrom.x ? 1f : -1f;
+        float distance = Mathf.Clamp(Mathf.Abs(PlayerPosition.x - jumpFrom.x), minJumpDistance, maxJumpDistance);
+        landX = jumpFrom.x + direction * distance;
+        velocity = new Vector2((landX - jumpFrom.x) / jumpSeconds, 4f * jumpHeight / jumpSeconds);
 
         Show(jumpingSprite);
+
+        GameLog.Verbose(LogCategory.Enemy, name + " leaps from " + jumpFrom.ToString("0.00") +
+            " - aiming at x " + landX.ToString("0.00") + ", he is at x " +
+            PlayerPosition.x.ToString("0.00") + ", speed " + velocity.ToString("0.00"));
     }
 
-    // Wherever it comes down, however far below. A level with nothing under the target is broken,
-    // so it says so once and lands in the air rather than falling out of the world.
-    private float GroundUnderTarget()
+    // Its whole flight, swept a frame at a time. Twice per frame, so what is left of the frame after
+    // a bump is spent going the new way rather than being lost against the surface.
+    private void Move()
     {
-        float apex = jumpFrom.y + jumpHeight;
-        float drop = DistanceToTerrain(new Vector2(landX, apex), Vector2.down, Mathf.Infinity);
+        float remaining = Time.deltaTime;
+        velocity.y -= Gravity * remaining;
 
-        if (float.IsInfinity(drop) == false)
-            return apex - drop + Feet;
-
-        if (warnedNoGround == false)
+        for (int pass = 0; pass < 2 && remaining > 0f; pass++)
         {
-            warnedNoGround = true;
-            GameLog.Warning(LogCategory.Enemy, "No ground under " + name + "'s target at x " + landX.ToString("0.0") + ", it lands in the air");
+            Vector2 from = transform.position;
+            Vector2 step = velocity * remaining;
+
+            if (step.sqrMagnitude <= 0f)
+                return;
+
+            RaycastHit2D hit;
+
+            if (SweepToTerrain(from, SweptSize, step.normalized, step.magnitude, out hit) == false)
+            {
+                transform.position = new Vector3(from.x + step.x, from.y + step.y, transform.position.z);
+                return;
+            }
+
+            float travelled = Mathf.Max(0f, hit.distance - SkinWidth);
+            Vector2 contact = from + step.normalized * travelled;
+            transform.position = new Vector3(contact.x, contact.y, transform.position.z);
+
+            if (hit.normal.y > FloorNormal)
+            {
+                Land(contact);
+                return;
+            }
+
+            Deflect(hit, contact);
+            remaining *= 1f - travelled / step.magnitude;
         }
-
-        return jumpFrom.y;
     }
 
-    // One arc all the way down. Past the end of the jump the same parabola turns downward and
-    // accelerates, which is what carries it into a pit rather than stopping at the edge.
-    private void Jump()
+    // A ceiling takes its climb and leaves its travel; a wall takes its travel and leaves its fall.
+    private void Deflect(RaycastHit2D hit, Vector2 at)
     {
-        float t = (Time.time - jumpStartedAt) / jumpSeconds;
-        float y = jumpFrom.y + jumpHeight * 4f * t * (1f - t);
-
-        if (t >= 1f && y <= landY)
+        if (hit.normal.y < -FloorNormal)
         {
-            transform.position = new Vector3(landX, landY, transform.position.z);
-            jumping = false;
-            Show(idleSprite);
-            WaitAgain();
+            if (velocity.y > 0f)
+                GameLog.Verbose(LogCategory.Enemy, name + " hit a ceiling at " + at.ToString("0.00") +
+                    " - climb spent, still travelling at " + velocity.x.ToString("0.00"));
+
+            velocity.y = Mathf.Min(velocity.y, 0f);
             return;
         }
 
-        float x = Mathf.Lerp(jumpFrom.x, landX, Mathf.Min(t, 1f));
-        transform.position = new Vector3(x, y, transform.position.z);
+        if (Mathf.Approximately(velocity.x, 0f) == false)
+            GameLog.Verbose(LogCategory.Enemy, name + " hit a wall at " + at.ToString("0.00") +
+                " - travel spent, dropping at " + velocity.y.ToString("0.00"));
+
+        velocity.x = 0f;
+    }
+
+    private void Land(Vector2 at)
+    {
+        transform.position = new Vector3(at.x, at.y, transform.position.z);
+        jumping = false;
+        velocity = Vector2.zero;
+        Show(idleSprite);
+        WaitAgain();
+
+        GameLog.Verbose(LogCategory.Enemy, name + " landed at " + at.ToString("0.00") +
+            " - wanted x " + landX.ToString("0.00") + ", went " + (at.x - jumpFrom.x).ToString("0.00") +
+            " of " + (landX - jumpFrom.x).ToString("0.00"));
+    }
+
+    private void WarnLost()
+    {
+        if (warnedLost)
+            return;
+
+        warnedLost = true;
+        GameLog.Warning(LogCategory.Enemy, "No ground under " + name + " at x " +
+            transform.position.x.ToString("0.00") + ", its jump had nowhere to land");
     }
 
     private void Show(Sprite sprite)

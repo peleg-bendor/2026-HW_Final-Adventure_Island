@@ -21,6 +21,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     private Vector2 home;
     private float feet = -1f;
     private float halfWidth = -1f;
+    private float halfHeight = -1f;
     private bool destroyed;
     private int lastTouchFrame = -1;
     private CancellationTokenSource respawn;
@@ -39,11 +40,13 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     // Where this was placed when the level was authored. Everything that puts it back puts it here.
     protected Vector2 Home { get { return home; } }
 
-    // How far the pivot sits above the bottom of its collider, and how far its front is from the
-    // middle. Measured on first use, not in Awake, where a collider's bounds are still a point.
+    // The shape of its own collider: how far the pivot sits above the bottom, and how far its side
+    // and top are from the middle. Measured on first use, not in Awake, where bounds are a point.
     protected float Feet { get { Measure(); return feet; } }
 
     protected float HalfWidth { get { Measure(); return halfWidth; } }
+
+    protected float HalfHeight { get { Measure(); return halfHeight; } }
 
     private void Measure()
     {
@@ -53,6 +56,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         Collider2D body = GetComponent<Collider2D>();
         feet = body != null ? Mathf.Max(0f, transform.position.y - body.bounds.min.y) : 0f;
         halfWidth = body != null ? body.bounds.extents.x : 0f;
+        halfHeight = body != null ? body.bounds.extents.y : 0f;
     }
 
     // The middle of his body rather than his transform, which sits at his feet.
@@ -69,8 +73,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
     }
 
-    // How far to the nearest ground along a ray, or infinity when there is none. The one place any
-    // enemy asks the level about its shape.
+    // How far to the nearest ground along a ray, or infinity when there is none.
     protected static float DistanceToTerrain(Vector2 from, Vector2 direction, float maxDistance)
     {
         float nearest = Mathf.Infinity;
@@ -82,6 +85,29 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         }
 
         return nearest;
+    }
+
+    // The same question asked with a body rather than a line, for anything that has to move its
+    // whole shape through the level and be stopped by what is in the way.
+    protected static bool SweepToTerrain(Vector2 from, Vector2 size, Vector2 direction,
+        float distance, out RaycastHit2D nearest)
+    {
+        nearest = new RaycastHit2D();
+        bool found = false;
+
+        foreach (RaycastHit2D hit in Physics2D.BoxCastAll(from, size, 0f, direction, distance))
+        {
+            if (IsTerrain(hit.collider) == false)
+                continue;
+
+            if (found == false || hit.distance < nearest.distance)
+            {
+                nearest = hit;
+                found = true;
+            }
+        }
+
+        return found;
     }
 
     // Terrain is the only solid collider in this game: every hazard, pickup, door, projectile and
