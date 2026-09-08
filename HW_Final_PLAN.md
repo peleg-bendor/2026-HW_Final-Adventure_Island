@@ -740,10 +740,11 @@ what the SOLID check finds, so the pool takes a prefab instead.
 
 Six steps, one enemy each, because each is one prefab, one tile id and one `Behave` and there is
 nothing to be gained by testing two at once. The base and the respawn timer arrive with the first
-of them; every later step is a subclass and a prefab. The six take **tile ids 11 to 16**.
+of them; every later step is a subclass and a prefab. **Ids start at 11 and append per prefab**,
+which is more than six: the עכביש alone needs two.
 
-1. The `Enemy` base and its fixed lifecycle, and עכביש. Static or moving is one prefab and a
-   `moveRange` where zero means static (8.7). This step is where the respawn timer, the contact
+1. The `Enemy` base and its fixed lifecycle, and עכביש. Static or moving is one class on two
+   prefabs (8.7), so ids 11 and 12 both go here. This step is where the respawn timer, the contact
    rule and both reset scopes are settled and tested.
 1. ציפור: leftward at a constant speed while dipping and rising, with speed, dip and wavelength
    per instance so a dip of zero flies straight (8.9). Switches itself off at the level's left
@@ -1040,8 +1041,13 @@ _(append entries here as we make design decisions.)_
   entry is not.
 - **A per-instance value is a field when it gets passed on and a subclass when it gets branched on.**
   The ביצה holds a `DropType` and hands it to the factory without ever asking what it is, so one
-  prefab. The spider's static-or-moving is a `moveRange` float where zero means static, which needs
-  no branch at all and is how 8.6 and 8.9 are worded. The two נחשים are two prefabs and two
+  prefab. The spider's static-or-moving was a `moveRange` float where zero means static;
+  **overturned at stage 14** in favour of one class on two prefabs, which is `Fruit_1` and `Fruit_2`'s
+  shape and no departure from this rule - the rule decides classes, and a bool that differs per
+  prefab is still a field. What forced it is that the instance was the only thing telling them apart,
+  so the log could not name which spider it meant and the difference had to be re-set by hand after
+  every repaint. It also lets the still prefab carry no `SpriteCycleAnimator` at all, so the script
+  no longer reaches into a component to switch one off. The two נחשים are two prefabs and two
   subclasses: one runs stand-hop-stand on a timer and the other tracks the player, fires, and needs a
   stop condition, so an `AttackType` enum would be tested every frame and half the serialized fields
   would be dead on each instance. That is the switch over enemy types the SOLID risk register
@@ -1895,28 +1901,23 @@ _(append entries here as we make design decisions.)_
   respawn under a popup can do is arrive at the state the restart was about to produce anyway.
   Worth being able to say at the defense, since "your timer does not pause" is the obvious probe and
   the answer is that there is no pause in this game that does not end in a full reset.
-- **The enemies take tile ids 11 to 16, and the weapon pickups take none.** `Sprite_Axe.prefab` and
+- **The enemies start at tile id 11, and the weapon pickups take none.** `Sprite_Axe.prefab` and
   `Sprite_Boomerang.prefab` carry the `Sprite_` prefix, which the naming rules reserve for things
   placed in a level, so they looked owed 11 and 12 first. Checked rather than assumed: neither
   appears anywhere in `Scene_Game.unity` and neither is in `TilePrefabMap.asset` - stage 13's `A`
   and `B` keys stood in for both, and 10.3 has weapons coming out of eggs. If stage 16 decides they
   are painted after all they append at 17 and 18, which the append rule already allows, so nothing is
-  lost by taking 11 to 16 now. **A note for stage 16:** if a weapon only ever drops, those two
+  lost by starting the enemies at 11 now. **A note for stage 16:** if a weapon only ever drops, those two
   prefabs are misnamed and lose the prefix.
 
-- **`OnAwake` is a fourth hook, and the static עכביש is what asked for it.** A spider that hangs
-  still shows one frame and a spider that drops and rises cycles two, so `SpriteCycleAnimator` has to
-  be switched off when `moveRange` is zero - and the base owns `Awake`, so a subclass has nowhere to
-  cache a component or read its own configuration once. The alternatives both lose. Ticking the
-  cycler's own checkbox per instance is a second hand-set value that can disagree with `moveRange`,
-  which is the failure `PlayerStart`'s facing and the fireball's prefab reference were both redesigned
-  to remove. Making `Awake` `protected virtual` the way `BaseProjectile` does lets a subclass forget
-  `base.Awake()` and silently lose its registration, which is the exact trap `Collectible` made
-  `Awake` private to close. So the base's private `Awake` calls an empty `OnAwake`, and the subclass
-  cannot skip the registration or reorder it. **It only ever disables the cycler, never enables one**,
-  because `SpriteCycleAnimator.Awake` switches itself off when it has no frames and component order
-  within a GameObject is not guaranteed - re-enabling would resurrect a component that had already
-  decided it could not run.
+- **`OnAwake` is a fourth hook, because the base owns `Awake` and a subclass still has components to
+  cache.** The עכביש reads how far its pivot sits above its feet, which is a constant of the prefab
+  and wrong to re-read at every spawn. Making `Awake` `protected virtual` the way `BaseProjectile`
+  does was the alternative, and it lets a subclass forget `base.Awake()` and silently lose its
+  registration - the exact trap `Collectible` made `Awake` private to close. So the base's private
+  `Awake` calls an empty `OnAwake`, and a subclass can neither skip the registration nor reorder it.
+  **This hook was first justified by the static spider switching off its own `SpriteCycleAnimator`,
+  and that job is gone**: two prefabs mean the still one simply has no cycler on it.
 - **`Spider`, not `EnemySpider`.** `Hazards/` holds `Fire`, `Rock` and `Spikes` under `Hazard` with
   no prefix, and that is the closer precedent than `Projectiles/`, where `ProjectileAxe` is prefixed
   only because a bare `Axe` would collide with the weapon the player carries. Six of `Enemy`, `Spider`,
@@ -1953,3 +1954,21 @@ _(append entries here as we make design decisions.)_
   out of the level. **The cost:** `Physics2D.RaycastAll` allocates, so this is a per-spawn allocation
   rather than a free one, and the nearest hit is picked explicitly rather than trusting the returned
   order.
+
+- **The floor ray skips the player as well as triggers, and finding out why cost a play session.**
+  The עכביש measured its drop as far as the first non-trigger collider, on the rule that terrain is
+  the only solid thing in the level - and forgot the player, who is the one documented exception,
+  named as such in `ProjectileAxe`'s own comment. `ResetAll` walks its list in registration order,
+  enemies register in `Awake` and `PlayerReset` in `OnEnable`, so a spider can measure its drop
+  before the player has been moved to the level start. Standing under one, he became its floor: the
+  travel came out near zero and the spider hung motionless while its `SpriteCycleAnimator` went on
+  animating, because that component is not gated by `Behave`. It started moving the moment he died
+  somewhere else. Ordering the registry was the alternative and it is the same trade the camera's
+  snap flag already refused - a rule every future resettable has to know, against one line here.
+- **The עכביש's swing is timed from its own spawn, not off the shared clock.** `SpriteCycleAnimator`
+  reads `Time.time` so that a row of מדורות flickers together, and the spider copied it - which meant
+  a reset put the spider back at its authored position and the next frame threw it wherever the
+  global clock happened to be, so it visibly did not start at home. Spiders share nothing worth
+  synchronising: they hang at different heights over different floors, so their travels differ and
+  "in step" has no meaning. Timing from the spawn makes 8.6 read literally - it starts at the top,
+  drops to the floor, comes back - and makes a reset look like a reset.
