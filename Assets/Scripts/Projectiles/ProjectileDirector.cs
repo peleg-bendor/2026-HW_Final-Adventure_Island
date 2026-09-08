@@ -33,6 +33,18 @@ public class ProjectileDirector : IInitializable
     // there is.
     private const float BoomerangMaxSeconds = 10f;
 
+    // Flat and level, with no weight of its own, so a snake's reach is exactly its range.
+    private const float FireballSpeed = 6f;
+    private const float FireballLift = 0f;
+    private const float FireballGravity = 0f;
+    private const float FireballRange = 9f;
+
+    // Enough for three snakes firing at once: at this speed and range each has two in the air.
+    private const int FireballCount = 6;
+
+    // A backstop, for a fireball whose range is ever set to zero.
+    private const float FireballMaxSeconds = 4f;
+
     private readonly IProjectileBuilder builder;
     private readonly IProjectilePool pool;
     private readonly ProjectilePrefabs prefabs;
@@ -48,6 +60,7 @@ public class ProjectileDirector : IInitializable
     {
         Fill(prefabs.axe, AxeCount, ConstructAxe);
         Fill(prefabs.boomerang, BoomerangCount, ConstructBoomerang);
+        Fill(prefabs.fireball, FireballCount, ConstructFireball);
     }
 
     // One recipe, applied as many times as that projectile has copies. The delegate is what keeps
@@ -103,5 +116,14 @@ public class ProjectileDirector : IInitializable
         builder.SetGravity(BoomerangGravity);
         builder.SetRange(BoomerangRange);
         builder.SetMaxSeconds(BoomerangMaxSeconds);
+    }
+
+    private void ConstructFireball()
+    {
+        builder.SetSpeed(FireballSpeed);
+        builder.SetLift(FireballLift);
+        builder.SetGravity(FireballGravity);
+        builder.SetRange(FireballRange);
+        builder.SetMaxSeconds(FireballMaxSeconds);
     }
 }

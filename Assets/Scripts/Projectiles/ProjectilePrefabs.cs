@@ -8,4 +8,5 @@ public class ProjectilePrefabs
 {
     public GameObject axe;
     public GameObject boomerang;
+    public GameObject fireball;
 }
