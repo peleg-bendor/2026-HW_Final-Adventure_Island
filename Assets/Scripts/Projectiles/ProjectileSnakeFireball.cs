@@ -3,7 +3,7 @@ using Zenject;
 
 // The shooting snake's fireball. Flies straight, costs the player a strike, and passes through every
 // other enemy - which is the whole of the rule that an enemy's shot can never kill another enemy.
-public class ProjectileFireball : BaseProjectile, IDestructible
+public class ProjectileSnakeFireball : BaseProjectile, IDestructible
 {
     private IGameFlow flow;
     private IPlayerGuard guard;
@@ -23,7 +23,7 @@ public class ProjectileFireball : BaseProjectile, IDestructible
             return false;
 
         Despawn();
-        GameLog.Verbose(LogCategory.Projectile, "Fireball put out - " + by);
+        GameLog.Verbose(LogCategory.Projectile, "Snake fireball put out - " + by);
         return true;
     }
 
@@ -47,11 +47,11 @@ public class ProjectileFireball : BaseProjectile, IDestructible
 
             if (flow == null)
             {
-                GameLog.Warning(LogCategory.Projectile, "No IGameFlow injected, the fireball costs nothing");
+                GameLog.Warning(LogCategory.Projectile, "No IGameFlow injected, the snake fireball costs nothing");
                 return;
             }
 
-            GameLog.Info(LogCategory.Projectile, "Fireball hit the player - a strike is owed");
+            GameLog.Info(LogCategory.Projectile, "Snake fireball hit the player - a strike is owed");
             flow.LoseStrike();
             return;
         }

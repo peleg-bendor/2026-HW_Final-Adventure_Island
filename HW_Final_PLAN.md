@@ -1747,7 +1747,9 @@ _(append entries here as we make design decisions.)_
   **Filling the pool at startup** then makes the cap and the pool's size the same number by
   construction, and lets the claim be the strong one - after startup this game never instantiates a
   projectile. It also removes a temporal coupling, since a lazily-creating pool would have to call
-  the builder while the director's setters were still loaded.
+  the builder while the director's setters were still loaded. **Half of that was overturned at stage
+  14**: the cap and the size are the same number only where the cap is a requirement, which is the
+  axe and the boomerang and not the נחש's fireball - see the entry on a pool that grows.
 - **The cap is his number, not ours.** 00:31:35: "אתם לא יכולים לזרוק 10 אלף, אתם זורקים איזה שלוש,
   אחת, שתיים, שלוש" - three axes, and he describes the cap and the delay of 6.7 as the same
   observation. One boomerang, since it returns to the player and having two in the air has no
@@ -2083,3 +2085,30 @@ _(append entries here as we make design decisions.)_
   in `Awake` and applied to the live transform, the enemy on first use. **The rule worth carrying:**
   `Collider2D.bounds` is only true between a physics sync and the next transform write, so anything
   derived from it either gets read every frame or gets measured once somewhere safe.
+
+- **A pool's size is a cap only where the cap is a requirement, and the נחש's fireball is where that
+  broke.** Stage 13 filled every pool at startup and treated its size as the limit on how many could
+  be in the air, which is exactly right for the axe - 6.7 says three, it is his own number, and
+  pre-filling makes it true by construction instead of by a check someone could forget. Nothing says
+  how many flames a snake may have out. So the fireball's number was a cap that was pretending to be
+  a rule, and with seven shooters in a test level it starved them: two flames alive per snake against
+  a pool of six. Peleg's objection, and it is the right one - nobody can know how many shooters a
+  level will hold. **So the director keeps each recipe past startup** and builds one more when a kind
+  whose count is not a rule runs dry, which settles in the first seconds of a level and never
+  happens again, since pools do not shrink. The axe and the boomerang refuse to grow, so a fourth axe
+  is still impossible. The claim gets longer and more accurate: *the axe's pool exists because three
+  is a rule of the game; the snake's exists so the game stops allocating, so its size is a starting
+  point.*
+- **Three ways were weighed and two rejected, one of them Exercise 3's.** Not pooling enemy shots at
+  all is what Exercise 3 did - `EnemyRangedAttack.Shoot` calls `Instantiate` every time, and only the
+  player's laser was ever pooled, by a singleton with a static `Instance` that returned null and
+  silently refused to fire when its five were out. The same starvation, hidden by having one
+  consumer. It loses here on three counts: `BaseProjectile.Despawn` is `SetActive(false)`, so an
+  unpooled fireball would need `Destroy` and one subclass would mean something different by the same
+  method; the Builder drops from four recipes to three, which weakens the answer to "isn't this the
+  laser again"; and seven snakes firing every 1.2 seconds is about 1,800 creations in a five-minute
+  session against roughly a hundred axes, so the enemy's shots are the *heavier* pooling candidate on
+  the only ground pooling exists for. Counting the shooters in the scene at startup was the third
+  option, and it keeps the flat claim true at the price of pointing `Projectiles/` at `Enemies/` and
+  a "two flames per shooter" multiplier that is itself derived from speed, range and interval - a
+  better-informed guess rather than no guess.

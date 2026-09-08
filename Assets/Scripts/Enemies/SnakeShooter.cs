@@ -8,7 +8,7 @@ public class SnakeShooter : Enemy
     // How long between shots, in seconds.
     [SerializeField, Min(0.1f)] private float secondsBetweenShots = 1.2f;
 
-    // Where a shot leaves from, relative to the pivot. X mirrors with its facing.
+    // Where a shot leaves from, relative to the pivot at its feet. X mirrors with its facing.
     [SerializeField] private Vector2 muzzle = new Vector2(0.6f, 0.9f);
 
     // How long the firing pose is held after a shot, in seconds.
@@ -78,9 +78,9 @@ public class SnakeShooter : Enemy
     {
         lastShotAt = Time.time;
 
-        if (director == null || prefabs == null || prefabs.fireball == null)
+        if (director == null || prefabs == null || prefabs.snakeFireball == null)
         {
-            GameLog.Warning(LogCategory.Enemy, "No ProjectileDirector or no fireball prefab, " + name + " cannot shoot");
+            GameLog.Warning(LogCategory.Enemy, "No ProjectileDirector or no snake fireball prefab, " + name + " cannot shoot");
             return;
         }
 
@@ -89,7 +89,7 @@ public class SnakeShooter : Enemy
 
         float direction = FacesRight ? 1f : -1f;
         Vector2 origin = (Vector2)transform.position + new Vector2(muzzle.x * direction, muzzle.y);
-        director.Throw(prefabs.fireball, origin, direction);
+        director.Throw(prefabs.snakeFireball, origin, direction);
     }
 
     private void Show(Sprite sprite)

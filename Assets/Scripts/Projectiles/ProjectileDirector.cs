@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
-// The recipes: what makes something an axe rather than a boomerang, and how many of each may be in
-// the air. Builds every one of them at startup, so nothing is instantiated mid-game.
+// The recipes: what makes something an axe rather than a boomerang, and how many of each the pool
+// starts with. It keeps every recipe, so a kind whose count is not a game rule can be added to.
 public class ProjectileDirector : IInitializable
 {
     // Thrown forward and up, falling under its own weight until it lands. No range: it flies until
@@ -33,17 +34,28 @@ public class ProjectileDirector : IInitializable
     // there is.
     private const float BoomerangMaxSeconds = 10f;
 
-    // Flat and level, with no weight of its own, so a snake's reach is exactly its range.
-    private const float FireballSpeed = 6f;
-    private const float FireballLift = 0f;
-    private const float FireballGravity = 0f;
-    private const float FireballRange = 9f;
+    // Flat and weightless, so a snake's reach is exactly its range.
+    private const float SnakeFireballSpeed = 6f;
+    private const float SnakeFireballLift = 0f;
+    private const float SnakeFireballGravity = 0f;
+    private const float SnakeFireballRange = 9f;
 
-    // Enough for three snakes firing at once: at this speed and range each has two in the air.
-    private const int FireballCount = 6;
+    // Two snakes' worth to start with. How many a level really wants depends on how many shooters
+    // are in it, which is not knowable from here, so this one grows.
+    private const int SnakeFireballCount = 4;
 
     // A backstop, for a fireball whose range is ever set to zero.
-    private const float FireballMaxSeconds = 4f;
+    private const float SnakeFireballMaxSeconds = 4f;
+
+    // A recipe, and whether the count it came with is a rule of the game or only a starting size.
+    // The axe's three is 6.7; a snake's flames are however many its level turns out to need.
+    private class Recipe
+    {
+        public System.Action Construct;
+        public bool CountIsARule;
+    }
+
+    private readonly Dictionary<GameObject, Recipe> recipes = new Dictionary<GameObject, Recipe>();
 
     private readonly IProjectileBuilder builder;
     private readonly IProjectilePool pool;
@@ -58,14 +70,14 @@ public class ProjectileDirector : IInitializable
 
     public void Initialize()
     {
-        Fill(prefabs.axe, AxeCount, ConstructAxe);
-        Fill(prefabs.boomerang, BoomerangCount, ConstructBoomerang);
-        Fill(prefabs.fireball, FireballCount, ConstructFireball);
+        Fill(prefabs.axe, AxeCount, ConstructAxe, true);
+        Fill(prefabs.boomerang, BoomerangCount, ConstructBoomerang, true);
+        Fill(prefabs.snakeFireball, SnakeFireballCount, ConstructSnakeFireball, false);
     }
 
-    // One recipe, applied as many times as that projectile has copies. The delegate is what keeps
+    // One recipe, applied as many times as that projectile starts with. The delegate is what keeps
     // this from being a switch over projectile kinds.
-    private void Fill(GameObject prefab, int count, System.Action construct)
+    private void Fill(GameObject prefab, int count, System.Action construct, bool countIsARule)
     {
         if (prefab == null)
         {
@@ -73,13 +85,20 @@ public class ProjectileDirector : IInitializable
             return;
         }
 
+        recipes[prefab] = new Recipe { Construct = construct, CountIsARule = countIsARule };
+
         for (int i = 0; i < count; i++)
-        {
-            construct();
-            pool.Add(prefab, builder.Build(prefab));
-        }
+            Build(prefab);
 
         GameLog.Info(LogCategory.Projectile, "Pooled " + count + " of " + prefab.name);
+    }
+
+    private BaseProjectile Build(GameObject prefab)
+    {
+        recipes[prefab].Construct();
+        BaseProjectile projectile = builder.Build(prefab);
+        pool.Add(prefab, projectile);
+        return projectile;
     }
 
     // One method however many projectiles there are, since the caller already holds the prefab it
@@ -92,12 +111,29 @@ public class ProjectileDirector : IInitializable
         BaseProjectile projectile = pool.Get(prefab);
 
         if (projectile == null)
+            projectile = AddOne(prefab);
+
+        if (projectile == null)
         {
             GameLog.Verbose(LogCategory.Projectile, prefab.name + " throw ignored - every copy is already in flight");
             return;
         }
 
         projectile.Launch(origin, direction);
+    }
+
+    // Refused for a kind whose count is a rule, so a fourth axe is impossible. For the rest this
+    // settles in the first seconds of a level and never happens again, since pools do not shrink.
+    private BaseProjectile AddOne(GameObject prefab)
+    {
+        Recipe recipe;
+
+        if (recipes.TryGetValue(prefab, out recipe) == false || recipe.CountIsARule)
+            return null;
+
+        BaseProjectile extra = Build(prefab);
+        GameLog.Verbose(LogCategory.Projectile, "Pooled one more " + prefab.name + " - this level wanted more");
+        return extra;
     }
 
     private void ConstructAxe()
@@ -118,12 +154,12 @@ public class ProjectileDirector : IInitializable
         builder.SetMaxSeconds(BoomerangMaxSeconds);
     }
 
-    private void ConstructFireball()
+    private void ConstructSnakeFireball()
     {
-        builder.SetSpeed(FireballSpeed);
-        builder.SetLift(FireballLift);
-        builder.SetGravity(FireballGravity);
-        builder.SetRange(FireballRange);
-        builder.SetMaxSeconds(FireballMaxSeconds);
+        builder.SetSpeed(SnakeFireballSpeed);
+        builder.SetLift(SnakeFireballLift);
+        builder.SetGravity(SnakeFireballGravity);
+        builder.SetRange(SnakeFireballRange);
+        builder.SetMaxSeconds(SnakeFireballMaxSeconds);
     }
 }
