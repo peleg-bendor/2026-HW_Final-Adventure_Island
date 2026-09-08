@@ -1,7 +1,7 @@
 using UnityEngine;
 
-// A snake that stands, hops a short way in the direction it faces, and stands again. A wall turns
-// it and so does a drop with nothing at the bottom, but a lower floor is only a longer hop.
+// A snake that stands, hops a short way in the direction it faces, and stands again. A wall cuts a
+// hop short and turns it on landing; a lower floor is only a longer arc.
 public class SnakeJumper : Enemy
 {
     // How far each hop carries it, in units.
@@ -21,9 +21,11 @@ public class SnakeJumper : Enemy
     [SerializeField] private Sprite jumpingSprite;
 
     private SpriteRenderer art;
+    private float halfWidth;
     private bool authoredRight;
 
     private bool hopping;
+    private bool turnOnLanding;
     private float hopStartedAt;
     private Vector2 hopFrom;
     private Vector2 hopTo;
@@ -52,6 +54,9 @@ public class SnakeJumper : Enemy
         if (art == null)
             GameLog.Warning(LogCategory.Enemy, "No SpriteRenderer found on " + name + ", it will not change pose");
 
+        Collider2D body = GetComponent<Collider2D>();
+        halfWidth = body != null ? body.bounds.extents.x : 0f;
+
         // Read before anything flips it, so a snake that turned at a wall still comes back facing
         // the way it was placed.
         authoredRight = FacesRight;
@@ -61,6 +66,7 @@ public class SnakeJumper : Enemy
     {
         Face(authoredRight);
         hopping = false;
+        turnOnLanding = false;
         standingSince = Time.time;
         Show(standingSprite);
     }
@@ -81,17 +87,22 @@ public class SnakeJumper : Enemy
     {
         Vector2 from = transform.position;
         float direction = FacesRight ? 1f : -1f;
+
+        // Cut short by a wall rather than refused by one, so it visibly bumps into it instead of
+        // stopping two cells away from something it never touched.
+        float reach = ReachBefore(from, direction);
         Vector2 landing;
 
-        if (FindLanding(from, direction, out landing) == false)
+        if (FindGround(new Vector2(from.x + direction * reach, from.y + hopHeight), out landing) == false)
         {
-            // Turned rather than refused, so the next hop goes the other way instead of standing
-            // against a wall forever.
+            // Nothing to come down on is the one thing that refuses a hop, since there would be no
+            // end to the arc.
             Face(FacesRight == false);
             standingSince = Time.time;
             return;
         }
 
+        turnOnLanding = reach < hopDistance;
         hopFrom = from;
         hopTo = landing;
         hopping = true;
@@ -109,6 +120,13 @@ public class SnakeJumper : Enemy
             hopping = false;
             standingSince = Time.time;
             Show(standingSprite);
+
+            if (turnOnLanding)
+            {
+                turnOnLanding = false;
+                Face(FacesRight == false);
+            }
+
             return;
         }
 
@@ -119,19 +137,28 @@ public class SnakeJumper : Enemy
         transform.position = new Vector3(x, y, transform.position.z);
     }
 
-    // Refused by something solid in the way or by nothing solid to come down on. A one-cell step
-    // ahead reads as a wall to the same ray, so it can fall but not climb.
-    private bool FindLanding(Vector2 from, float direction, out Vector2 landing)
+    // How far it can travel before its body meets something solid, never more than a whole hop.
+    private float ReachBefore(Vector2 from, float direction)
     {
-        landing = from;
+        float nearest = Mathf.Infinity;
 
-        foreach (RaycastHit2D hit in Physics2D.RaycastAll(from, Vector2.right * direction, hopDistance))
+        foreach (RaycastHit2D hit in Physics2D.RaycastAll(from, Vector2.right * direction, hopDistance + halfWidth))
         {
             if (IsTerrain(hit.collider))
-                return false;
+                nearest = Mathf.Min(nearest, hit.distance);
         }
 
-        Vector2 above = new Vector2(from.x + direction * hopDistance, from.y + hopHeight);
+        if (float.IsInfinity(nearest))
+            return hopDistance;
+
+        // Measured from the middle, so its front stops at the wall face rather than inside it.
+        return Mathf.Clamp(nearest - halfWidth, 0f, hopDistance);
+    }
+
+    // The nearest thing to come down on below a point, and where the pivot sits once it has landed.
+    private bool FindGround(Vector2 above, out Vector2 landing)
+    {
+        landing = above;
         float nearest = Mathf.Infinity;
 
         foreach (RaycastHit2D hit in Physics2D.RaycastAll(above, Vector2.down))

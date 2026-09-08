@@ -56,11 +56,14 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
     }
 
-    // Terrain is the only solid collider in this game: every hazard, pickup, door, projectile and
-    // enemy is a trigger, and the player is the one solid thing that is not ground.
+    // What a creature comes down on: solid terrain, or the spikes that floor a pit. Everything else
+    // in this game is a trigger, and the player is the one solid thing that is not ground.
     protected static bool IsTerrain(Collider2D collider)
     {
-        return collider != null && collider.isTrigger == false && collider.GetComponent<Player>() == null;
+        if (collider == null || collider.GetComponent<Player>() != null)
+            return false;
+
+        return collider.isTrigger == false || collider.GetComponent<Spikes>() != null;
     }
 
     // What is allowed to destroy this enemy. One line per subclass, and it is the whole rule.
