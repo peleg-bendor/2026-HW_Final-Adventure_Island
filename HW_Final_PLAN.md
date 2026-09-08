@@ -2058,3 +2058,28 @@ _(append entries here as we make design decisions.)_
   emptied the עכביש's `OnAwake` completely. **The consolidation left undone, deliberately:**
   `ProjectileAxe` still writes the test inline, because moving it into an extension method is a
   fourth site and a new folder in a stage that is not about projectiles.
+
+- **The נחש's fall is the hop's own parabola, and finding that out deleted a state.** The jump ran to
+  `t = 1` and a second `falling` state then re-derived the speed and acceleration to continue with -
+  `4·hopHeight/hopSeconds` and `8·hopHeight/hopSeconds²`, which are exactly what
+  `hopHeight·4t(1−t)` already has at `t = 1`. So the fall is that expression with `t` left to run and
+  `x` clamped at the landing column, which is the column the ground ray had just proved was clear.
+  One bool, one timer, one method and two hand-derived formulas gone, with identical motion.
+  **What made it necessary in the first place** was that a single arc from take-off to a landing five
+  units below descends almost vertically while `x` barely moves, so it cut straight down through the
+  platform it had just left - Peleg watched a snake fall through the ledge beside the pit. A level
+  jump followed by a fall cannot, by construction rather than by tuning.
+- **One terrain ray for every enemy, after the same eight lines had been written three times.**
+  `Spider.MeasureDrop`, and the נחש's wall check and ground check, were each casting, filtering to
+  terrain, taking the nearest and handling "none". `DistanceToTerrain` on the base replaced all
+  three, and `IsTerrain` went private with it, since nothing outside the base asks that question any
+  more. The rule of thumb that produced it: the third copy is the one that gets extracted, not the
+  second.
+- **Two bounds-timing bugs in one stage, and they have the same shape.** `Player.Middle` read
+  `Collider2D.bounds` after a reset had teleported him outside a physics sync; `Enemy` read
+  `bounds.min` inside `Awake`, where a collider has not registered yet and its bounds are still a
+  point, which put every enemy half a cell into the floor. Both values are constants of the object,
+  and the fix in both cases was to measure once away from the moment that made it wrong - the player
+  in `Awake` and applied to the live transform, the enemy on first use. **The rule worth carrying:**
+  `Collider2D.bounds` is only true between a physics sync and the next transform write, so anything
+  derived from it either gets read every frame or gets measured once somewhere safe.

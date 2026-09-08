@@ -46,13 +46,7 @@ public class Spider : Enemy
     // How far the pivot can fall before the sprite's feet reach whatever is underneath.
     private float MeasureDrop()
     {
-        float nearest = Mathf.Infinity;
-
-        foreach (RaycastHit2D hit in Physics2D.RaycastAll(Home, Vector2.down))
-        {
-            if (IsTerrain(hit.collider))
-                nearest = Mathf.Min(nearest, hit.distance);
-        }
+        float nearest = DistanceToTerrain(Home, Vector2.down, Mathf.Infinity);
 
         if (float.IsInfinity(nearest))
         {

@@ -69,9 +69,24 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
     }
 
+    // How far to the nearest ground along a ray, or infinity when there is none. The one place any
+    // enemy asks the level about its shape.
+    protected static float DistanceToTerrain(Vector2 from, Vector2 direction, float maxDistance)
+    {
+        float nearest = Mathf.Infinity;
+
+        foreach (RaycastHit2D hit in Physics2D.RaycastAll(from, direction, maxDistance))
+        {
+            if (IsTerrain(hit.collider))
+                nearest = Mathf.Min(nearest, hit.distance);
+        }
+
+        return nearest;
+    }
+
     // Terrain is the only solid collider in this game: every hazard, pickup, door, projectile and
     // enemy is a trigger, and the player is the one solid thing that is not ground.
-    protected static bool IsTerrain(Collider2D collider)
+    private static bool IsTerrain(Collider2D collider)
     {
         return collider != null && collider.isTrigger == false && collider.GetComponent<Player>() == null;
     }
