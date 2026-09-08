@@ -95,10 +95,4 @@ public class Bird : Enemy
             Face(false);
         }
     }
-
-    // The art faces right, so it is mirrored for the swoop and turned back for the flight home.
-    private void Face(bool right)
-    {
-        transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
-    }
 }

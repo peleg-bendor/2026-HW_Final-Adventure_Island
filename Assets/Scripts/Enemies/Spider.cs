@@ -10,7 +10,6 @@ public class Spider : Enemy
     // How fast it drops and rises, in units per second.
     [SerializeField, Min(0f)] private float moveSpeed = 2f;
 
-    private float feet;
     private float travel;
     private float spawnedAt;
     private bool warnedNoFloor;
@@ -23,21 +22,6 @@ public class Spider : Enemy
             return Destroyer.Axe | Destroyer.Boomerang | Destroyer.AnimalAttack | Destroyer.Riding |
                    Destroyer.Fairy;
         }
-    }
-
-    protected override void OnAwake()
-    {
-        Collider2D body = GetComponent<Collider2D>();
-
-        if (body == null)
-        {
-            GameLog.Warning(LogCategory.Enemy, "No Collider2D found on " + name + ", it will stop with its middle in the floor");
-            return;
-        }
-
-        // How far the pivot sits above the sprite's feet. A constant of the prefab, so it is read
-        // here rather than at every spawn.
-        feet = transform.position.y - body.bounds.min.y;
     }
 
     // Measured at every spawn rather than once, so a spider that came back somewhere else still
@@ -66,17 +50,8 @@ public class Spider : Enemy
 
         foreach (RaycastHit2D hit in Physics2D.RaycastAll(Home, Vector2.down))
         {
-            // Terrain is the only solid collider in this game, so triggers are every hazard, pickup
-            // and door - and this spider's own.
-            if (hit.collider == null || hit.collider.isTrigger)
-                continue;
-
-            // The player is the one solid thing that is not terrain, and a reset may not have moved
-            // him out from under this spider yet.
-            if (hit.collider.GetComponent<Player>() != null)
-                continue;
-
-            nearest = Mathf.Min(nearest, hit.distance);
+            if (IsTerrain(hit.collider))
+                nearest = Mathf.Min(nearest, hit.distance);
         }
 
         if (float.IsInfinity(nearest))
@@ -91,6 +66,6 @@ public class Spider : Enemy
             return 0f;
         }
 
-        return Mathf.Max(0f, nearest - feet);
+        return Mathf.Max(0f, nearest - Feet);
     }
 }

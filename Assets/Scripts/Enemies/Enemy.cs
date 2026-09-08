@@ -19,6 +19,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     private Player player;
 
     private Vector2 home;
+    private float feet;
     private bool destroyed;
     private int lastTouchFrame = -1;
     private CancellationTokenSource respawn;
@@ -37,10 +38,29 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     // Where this was placed when the level was authored. Everything that puts it back puts it here.
     protected Vector2 Home { get { return home; } }
 
+    // How far the pivot sits above the bottom of the collider, so anything that lands on a floor
+    // lands on its feet. A constant of the prefab, measured once.
+    protected float Feet { get { return feet; } }
+
     // The middle of his body rather than his transform, which sits at his feet.
     protected Vector2 PlayerPosition
     {
         get { return player != null ? player.Middle : (Vector2)transform.position; }
+    }
+
+    // Every sprite in this project is drawn facing right, so a positive scale is a rightward one.
+    protected bool FacesRight { get { return transform.localScale.x > 0f; } }
+
+    protected void Face(bool right)
+    {
+        transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
+    }
+
+    // Terrain is the only solid collider in this game: every hazard, pickup, door, projectile and
+    // enemy is a trigger, and the player is the one solid thing that is not ground.
+    protected static bool IsTerrain(Collider2D collider)
+    {
+        return collider != null && collider.isTrigger == false && collider.GetComponent<Player>() == null;
     }
 
     // What is allowed to destroy this enemy. One line per subclass, and it is the whole rule.
@@ -58,6 +78,13 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     private void Awake()
     {
         home = transform.position;
+
+        Collider2D body = GetComponent<Collider2D>();
+
+        if (body != null)
+            feet = transform.position.y - body.bounds.min.y;
+        else
+            GameLog.Warning(LogCategory.Enemy, "No Collider2D found on " + name + ", it cannot be touched or destroyed");
 
         if (registry != null)
             registry.Register(this);

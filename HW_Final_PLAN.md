@@ -2013,3 +2013,48 @@ _(append entries here as we make design decisions.)_
   and a helper written for a caller that no longer exists is exactly what code quality rule 5 refuses.
   Recorded because the distinction it was going to name is still real and the rule still needs stating
   somewhere: only `Die` sets `destroyed`, and only `destroyed` survives a פסילה.
+
+- **`Player.Middle` came off `Collider2D.bounds`, and a reset teleports him outside a physics sync.**
+  A bird launched on the frame a game restarted, with the player twelve units away at the level start,
+  and only ever the bird he had died touching. `Enemy.IsPlayerNear` measures to `Player.Middle`, which
+  read `bounds.center`; `Physics2D.autoSyncTransforms` is off by default, so on the frame
+  `PlayerReset` writes his transform his collider still reports where he died - inside that bird. The
+  gate passed for one frame, `IsMidAction` then carried the swoop and the flight home, and one stale
+  frame bought four seconds of visible nonsense. The offset from his transform to his collider's
+  centre is a constant, so it is measured once in `Awake` and applied to the live transform, which
+  says exactly what `bounds.center` said without depending on when physics last synced. It fixes the
+  boomerang's return target on a reset frame too, which nobody would ever have noticed.
+  `Physics2D.SyncTransforms()` inside `PlayerReset` was the alternative and covers any future reader
+  of his collider; it loses on putting a global physics call in a reset path for one consumer.
+  **The line that caught it was added to catch it**: a bird logs the distance it launched at, kept at
+  `Verbose` because a launch repeats on a cycle. Confirmed by reproducing the death and reading the
+  log, not by reasoning.
+
+- **Every sprite in this project faces right, so a positive scale is a rightward thing.** Written
+  down because it was briefly doubted: the ציפור, the two נחשים and the צפרדע were read off
+  thumbnails as facing different ways, and at four times the size the snake's snout and the frog's
+  mouth both plainly point right. The עכביש and the רוח רפאים are symmetrical and have no facing at
+  all. So `Face(bool right)` moves from `Bird` onto `Enemy` unchanged, and mirroring six PNGs to
+  impose a convention that already held was not needed.
+- **A direction is authored by flipping the thing in the Scene view, and captured before anything
+  writes it.** The נחש reads `FacesRight` once in `OnAwake` and restores it at every spawn, so a
+  snake that turned at a wall comes back facing the way it was placed. That is `PlayerStart`'s
+  argument - what it shows and what it does cannot disagree - with the one addition `PlayerStart`
+  does not need, since nothing ever flips a start marker at runtime.
+- **The נחש turns at a wall but not at a ledge.** Peleg's rule: falling to lower ground is not
+  something that should stop it. So the hop is refused only by something solid in the way or by
+  nothing solid to come down on, and a floor lower than this one is just a longer arc - the hop
+  interpolates between its two ends and adds the parabola, so it handles any drop without a second
+  case. Turning at a ledge was the first draft and it makes a snake pace a platform like a Goomba,
+  which is tidier and is not what a snake in this game does. **Nothing in it forbids climbing**: the
+  landing ray starts a hop's height above the snake, so it will land on anything up to that much
+  higher. What stops it on this terrain is that a one-cell step's body blocks the horizontal ray
+  first, which is the level's geometry and not a rule in the code.
+- **`IsTerrain` is on `Enemy` because the same test now has three call sites.** The rule that terrain
+  is the only solid collider in this game - every hazard, pickup, door, projectile and enemy is a
+  trigger, and the player is the one solid thing that is not ground - was written out in
+  `ProjectileAxe`, then again in the עכביש's drop, and the נחש needs it twice more. `Feet`, the
+  distance from a pivot to the bottom of its collider, moved onto the base for the same reason and
+  emptied the עכביש's `OnAwake` completely. **The consolidation left undone, deliberately:**
+  `ProjectileAxe` still writes the test inline, because moving it into an extension method is a
+  fourth site and a new folder in a stage that is not about projectiles.
