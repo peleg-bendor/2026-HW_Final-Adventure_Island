@@ -182,9 +182,12 @@ objects and enemies.
 1. A destroyed enemy may drop something to collect. **What it drops is configured per enemy, never
    rolled at runtime**, and "drops nothing" is one of the options (00:46:39). The original game has
    no randomness in it at all (00:37:46).
-1. A destroyed enemy comes back where it died after a countdown. **This delay is random**, suggested
-   `10` to `20` seconds (00:44:49). One of the two things he asked to be random, the other being
-   the צפרדע's jump timing in 8.18. Nothing else in the game is rolled.
+1. A destroyed enemy comes back after a countdown, **at the place it was authored**. **This delay is
+   random**, suggested `10` to `20` seconds (00:44:49). One of the two things he asked to be random,
+   the other being the צפרדע's jump timing in 8.18. Nothing else in the game is rolled. He calls it
+   a "ספונר" and never says where the enemy reappears; an earlier draft of this line said "where it
+   died", which was ours and is wrong for anything on an authored path -- a ציפור killed halfway
+   through a swoop has no meaningful place to come back to.
 1. The game should not be difficult (00:43:21): "לא שהמשחק יהיה קשה. המשחק לא צריך להיות קשה. מה
    שמעניין אותי לראות שזה עובד".
 
@@ -201,8 +204,12 @@ objects and enemies.
    high (00:39:58). Speed, dip depth and wavelength are per-instance fields, so a bird with a dip of
    zero flies straight and stays high.
 10. A bird kept high is the game's way of signalling a drop worth the effort of reaching it.
-11. Leaves the level at the left edge and despawns. It does not loop back. The respawn timer in 8.4
-    applies only to enemies that were destroyed.
+11. A bird waits at its perch until the player is within range **and to its left**, then swoops
+    leftward through one dip and rises to the far end of the swoop, then flies back to its perch and
+    waits again. Perch, dip depth and swoop distance are per-instance. Neither source describes what
+    a bird does after its pass -- an earlier draft of this line said it left at the level's left edge
+    and did not loop back, and that was ours, not his. The cycle is ours too, and its reason is 8.10:
+    a bird you get one pass at makes the drop a coin flip rather than something you work for.
 
 ### נחש, the jumper
 

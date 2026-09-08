@@ -746,9 +746,9 @@ which is more than six: the עכביש alone needs two.
 1. The `Enemy` base and its fixed lifecycle, and עכביש. Static or moving is one class on two
    prefabs (8.7), so ids 11 and 12 both go here. This step is where the respawn timer, the contact
    rule and both reset scopes are settled and tested.
-1. ציפור: leftward at a constant speed while dipping and rising, with speed, dip and wavelength
-   per instance so a dip of zero flies straight (8.9). Switches itself off at the level's left
-   edge (8.11).
+1. ציפור: perches until the player is near and to its left, swoops through one dip, then flies
+   home and waits again (8.11 as rewritten). Speed, dip depth and swoop distance per instance, so
+   a dip of zero passes level and high (8.9).
 1. נחש, the jumper: stand, hop forward, stand, repeat (8.12).
 1. נחש, the shooter: fires while the player is in range and stops when he leaves it, which is
    8.14 and 8.15 answered by the same number. Its fireball is a fourth recipe in
@@ -1972,3 +1972,44 @@ _(append entries here as we make design decisions.)_
   synchronising: they hang at different heights over different floors, so their travels differ and
   "in step" has no meaning. Timing from the spawn makes 8.6 read literally - it starts at the top,
   drops to the floor, comes back - and makes a reset look like a reset.
+
+- **Two clauses of section 8 were invented in Stage 0, and both were caught by designing against
+  them.** 8.11 said a ציפור "leaves the level at the left edge and despawns. It does not loop back",
+  and 8.4 said a destroyed enemy "comes back where it died". Grepping both sources for either finds
+  nothing: the written text's entire sentence on the bird is "ציפור - נעה לכיוון לשמאל יורדת
+  ועולה", the transcript adds only constant speed, two axes, a per-bird dip amount and the
+  high-bird-drops-something point, and at 00:44:49 he says "ברגע שהאויב מושמד, צריך להיות לו ספונר"
+  without ever saying where it reappears. Both invented clauses had shaped real design decisions -
+  the first produced a bird that parks off-camera, the second a bird that would have respawned
+  mid-swoop. **The lesson for the remaining four enemies:** the requirements document is a reading,
+  and where a line carries no timestamp and no quote it is worth re-checking against the transcript
+  before building to it.
+- **The ציפור perches, swoops and returns, which is ours and not his.** Peleg's design, from
+  playing it: a bird that passes once gives the player about two seconds to earn the drop that 8.10
+  says he should have to work for, and after that the drop is unreachable until he dies. So the bird
+  waits at its authored perch, launches when the player is within range **and to its left** - flying
+  left at someone already to the right only takes it away from him - dips through one cosine and
+  rises to the far end, then flies home and waits. The only line in either source it bends is
+  "אז זה תמיד נע על שני צירים", since a perched bird moves on none; the wings keep flapping, so it
+  reads as hovering. The defense answer is his own sentence at 00:39:58, that a high bird is one you
+  have to make an effort to kill. **How V-shaped the swoop looks is the dip against the distance**,
+  so there is no shape field: a deep dip over a short swoop reads as a V and a shallow one as a U.
+- **`IsMidAction` is a fifth hook, and the gate is what made it necessary.** The base skips `Behave`
+  when the player is out of `activationRange`, which is right for deciding whether to *start*
+  something and wrong for stopping something already running: a player sprinting right away from a
+  swooping bird separates at about ten units a second, so the bird would freeze in mid-air halfway
+  through its arc and never fly home. A larger range only moves the failure. So the base calls
+  `Behave` when the player is near **or** the subclass says it is part-way through something, and
+  the ציפור answers true while swooping or returning. The frog mid-jump and the נחש mid-hop are the
+  next two callers, so this is a hook with three users before it is written.
+- **The respawn puts an enemy back where it was authored, and `ResetTo` and the countdown now share
+  one `Spawn`.** They had drifted apart - a reset repositioned and the countdown did not - which was
+  only invisible because the עכביש recomputes its swing from `Home` every frame anyway. Folding both
+  into one private method makes "coming back" one thing that happens two ways rather than two things
+  that happen to agree.
+- **`Leave` was designed and then not written.** The base was going to carry a protected helper for
+  switching off without dying, to name the `destroyed`-versus-inactive distinction at the one place a
+  subclass could get it wrong. The perch-and-return ציפור never leaves, so it has no callers at all -
+  and a helper written for a caller that no longer exists is exactly what code quality rule 5 refuses.
+  Recorded because the distinction it was going to name is still real and the rule still needs stating
+  somewhere: only `Die` sets `destroyed`, and only `destroyed` survives a פסילה.

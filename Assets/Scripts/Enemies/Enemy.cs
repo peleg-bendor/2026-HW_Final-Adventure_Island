@@ -34,7 +34,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         this.player = player;
     }
 
-    // Where this was placed when the level was authored, and where a strike puts it back.
+    // Where this was placed when the level was authored. Everything that puts it back puts it here.
     protected Vector2 Home { get { return home; } }
 
     // The middle of his body rather than his transform, which sits at his feet.
@@ -48,6 +48,10 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
 
     // What this one does while the player is near. The only step that makes a spider a spider.
     protected abstract void Behave();
+
+    // True while part-way through something that should finish even if the player has moved out of
+    // range - a swoop, a hop, a jump - so it is not left frozen halfway.
+    protected virtual bool IsMidAction { get { return false; } }
 
     // Registered in Awake and released on destroy, like a collectible: a killed enemy switches
     // itself off, so unregistering on disable would drop what a level start has to bring back.
@@ -84,12 +88,12 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     // because a subclass declaring its own Update would hide this one and never be gated.
     private void Update()
     {
-        if (IsPlayerNear())
+        if (IsPlayerNear() || IsMidAction)
             Behave();
     }
 
-    // Nothing moves, shoots or chases until he is close enough, which is what keeps a bird from
-    // flying the length of the level before he arrives.
+    // Nothing starts moving, shooting or chasing until he is close enough, which is what keeps a
+    // bird from swooping at nobody.
     private bool IsPlayerNear()
     {
         if (activationRange <= 0f)
@@ -188,8 +192,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         }
 
         destroyed = false;
-        gameObject.SetActive(true);
-        OnSpawned();
+        Spawn();
         GameLog.Info(LogCategory.Enemy, name + " back after " + seconds.ToString("0.0") + "s");
     }
 
@@ -201,6 +204,15 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         respawn.Cancel();
         respawn.Dispose();
         respawn = null;
+    }
+
+    // Coming back is one thing that happens two ways, rather than two that have to agree: the
+    // countdown and a level start both land here.
+    private void Spawn()
+    {
+        transform.position = new Vector3(home.x, home.y, transform.position.z);
+        gameObject.SetActive(true);
+        OnSpawned();
     }
 
     // Where a subclass puts itself back into its starting state, for the same reason the base puts
@@ -223,8 +235,6 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
             return;
         }
 
-        transform.position = new Vector3(home.x, home.y, transform.position.z);
-        gameObject.SetActive(true);
-        OnSpawned();
+        Spawn();
     }
 }
