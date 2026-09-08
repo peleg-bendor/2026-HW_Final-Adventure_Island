@@ -19,7 +19,8 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     private Player player;
 
     private Vector2 home;
-    private float feet;
+    private float feet = -1f;
+    private float halfWidth = -1f;
     private bool destroyed;
     private int lastTouchFrame = -1;
     private CancellationTokenSource respawn;
@@ -38,9 +39,21 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     // Where this was placed when the level was authored. Everything that puts it back puts it here.
     protected Vector2 Home { get { return home; } }
 
-    // How far the pivot sits above the bottom of the collider, so anything that lands on a floor
-    // lands on its feet. A constant of the prefab, measured once.
-    protected float Feet { get { return feet; } }
+    // How far the pivot sits above the bottom of its collider, and how far its front is from the
+    // middle. Measured on first use, not in Awake, where a collider's bounds are still a point.
+    protected float Feet { get { Measure(); return feet; } }
+
+    protected float HalfWidth { get { Measure(); return halfWidth; } }
+
+    private void Measure()
+    {
+        if (feet >= 0f)
+            return;
+
+        Collider2D body = GetComponent<Collider2D>();
+        feet = body != null ? Mathf.Max(0f, transform.position.y - body.bounds.min.y) : 0f;
+        halfWidth = body != null ? body.bounds.extents.x : 0f;
+    }
 
     // The middle of his body rather than his transform, which sits at his feet.
     protected Vector2 PlayerPosition
@@ -56,14 +69,11 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
     }
 
-    // What a creature comes down on: solid terrain, or the spikes that floor a pit. Everything else
-    // in this game is a trigger, and the player is the one solid thing that is not ground.
+    // Terrain is the only solid collider in this game: every hazard, pickup, door, projectile and
+    // enemy is a trigger, and the player is the one solid thing that is not ground.
     protected static bool IsTerrain(Collider2D collider)
     {
-        if (collider == null || collider.GetComponent<Player>() != null)
-            return false;
-
-        return collider.isTrigger == false || collider.GetComponent<Spikes>() != null;
+        return collider != null && collider.isTrigger == false && collider.GetComponent<Player>() == null;
     }
 
     // What is allowed to destroy this enemy. One line per subclass, and it is the whole rule.
@@ -82,11 +92,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     {
         home = transform.position;
 
-        Collider2D body = GetComponent<Collider2D>();
-
-        if (body != null)
-            feet = transform.position.y - body.bounds.min.y;
-        else
+        if (GetComponent<Collider2D>() == null)
             GameLog.Warning(LogCategory.Enemy, "No Collider2D found on " + name + ", it cannot be touched or destroyed");
 
         if (registry != null)
