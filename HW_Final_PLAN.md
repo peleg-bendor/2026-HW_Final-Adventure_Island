@@ -355,8 +355,8 @@ probe to expect is "isn't this the laser again" — it is the same home, and the
 laser had one recipe where this has four, and the pool is no longer one class per projectile type.
 **Counted at stage 13 and corrected here: four, not five.** The projectiles in this game are the axe,
 the boomerang, the נחש's fireball and the red animal's fire; the arc and the return are behaviours in
-subclasses rather than recipes of their own. Two of the four exist before stage 15, so the sentence
-is only fully true from there.
+subclasses rather than recipes of their own. Three of the four existed before stage 15 and the fourth
+arrived with it, so the sentence is fully true from there.
 
 **Factory — drops and egg contents, two callers.** *"8.3 and 10.3 both say what drops is configured
 and never rolled, so an enemy holds a drop type and an egg holds a drop type, and neither knows how
@@ -390,8 +390,8 @@ returns nothing. A Task there would be worse."*
 
 **Two patterns deliberately rejected**, recorded because a rejection with a reason defends better
 than an application without one: Template for the full-versus-partial level reset, which is one
-boolean of real difference; and Builder for the mounted-animal state, which is four fields and is
-better as a ScriptableObject per animal.
+boolean of real difference; and Builder for the mounted state, which is data — eleven serialized
+fields once it was written — and is better as a ScriptableObject per mount.
 
 **Reflection is placed at stage 16, and stays `[good]`.** The drop factory resolves a configured drop
 type to its class by attribute rather than by a switch, removing the one switch statement the design
@@ -767,7 +767,7 @@ reorder the steps, so a new enemy type cannot forget to respawn. The respawn tim
 for the reason above: a killed enemy is deactivated, and Unity stops coroutines on a disabled
 GameObject.
 
-### Stage 15 — Animals `[ ]`
+### Stage 15 — Mounts `[x]`
 
 1. Mount by collecting לב, עלה or כוכב; swap when a second token is taken while riding.
 1. Blue hits low with its tail, red spits fire higher, green spins in place.
@@ -778,6 +778,12 @@ GameObject.
 height, the absorb rule — looks like a second Builder. It is four fields, and a ScriptableObject per
 animal says the same thing with less machinery and stays editable without recompiling. Builder keeps one
 strong home in stage 13 rather than a weak second one here, which is the same call Exercise 3 made.
+
+**Corrected once it was written: eleven fields, not four, and the absorb rule is not one of them.**
+`MountDefinition` carries five sprites, a body width, an attack length, the hit's sprite, offset and
+size, and whether it spits fire. The absorb never reached the asset at all — it is identical for all
+three, so it lives in `PlayerGuard` and no mount has an opinion about it. Eleven is still data, which
+is the whole of the rejection; the asset earns its keep more than the estimate said, not less.
 
 ### Stage 16 — ביצים, drops and collectibles `[ ]`
 
@@ -2159,3 +2165,122 @@ _(append entries here as we make design decisions.)_
   a respawn, the ghost's freeze and chase, and two fireballs landing. **Two things it could not
   show**: the jumping נחש, which logs nothing while it hops and was never touched, and 8.16, which is
   a requirement satisfied by nothing happening.
+
+- **The code says Mount where the requirements say חיה.** Peleg's call, and his reason is that they
+  are not animals, they are dinosaurs. `Destroyer.MountAttack`, `LogCategory.Mount`,
+  `Assets/Scripts/Mounts/` and `Assets/Data/Mount_Blue.asset`; `Exercise Adventure Island.md` keeps
+  חיה throughout, because it quotes the instructor and the video has to use his word. That is the
+  same split convention 12 already draws for כוח and פסילה. **`Destroyer.Riding` stays as it is** -
+  the two values name the mount attacking and the player riding it, which is exactly the distinction
+  7.8 and 5.8 disagree about.
+- **`MountSlot` is `WeaponSlot`'s twin, and that is what makes 7.11 cost nothing.** Both hold an asset
+  reference, both subscribe to `GameStarted` and `StrikeLost` and clear on either, and neither is an
+  `IResettable` - because `StartGame` and `CompleteLevel` both run `ResetAll(Full)`, and the mount is
+  lost on one and kept across the other. So 3.6 and 7.11 are two lines each rather than a stage's
+  work, and the whole of "carry into level 2" is the absence of code. 6.3 and 7.11 are literally the
+  same requirement for two different things, so one idiom answering both is the defense sentence.
+- **Mounting changes his width and not his height.** 1.5 for blue and red, 1.7 for green, against 0.9
+  on foot. Both this plan and `CONVENTIONS` said an animal with its rider is 2x2, which was read off
+  the sprite boxes rather than the art: blue and red are 1.75 by 2.88 and green is 2.25 by 2.75, so a
+  rider at full art height would not fit a two-cell gap. Height was left alone because horizontal
+  contact is what every riding requirement is about - 5.5, 5.8 and 7.10 are all "ride into a thing" -
+  while headroom is the one thing level authoring cannot cheaply give. His head clipping a ceiling is
+  the forgiving direction, which is the call the מדורה's collider already made. It also means the
+  capsule's offset never moves, so `Player.Middle` stays true and `Player` was not touched.
+  **Per-mount widths cost nothing on this grid**, which is why the objection to them was dropped:
+  tiles are 1x1 on integer coordinates, so every clearance is a whole number, and 1.5 and 1.7 both
+  pass a two-cell gap and both fail a one-cell one. They could only differ on a gap the placer cannot
+  author.
+- **The strike is one object switched on and off, and that is what a pool of one would be.**
+  `MountStrike` is a child of the player carrying a `CapsuleCollider2D`, a `SpriteRenderer` and its
+  own kinematic `Rigidbody2D`, all shaped from the definition at the moment of the attack. Only one
+  mount attack can ever be live, so pooling it would pool a single object; making it a
+  `BaseProjectile` with zero speed would have added two recipes to describe a swipe that does not fly.
+  **An invisible `Physics2D.OverlapBox` was the first design and Peleg overturned it**: the hit is a
+  real object with a sprite, which is both easier to tune against the art and the same trigger idiom
+  every other damage source in this game already uses. **The body is not optional.** A collider on a
+  child with no `Rigidbody2D` joins the nearest ancestor's, which is the player's, and would turn up
+  in `PlayerGround`'s eight-slot contact array for a quarter second at a time. And Use Full Kinematic
+  Contacts has to be ticked, because every enemy is kinematic with it off - checked in
+  `Sprite_Enemy_Ghost.prefab` - and Unity raises no trigger callbacks between two kinematic bodies
+  without it on at least one of them. The capsule rather than a box is Peleg's, and it is right for a
+  reason a box hides: a 2.4 square reaches 1.7 diagonally against 1.2 sideways, so a spin would hit
+  further away at an angle than beside him.
+- **A mount's attack has to out-reach his own body, and that is a consequence of 7.10 rather than a
+  choice.** Touching anything harmful while riding costs the mount on the physics step of the contact,
+  before any attack of ours could land, so an attack that only covers his own capsule can never hit
+  anything he has not already paid for. That is what puts blue's hit in front of him, what makes red's
+  fire travel, and what forces green's spin box wider than his capsule. The instructor's own
+  description of green at 00:33:15 is "if someone comes to hit you, it spins in place and kills it",
+  which is exactly that.
+- **Two feature flags rather than a switch over the three mounts.** A definition with a hit size
+  sweeps; one that spits fire launches. A mount with both would work and one with neither does
+  nothing, so no code anywhere asks which mount it is holding - which is what the SOLID register meant
+  by a switch over types undoing the Template. **`spitsFire` is a bool and not the fire's prefab**,
+  because `ProjectileDirector.Fill` already reads that prefab from `ProjectilePrefabs` to register the
+  recipe, and a second copy of the reference on the asset is the exact drift stage 14 refused for the
+  נחש. `strikeOffset` does double duty as the middle of the hit and as the mouth the fire leaves from,
+  since it is one fact either way and a second offset only one of three assets ever fills is a field
+  the other two carry to answer nothing.
+- **The red mount's fire is capped at three and pre-filled, like the axe.** Peleg's call, against the
+  first draft which let it grow the way the נחש's does. It makes the claim shorter and truer: **how
+  many the player may have in the air is a rule of this game, and how many an enemy may is not.** The
+  axe's three is the instructor's number and the fire's three is ours, but both are rules about the
+  player and both are true by construction. The snake's is the only recipe that still grows, for the
+  reason stage 14 recorded - nobody can know how many shooters a level will hold.
+- **The flame grows once, so `SpriteCycleAnimator` was the wrong tool.** That component loops on the
+  shared clock, which is what makes a row of מדורות flicker together and exactly wrong for a swell
+  that happens once a flight. `OnLaunched` puts the small frame back and `Fly` swaps to the grown one
+  past a distance it was already measuring for the range - the third hook doing the job stage 13 added
+  it for, since a pooled projectile is handed out carrying whatever the last flight left on it.
+  **The collider is sized to the grown frame**, which is the opposite call to the מדורה's and for the
+  opposite reason: a hazard bigger than it looks kills you on a gap you cleared, while a weapon bigger
+  than it looks only ever helps. The two frames differ 2:1 in width, so the window where they
+  disagree is real; it is about 16% of the flight at the authored distance.
+- **One strike a frame, and three spike tiles are what found it.** `Level01.txt` has `5, 5, 5` at the
+  pit floor - three `Sprite_Spikes` instances, each with its own 1-unit collider and its own
+  `LoseStrike` call - so one fall charged two strikes and sometimes three. It predates this stage: at
+  0.9 wide he only ever charged once by landing within 0.05 of a tile centre. Mounting made it
+  certain, because 1.5 spans two tiles always and all three when centred on the middle one. **The
+  guard is in `GameFlow.LoseStrike` and not in `Spikes`**, because losing a strike teleports him to
+  the level start synchronously, so any second charge in the same frame is charging for a place he has
+  already left - which is equally true of two adjacent מדורות and of a fire and an enemy touched
+  together. `Hazard.lastTouchFrame` could not have helped, since it is per instance. Found by reading
+  the log rather than by playing: every `Spikes touched` in it came in pairs, including one pair
+  straddling `Game over`, which no two separate falls could produce with time already frozen.
+- **The absorb ignores the thing that took the mount for half a second, and only that thing.**
+  Everything but the רוח רפאים answers `Riding`, so it switches itself off and there is nothing left
+  touching him. The ghost refuses, which leaves him on foot inside a live enemy - and clearing the
+  slot resizes his capsule inside that same trigger callback, which makes Unity re-issue the enter
+  event, so without the window riding into a ghost cost the mount and a strike in one frame. Keyed on
+  the one source, so a מדורה touched in the same window still kills and a תהום still kills. Same shape
+  as the אבן's shove immunity, and for the same underlying reason: he is still inside the collider
+  when the effect lands. The alternative was accepting it, and it loses to the requirement's own
+  wording - the mount absorbs a hit *that would otherwise cost the player*, and a strike a frame later
+  means it did not.
+- **`TryDestroy` before `Clear`, for the same reason.** Clearing the slot resizes the capsule, and a
+  resize inside a trigger callback re-issues enter events for whatever still overlaps. Destroying
+  first means the source is already switched off by the time that happens, so only the ghost can ever
+  reach the grace window at all.
+- **Two prefab naming rules landed here, both from things that collided.** `Pickup_` for a collectible
+  something spawns, because `CONVENTIONS` gave a runtime-spawned prefab no prefix at all and
+  `Axe.prefab` was already the thing in flight - so `Pickup_Axe`, `Pickup_Boomerang` and the three
+  `Pickup_Mount_*`. And `Assets/Data/` for definition assets. **`Assets/Mounts/` was the first
+  proposal and Peleg overturned it**: every other folder under `Assets/` is either Unity's or named
+  for an asset type, with `Levels/` the single exception, so a folder named for one feature was
+  special treatment nothing else in the project had - and it shared a name with
+  `Assets/Scripts/Mounts/`.
+- **The tokens are not painted and take no tile ids.** They were given 18, 19 and 20 and then handed
+  back, on Peleg's call and for the weapons' reason: 7.3 and 10.3 both have them coming out of eggs
+  and destroyed enemies, so nothing should place one in a level by hand. `Q`, `W` and `E` stand in
+  until stage 16, the way `A` and `B` do for the weapons, and both sets die together when the drop
+  factory arrives. Stage 16 appends at 18.
+- **Running out of כוח was the only strike source that logged nothing.** Every other one announces
+  itself - `Fire touched - a strike is owed`, `Spikes touched`, `<enemy> touched`,
+  `Fruit reached 20` - and `PowerController` went straight to `flow.LoseStrike()`, so a session's log
+  had four unexplained `Strike lost` lines in it. It predates this stage and was found the same way
+  the spike bug was, by reading a log that did not add up.
+- **`MountCollectible` shipped without a caller in the game**, the same accepted cost as
+  `Hazard.TryDestroy` at stage 12 and `PlayerGuard.TryAbsorb` at stage 13. Nothing places a token, so
+  it was exercised by dragging `Pickup_Mount_Blue` into `Level_1` by hand and deleting it again. Stage
+  16 is what gives it a real caller.
