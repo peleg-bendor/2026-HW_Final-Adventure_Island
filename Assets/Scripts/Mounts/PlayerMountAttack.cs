@@ -6,15 +6,19 @@ using Zenject;
 public class PlayerMountAttack : MonoBehaviour
 {
     private IMountSlot slot;
+    private ProjectileDirector director;
+    private ProjectilePrefabs prefabs;
     private MountStrike strike;
 
     private float attackUntil = float.NegativeInfinity;
     private float attackSeconds;
 
     [Inject]
-    public void Construct(IMountSlot slot)
+    public void Construct(IMountSlot slot, ProjectileDirector director, ProjectilePrefabs prefabs)
     {
         this.slot = slot;
+        this.director = director;
+        this.prefabs = prefabs;
     }
 
     // True while an attack is running, which both picks the attack frames and refuses a second press.
@@ -55,8 +59,28 @@ public class PlayerMountAttack : MonoBehaviour
         if (strike != null)
             strike.Begin(mount.StrikeSprite, mount.StrikeOffset, mount.StrikeSize);
 
-        GameLog.Info(LogCategory.Mount, "Mount attacked: " + mount.name);
+        if (mount.SpitsFire)
+            SpitFire(mount);
+
+        GameLog.Verbose(LogCategory.Mount, "Mount attacked: " + mount.name);
         return true;
+    }
+
+    // The prefab comes from the installer rather than the definition asset, since the pool is keyed
+    // on the reference and a second copy of it could point somewhere else.
+    private void SpitFire(MountDefinition mount)
+    {
+        if (director == null || prefabs == null || prefabs.mountFire == null)
+        {
+            GameLog.Warning(LogCategory.Mount, "No ProjectileDirector injected or no mount fire prefab assigned, the red mount spits nothing");
+            return;
+        }
+
+        float direction = Mathf.Sign(transform.localScale.x);
+        Vector2 origin = (Vector2)transform.position +
+                         new Vector2(mount.StrikeOffset.x * direction, mount.StrikeOffset.y);
+
+        director.Throw(prefabs.mountFire, origin, direction);
     }
 
     // The hit goes when its time is up, and the moment he is off the mount - losing it to a contact

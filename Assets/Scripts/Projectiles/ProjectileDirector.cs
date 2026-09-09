@@ -47,6 +47,20 @@ public class ProjectileDirector : IInitializable
     // A backstop, for a fireball whose range is ever set to zero.
     private const float SnakeFireballMaxSeconds = 4f;
 
+    // Flat and weightless like the snake's, and deliberately shorter: a few tiles ahead rather than
+    // across the screen.
+    private const float MountFireSpeed = 7f;
+    private const float MountFireLift = 0f;
+    private const float MountFireGravity = 0f;
+    private const float MountFireRange = 5f;
+
+    // Three at once, capped the way the axe is. How many the player may have in the air is a rule
+    // of this game; how many an enemy may is not.
+    private const int MountFireCount = 3;
+
+    // The same backstop as the snake's, for the same reason.
+    private const float MountFireMaxSeconds = 3f;
+
     // A recipe, and whether the count it came with is a rule of the game or only a starting size.
     // The axe's three is 6.7; a snake's flames are however many its level turns out to need.
     private class Recipe
@@ -73,6 +87,7 @@ public class ProjectileDirector : IInitializable
         Fill(prefabs.axe, AxeCount, ConstructAxe, true);
         Fill(prefabs.boomerang, BoomerangCount, ConstructBoomerang, true);
         Fill(prefabs.snakeFireball, SnakeFireballCount, ConstructSnakeFireball, false);
+        Fill(prefabs.mountFire, MountFireCount, ConstructMountFire, true);
     }
 
     // One recipe, applied as many times as that projectile starts with. The delegate is what keeps
@@ -122,8 +137,9 @@ public class ProjectileDirector : IInitializable
         projectile.Launch(origin, direction);
     }
 
-    // Refused for a kind whose count is a rule, so a fourth axe is impossible. For the rest this
-    // settles in the first seconds of a level and never happens again, since pools do not shrink.
+    // Refused for a kind whose count is a rule, so a fourth axe and a fourth flame are both
+    // impossible. For the rest this settles in the first seconds of a level and never happens
+    // again, since pools do not shrink.
     private BaseProjectile AddOne(GameObject prefab)
     {
         Recipe recipe;
@@ -161,5 +177,14 @@ public class ProjectileDirector : IInitializable
         builder.SetGravity(SnakeFireballGravity);
         builder.SetRange(SnakeFireballRange);
         builder.SetMaxSeconds(SnakeFireballMaxSeconds);
+    }
+
+    private void ConstructMountFire()
+    {
+        builder.SetSpeed(MountFireSpeed);
+        builder.SetLift(MountFireLift);
+        builder.SetGravity(MountFireGravity);
+        builder.SetRange(MountFireRange);
+        builder.SetMaxSeconds(MountFireMaxSeconds);
     }
 }

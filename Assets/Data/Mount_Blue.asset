@@ -22,5 +22,6 @@ MonoBehaviour:
   bodyWidth: 1.5
   attackSeconds: 0.25
   strikeSprite: {fileID: 21300000, guid: 0b20da9aeebf4de4fbcd3b30491e7407, type: 3}
-  strikeOffset: {x: 0.85, y: 0.1}
+  strikeOffset: {x: 1.2, y: 0.1}
   strikeSize: {x: 1, y: 1}
+  spitsFire: 0

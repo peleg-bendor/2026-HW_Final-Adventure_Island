@@ -25,12 +25,16 @@ public class MountDefinition : ScriptableObject
     // What the hit looks like. Empty for a mount whose own frames already show it.
     [SerializeField] private Sprite strikeSprite;
 
-    // Where the hit sits, from his transform, which is half a unit above his feet. X mirrors with
-    // his facing.
+    // Where its attack happens, from his transform, which is half a unit above his feet: the middle
+    // of the hit, or the mouth the fire leaves from. X mirrors with his facing.
     [SerializeField] private Vector2 strikeOffset;
 
-    // How big the hit is, in units. Zero for a mount whose attack is not a box.
+    // How big the hit is, in units. Zero for a mount whose attack is not a hit at all.
     [SerializeField] private Vector2 strikeSize;
+
+    // Whether its attack leaves its mouth. Only the red one does; the other two reach as far as
+    // their hit and no further.
+    [SerializeField] private bool spitsFire;
 
     public Sprite Idle { get { return idle; } }
 
@@ -49,4 +53,6 @@ public class MountDefinition : ScriptableObject
     public Vector2 StrikeOffset { get { return strikeOffset; } }
 
     public Vector2 StrikeSize { get { return strikeSize; } }
+
+    public bool SpitsFire { get { return spitsFire; } }
 }
