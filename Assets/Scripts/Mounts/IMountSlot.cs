@@ -12,4 +12,8 @@ public interface IMountSlot
 
     // Replaces whatever he was riding, since taking a second token swaps.
     void Take(MountDefinition mount);
+
+    // Public because a mount is lost two ways: with a strike, which this class hears for itself,
+    // and by absorbing a hit, which is the guard's to decide.
+    void Clear();
 }

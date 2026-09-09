@@ -69,7 +69,10 @@ public class PowerController : ITickable, IInitializable, IResettable, IPower
         // Reaching zero costs a strike. That is a game rule, which is why the model has no opinion
         // about zero.
         if (model.Current == 0)
+        {
+            GameLog.Info(LogCategory.Player, "Power ran out - a strike is owed");
             flow.LoseStrike();
+        }
     }
 
     public void ResetTo(ResetScope scope)

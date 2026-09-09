@@ -36,7 +36,7 @@ public class MountSlot : IMountSlot, IInitializable
         Changed?.Invoke();
     }
 
-    private void Clear()
+    public void Clear()
     {
         if (current == null)
             return;
