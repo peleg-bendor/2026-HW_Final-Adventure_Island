@@ -13,6 +13,7 @@ public class PlayerMountAnimator : MonoBehaviour
     private SpriteRenderer art;
     private PlayerMovement movement;
     private PlayerGround ground;
+    private PlayerMountAttack attack;
     private Sprite shown;
 
     [Inject]
@@ -26,9 +27,13 @@ public class PlayerMountAnimator : MonoBehaviour
         art = GetComponent<SpriteRenderer>();
         movement = GetComponent<PlayerMovement>();
         ground = GetComponent<PlayerGround>();
+        attack = GetComponent<PlayerMountAttack>();
 
         if (art == null || movement == null || ground == null)
             GameLog.Warning(LogCategory.Mount, "No SpriteRenderer, PlayerMovement or PlayerGround found, the mount will not animate");
+
+        if (attack == null)
+            GameLog.Warning(LogCategory.Mount, "No PlayerMountAttack found, the mount will not show its attack frames");
 
         if (slot == null)
             GameLog.Warning(LogCategory.Mount, "No IMountSlot injected, the mount will not animate");
@@ -55,10 +60,13 @@ public class PlayerMountAnimator : MonoBehaviour
         art.sprite = frame;
     }
 
-    // Airborne beats walking, and one frame covers the whole jump where he has a rise and a fall on
-    // foot.
+    // Attacking beats airborne beats walking, and one frame covers the whole jump where he has a
+    // rise and a fall on foot.
     private Sprite Frame(MountDefinition mount)
     {
+        if (attack != null && attack.IsAttacking)
+            return AttackFrame(mount);
+
         if (ground != null && ground.IsGrounded() == false)
             return mount.Jumping;
 
@@ -66,5 +74,17 @@ public class PlayerMountAnimator : MonoBehaviour
             return mount.Walking[(int)(Time.time / secondsPerWalkFrame) % mount.Walking.Length];
 
         return mount.Idle;
+    }
+
+    // Spread across the attack's own length rather than a fixed interval, so a four-frame spin and
+    // a one-frame swipe both finish exactly when the hit does.
+    private Sprite AttackFrame(MountDefinition mount)
+    {
+        Sprite[] frames = mount.Attacking;
+
+        if (frames == null || frames.Length == 0)
+            return mount.Idle;
+
+        return frames[Mathf.Clamp((int)(attack.AttackProgress * frames.Length), 0, frames.Length - 1)];
     }
 }

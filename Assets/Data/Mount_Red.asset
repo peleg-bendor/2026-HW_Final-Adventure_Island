@@ -17,4 +17,10 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 438668fbdc171fc49a1a06129f6439c2, type: 3}
   - {fileID: 21300000, guid: 817e7c47140bf2140a28c840d5be8afa, type: 3}
   jumping: {fileID: 21300000, guid: 2b91c152aabd34d47aecdf2157de5ceb, type: 3}
+  attacking:
+  - {fileID: 21300000, guid: 1c5cbdf49eaa6e641b9ffd9b73169ab3, type: 3}
   bodyWidth: 1.5
+  attackSeconds: 0.25
+  strikeSprite: {fileID: 0}
+  strikeOffset: {x: 0, y: 0}
+  strikeSize: {x: 0, y: 0}

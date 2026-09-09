@@ -13,8 +13,24 @@ public class MountDefinition : ScriptableObject
     // One frame for the whole of a jump, since the mount art has no separate rise and fall.
     [SerializeField] private Sprite jumping;
 
+    // Shown in order once over the length of an attack.
+    [SerializeField] private Sprite[] attacking;
+
     // How wide the player's capsule is while riding this one, in units. His height never changes.
     [SerializeField, Min(0.1f)] private float bodyWidth = 1.5f;
+
+    // How long one attack lasts, in seconds. It is its own cooldown as well.
+    [SerializeField, Min(0.05f)] private float attackSeconds = 0.25f;
+
+    // What the hit looks like. Empty for a mount whose own frames already show it.
+    [SerializeField] private Sprite strikeSprite;
+
+    // Where the hit sits, from his transform, which is half a unit above his feet. X mirrors with
+    // his facing.
+    [SerializeField] private Vector2 strikeOffset;
+
+    // How big the hit is, in units. Zero for a mount whose attack is not a box.
+    [SerializeField] private Vector2 strikeSize;
 
     public Sprite Idle { get { return idle; } }
 
@@ -22,5 +38,15 @@ public class MountDefinition : ScriptableObject
 
     public Sprite Jumping { get { return jumping; } }
 
+    public Sprite[] Attacking { get { return attacking; } }
+
     public float BodyWidth { get { return bodyWidth; } }
+
+    public float AttackSeconds { get { return attackSeconds; } }
+
+    public Sprite StrikeSprite { get { return strikeSprite; } }
+
+    public Vector2 StrikeOffset { get { return strikeOffset; } }
+
+    public Vector2 StrikeSize { get { return strikeSize; } }
 }

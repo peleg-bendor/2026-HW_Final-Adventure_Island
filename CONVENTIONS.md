@@ -102,7 +102,13 @@ state it plays, `Anim_Player_Walk`, and a controller takes `Animator_`. Transiti
 duration with no exit time: blending means nothing between discrete sprites and only adds lag.
 
 Prefabs live in `Assets/Prefabs/`, flat. Those for objects placed in the level take the `Sprite_`
-prefix; those for things spawned at runtime don't.
+prefix, a collectible something spawns takes `Pickup_`, and anything else built at runtime takes
+none. The middle case exists because the two collide otherwise: `Pickup_Axe` is the axe lying in the
+level waiting to be walked into, and `Axe` is the one in flight.
+
+Definition assets - the ScriptableObjects the game reads at runtime rather than the ones a tool
+reads - live in `Assets/Data/`, flat. One folder for all of them rather than one per feature, and
+not named for anything under `Assets/Scripts/`.
 
 A collider is sized to the art rather than to the sprite's box, since the box carries transparent
 padding: the door measures 1.3 by 1.8 inside a 2x2 box. The exception is anything that has to fit

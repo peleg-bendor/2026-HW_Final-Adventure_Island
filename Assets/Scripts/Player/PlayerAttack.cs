@@ -12,6 +12,7 @@ public class PlayerAttack : MonoBehaviour
     private ProjectileDirector director;
     private IWeaponSlot slot;
     private Player player;
+    private PlayerMountAttack mount;
 
     [Inject]
     public void Construct(ProjectileDirector director, IWeaponSlot slot)
@@ -23,14 +24,23 @@ public class PlayerAttack : MonoBehaviour
     private void Awake()
     {
         player = GetComponent<Player>();
+        mount = GetComponent<PlayerMountAttack>();
 
         if (player == null)
             GameLog.Warning(LogCategory.Player, "No Player found, throws will leave from his feet");
+
+        if (mount == null)
+            GameLog.Warning(LogCategory.Player, "No PlayerMountAttack found, the key will throw a weapon even while riding");
     }
 
     private void Update()
     {
         if (Keyboard.current == null || Keyboard.current.zKey.wasPressedThisFrame == false)
+            return;
+
+        // The mount answers first, so a weapon is kept while riding and usable again the moment the
+        // mount is gone.
+        if (mount != null && mount.TryAttack())
             return;
 
         if (director == null || slot == null)
