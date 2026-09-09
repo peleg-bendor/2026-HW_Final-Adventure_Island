@@ -4,7 +4,7 @@ public enum LogCategory
 {
     Player,
     Enemy,
-    Animal,
+    Mount,
     Weapon,
     Projectile,
     Collectible,

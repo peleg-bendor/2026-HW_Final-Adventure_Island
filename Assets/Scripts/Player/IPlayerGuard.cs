@@ -2,7 +2,7 @@
 // fairy rule live, rather than repeated in every hazard and every enemy.
 public interface IPlayerGuard
 {
-    // Survived is not the same as destroyed: riding into a ghost costs the animal and leaves the
+    // Survived is not the same as destroyed: riding into a ghost costs the mount and leaves the
     // ghost standing.
     bool TryAbsorb(IDestructible source);
 }

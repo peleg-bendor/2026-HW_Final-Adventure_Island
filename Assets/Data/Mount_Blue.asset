@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e89d2d5c2b660bc45b176a36c6390649, type: 3}
+  m_Name: Mount_Blue
+  m_EditorClassIdentifier: Assembly-CSharp::MountDefinition
+  idle: {fileID: 21300000, guid: 8484b07e4ce29c441864c99855db0ca3, type: 3}
+  walking:
+  - {fileID: 21300000, guid: 03ccffe265d89594db10a2d34780acb3, type: 3}
+  - {fileID: 21300000, guid: 9b6684294ec42e2418310e91016a4c13, type: 3}
+  jumping: {fileID: 21300000, guid: a9f5513f1ed83e54c933134302007f10, type: 3}
+  bodyWidth: 1.5

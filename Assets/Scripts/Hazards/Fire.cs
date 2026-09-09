@@ -12,7 +12,7 @@ public class Fire : Hazard
         this.flow = flow;
     }
 
-    // Not an axe, not a boomerang, not an animal's attack.
+    // Not an axe, not a boomerang, not a mount's attack.
     protected override Destroyer DestroyedBy
     {
         get { return Destroyer.Fairy | Destroyer.Riding; }

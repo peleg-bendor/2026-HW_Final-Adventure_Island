@@ -24,10 +24,10 @@ public class Rock : Hazard
         this.shove = shove;
     }
 
-    // A boomerang, an animal or a fairy. An axe explicitly does not.
+    // A boomerang, a mount or a fairy. An axe explicitly does not.
     protected override Destroyer DestroyedBy
     {
-        get { return Destroyer.Boomerang | Destroyer.AnimalAttack | Destroyer.Riding | Destroyer.Fairy; }
+        get { return Destroyer.Boomerang | Destroyer.MountAttack | Destroyer.Riding | Destroyer.Fairy; }
     }
 
     protected override void Hurt()

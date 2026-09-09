@@ -18,6 +18,8 @@ public class GameFlow : IGameFlow
     // reads it, which is what keeps it from being a state machine everything has to consult.
     private bool ending;
 
+    private int lastStrikeFrame = -1;
+
     public GameFlow(SessionState session, ILevels levels, IResetRunner resets, IPopups popups, int fruitPerStrike)
     {
         this.session = session;
@@ -61,6 +63,15 @@ public class GameFlow : IGameFlow
             return;
         }
 
+        // One a frame at most, since losing a strike puts him back at the level start: a second
+        // charge in the same frame is for a place he has already left.
+        if (lastStrikeFrame == Time.frameCount)
+        {
+            GameLog.Info(LogCategory.Game, "Strike ignored - one was already lost this frame");
+            return;
+        }
+
+        lastStrikeFrame = Time.frameCount;
         session.LoseStrike();
         StrikeLost?.Invoke();
 

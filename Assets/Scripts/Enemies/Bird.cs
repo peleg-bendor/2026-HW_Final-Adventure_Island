@@ -17,12 +17,12 @@ public class Bird : Enemy
     private bool returning;
     private float swoopStartedAt;
 
-    // An axe, a boomerang, an animal or a fairy, which is every enemy except the ghost.
+    // An axe, a boomerang, a mount or a fairy, which is every enemy except the ghost.
     protected override Destroyer DestroyedBy
     {
         get
         {
-            return Destroyer.Axe | Destroyer.Boomerang | Destroyer.AnimalAttack | Destroyer.Riding |
+            return Destroyer.Axe | Destroyer.Boomerang | Destroyer.MountAttack | Destroyer.Riding |
                    Destroyer.Fairy;
         }
     }

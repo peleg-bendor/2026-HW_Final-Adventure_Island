@@ -54,6 +54,7 @@ public class GameInstaller : MonoInstaller
         Container.BindInterfacesAndSelfTo<ProjectilePool>().AsSingle();
         Container.BindInterfacesAndSelfTo<ProjectileDirector>().AsSingle();
         Container.BindInterfacesAndSelfTo<WeaponSlot>().AsSingle();
+        Container.BindInterfacesTo<MountSlot>().AsSingle();
 
         GameLog.Info(LogCategory.Game, "Zenject container built");
     }

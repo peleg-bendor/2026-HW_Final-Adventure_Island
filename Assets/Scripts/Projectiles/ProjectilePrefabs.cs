@@ -9,6 +9,6 @@ public class ProjectilePrefabs
     public GameObject axe;
     public GameObject boomerang;
 
-    // Named for the snake because the red animal spits fire of its own, with different numbers.
+    // Named for the snake because the red mount spits fire of its own, with different numbers.
     public GameObject snakeFireball;
 }
