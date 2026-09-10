@@ -101,7 +101,7 @@ public class SnakeJumper : Enemy
         }
 
         float x = from.x + direction * reach;
-        float drop = DistanceToTerrain(new Vector2(x, from.y + hopHeight), Vector2.down, Mathf.Infinity);
+        float drop = Ground.DistanceTo(new Vector2(x, from.y + hopHeight), Vector2.down, Mathf.Infinity);
 
         if (float.IsInfinity(drop))
         {
@@ -160,7 +160,7 @@ public class SnakeJumper : Enemy
     // How far it can travel before its front meets something solid, never more than a whole hop.
     private float ReachBefore(Vector2 from, float direction)
     {
-        float wall = DistanceToTerrain(from, Vector2.right * direction, hopDistance + HalfWidth);
+        float wall = Ground.DistanceTo(from, Vector2.right * direction, hopDistance + HalfWidth);
 
         if (float.IsInfinity(wall))
             return hopDistance;

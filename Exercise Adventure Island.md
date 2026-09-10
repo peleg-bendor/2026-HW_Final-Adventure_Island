@@ -180,8 +180,13 @@ objects and enemies.
    another enemy. He calls this "חשוב מאוד" and specifically a code-design point (00:41:09): "שנגיד
    אתה יורה, פתאום הצפרדע קופץ על הירייה, היא לא מתה".
 1. A destroyed enemy may drop something to collect. **What it drops is configured per enemy, never
-   rolled at runtime**, and "drops nothing" is one of the options (00:46:39). The original game has
-   no randomness in it at all (00:37:46).
+   rolled at runtime**, and "drops nothing" is one of the options (00:46:39). He offered both ways --
+   "או שיש רנדום, היא מפילה משהו או לא, או שיש אפשרות שאתם מזינים מה היא מפילה" (00:46:52) -- and called
+   configured the better of the two, "עדיף אולי אפילו לא לעשות את זה רנדום, למה שתוכל לשלוט בכל הדברים
+   שיוצאים" (00:37:46). The original game has no randomness in it at all.
+1. One drop per enemy rather than a list. 00:47:03 reads literally as loading every drop type onto a
+   single enemy, and what that line asks for -- every type seen early -- is 10.4's job for whoever
+   authors the level rather than one enemy's.
 1. A destroyed enemy comes back after a countdown, **at the place it was authored**. **This delay is
    random**, suggested `10` to `20` seconds (00:44:49). One of the two things he asked to be random,
    the other being the צפרדע's jump timing in 8.18. Nothing else in the game is rolled. He calls it
@@ -255,12 +260,26 @@ objects and enemies.
 ## 10. ביצים and drops
 
 1. Eggs are placed in the level by hand.
-2. Stepping on an egg opens it (00:37:18).
+2. Touching an egg opens it. The transcript says stepping on it -- "כאילו זה פשוט נופל מהביצה
+   כשאתה דורך עליה? כן" (00:37:18) -- and any contact is the more forgiving reading of the same
+   rule, since treading on one is a way of touching it. Decided that way because he will walk into an
+   egg on camera, and one that ignores a walk-in reads as broken.
 3. An egg yields an animal token, a weapon or a פייה. Which one is set per egg, never rolled.
 4. The first few enemies and eggs in level 1 should between them yield every drop type, so that all
    of them can be seen in the opening half-minute instead of after an hour of play (00:47:03): "אז
    תשימו את כל הדברים על החיה הראשונה, תלחמו איתה ותראו שהיא מפילה לכם הכל". This is the payoff of
    8.3 and it is how he intends to check the drop code.
+5. A drop falls out of whatever held it and settles on the ground below. Both sources use that verb,
+   four times between them: "מתוך הביצה נופל את הלב, או נופל העלה, או נופל הכוכב" (00:36:53),
+   "נופל, יוצא מהביצה. לפעמים זה גם נופל מאויבים" (00:37:18), and "להפיל חיה לאיסוף" in
+   the written text. So a ציפור killed high brings its reward down to the player rather than leaving
+   it out of reach: the effort 8.10 asks for is in killing the bird, "צריך להתאמץ בשביל להרוג
+   אותה ואז היא תפיל משהו" (00:39:58).
+6. A drop has to come to rest somewhere the player can reach it. Neither source raises this; it
+   follows from 10.5 the moment something can be destroyed inside terrain or over a תהום.
+7. An egg shows a cracked frame briefly and is then replaced by what it held, rather than staying in
+   the level as an opened shell. "אחרי שפותחים ביצה מופיע האובייקט" in the written text, and the art
+   agrees: there is an idle frame and a cracked one, and nothing for an empty egg.
 
 ## 11. The levels
 

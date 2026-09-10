@@ -5859,7 +5859,7 @@ MonoBehaviour:
   - category: 1
     level: 2
   - category: 2
-    level: 3
+    level: 2
   - category: 3
     level: 2
   - category: 4
@@ -9872,6 +9872,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Sprite_Enemy_Snake_Jumper
       objectReference: {fileID: 0}
+    - target: {fileID: 5113530725854070903, guid: 1157c4701fa3e754c88ef1af883539f1, type: 3}
+      propertyPath: drop
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -12923,7 +12927,6 @@ Transform:
   - {fileID: 1459814156}
   - {fileID: 388054621}
   - {fileID: 271881591}
-  - {fileID: 1951285443}
   - {fileID: 2099755156}
   - {fileID: 1997407128}
   - {fileID: 1815152121}
@@ -23868,63 +23871,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7053467105821369446, guid: 6185ece2dafe3874a94da69daee844fd, type: 3}
   m_PrefabInstance: {fileID: 1716248047}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &1721481979
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 919321203}
-    m_Modifications:
-    - target: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 12
-      objectReference: {fileID: 0}
-    - target: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6013840377464380100, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-      propertyPath: m_Name
-      value: Sprite_Enemy_Ghost
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
 --- !u!1001 &1724068155
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -27176,11 +27122,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7053467105821369446, guid: 6185ece2dafe3874a94da69daee844fd, type: 3}
   m_PrefabInstance: {fileID: 1944766814}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &1951285443 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5740123623781500717, guid: 1e053e6e018bf0542baa438c9397e2ef, type: 3}
-  m_PrefabInstance: {fileID: 1721481979}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1956315666
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -28961,6 +28902,12 @@ MonoBehaviour:
     snakeFireball: {fileID: 8108324297943830757, guid: a93325e4ecd4e164f85f6e9e24849f41, type: 3}
     mountFire: {fileID: 8108324297943830757, guid: 68b4e1b0238d83f48a964586d6bceeaa, type: 3}
   projectileParent: {fileID: 334172705}
+  dropPrefabs:
+  - {fileID: 1427929804517383917, guid: 0f76a7dbb5872b447a3b21e09da2a165, type: 3}
+  - {fileID: 5057896708716502427, guid: 0bd2eb79b4175ba4c8dd2b8882214948, type: 3}
+  - {fileID: 6999945005652603631, guid: 643d5458ac02142448be3d1f992072b8, type: 3}
+  - {fileID: 6129944887139927165, guid: d54301e29480dd04d88bfa67ff34f4d8, type: 3}
+  - {fileID: 6826886873224020649, guid: 622db178030768c418c9b8af0c068d7f, type: 3}
 --- !u!4 &2110033036
 Transform:
   m_ObjectHideFlags: 0

@@ -26,6 +26,10 @@ public class GameInstaller : MonoInstaller
     // Where the pooled projectiles are parked in the Hierarchy, so they do not litter the root.
     [SerializeField] private Transform projectileParent;
 
+    // Every pickup a drop can turn out to be. Each prefab says which drop type it is, so a new one
+    // is another entry here and no change to the factory.
+    [SerializeField] private GameObject[] dropPrefabs;
+
     public override void InstallBindings()
     {
         Container.BindInterfacesAndSelfTo<SessionState>().AsSingle().WithArguments(startingStrikes);
@@ -55,6 +59,7 @@ public class GameInstaller : MonoInstaller
         Container.BindInterfacesAndSelfTo<ProjectileDirector>().AsSingle();
         Container.BindInterfacesAndSelfTo<WeaponSlot>().AsSingle();
         Container.BindInterfacesTo<MountSlot>().AsSingle();
+        Container.BindInterfacesTo<DropFactory>().AsSingle().WithArguments(dropPrefabs);
 
         GameLog.Info(LogCategory.Game, "Zenject container built");
     }

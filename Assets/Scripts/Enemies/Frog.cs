@@ -173,7 +173,7 @@ public class Frog : Enemy
 
             RaycastHit2D hit;
 
-            if (SweepToTerrain(from, SweptSize, step.normalized, step.magnitude, out hit) == false)
+            if (Ground.SweepTo(from, SweptSize, step.normalized, step.magnitude, out hit) == false)
             {
                 transform.position = new Vector3(from.x + step.x, from.y + step.y, transform.position.z);
                 return;

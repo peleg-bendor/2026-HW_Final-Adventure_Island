@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6033423589281406944}
   - component: {fileID: 6874558856466158824}
   - component: {fileID: 7541448045278093920}
+  - component: {fileID: -1436515645819750633}
   m_Layer: 0
   m_Name: Pickup_Boomerang
   m_TagString: Untagged
@@ -124,7 +125,7 @@ CircleCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
@@ -142,4 +143,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec8a6b2eb9d16784a8d24a984ad08c99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponCollectible
+  drop: 5
   projectilePrefab: {fileID: 198139132375361699, guid: e6c101e10ecb64540b86541e43faa714, type: 3}
+--- !u!114 &-1436515645819750633
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5057896708716502427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 337c52ed926c25f44a84a980462ff822, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DropSettle
+  fallSpeed: 8
+  maxFall: 20

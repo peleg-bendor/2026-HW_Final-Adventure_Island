@@ -12,11 +12,15 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     // How close the player has to be, in units, before this does anything. Zero is always active.
     [SerializeField, Min(0f)] private float activationRange = 12f;
 
+    // What this one leaves behind when it is destroyed. None is a real answer and the common one.
+    [SerializeField] private DropType drop = DropType.None;
+
     private IGameFlow flow;
     private IPlayerGuard guard;
     private IResetRegistry registry;
     private RespawnDelay delay;
     private Player player;
+    private IDropFactory drops;
 
     private Vector2 home;
     private float feet = -1f;
@@ -28,13 +32,14 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
 
     [Inject]
     private void Construct(IGameFlow flow, IPlayerGuard guard, IResetRegistry registry,
-        RespawnDelay delay, Player player)
+        RespawnDelay delay, Player player, IDropFactory drops)
     {
         this.flow = flow;
         this.guard = guard;
         this.registry = registry;
         this.delay = delay;
         this.player = player;
+        this.drops = drops;
     }
 
     // Where this was placed when the level was authored. Everything that puts it back puts it here.
@@ -77,50 +82,6 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     protected void Face(bool right)
     {
         transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
-    }
-
-    // How far to the nearest ground along a ray, or infinity when there is none.
-    protected static float DistanceToTerrain(Vector2 from, Vector2 direction, float maxDistance)
-    {
-        float nearest = Mathf.Infinity;
-
-        foreach (RaycastHit2D hit in Physics2D.RaycastAll(from, direction, maxDistance))
-        {
-            if (IsTerrain(hit.collider))
-                nearest = Mathf.Min(nearest, hit.distance);
-        }
-
-        return nearest;
-    }
-
-    // The same question asked with a body rather than a line, for anything that has to move its
-    // whole shape through the level and be stopped by what is in the way.
-    protected static bool SweepToTerrain(Vector2 from, Vector2 size, Vector2 direction,
-        float distance, out RaycastHit2D nearest)
-    {
-        nearest = new RaycastHit2D();
-        bool found = false;
-
-        foreach (RaycastHit2D hit in Physics2D.BoxCastAll(from, size, 0f, direction, distance))
-        {
-            if (IsTerrain(hit.collider) == false)
-                continue;
-
-            if (found == false || hit.distance < nearest.distance)
-            {
-                nearest = hit;
-                found = true;
-            }
-        }
-
-        return found;
-    }
-
-    // Terrain is the only solid collider in this game: every hazard, pickup, door, projectile and
-    // enemy is a trigger, and the player is the one solid thing that is not ground.
-    private static bool IsTerrain(Collider2D collider)
-    {
-        return collider != null && collider.isTrigger == false && collider.GetComponent<Player>() == null;
     }
 
     // What is allowed to destroy this enemy. One line per subclass, and it is the whole rule.
@@ -234,13 +195,31 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         return true;
     }
 
-    // The fixed order, and a subclass has no say in it: gone, then the countdown that brings it back.
+    // The fixed order, and a subclass has no say in it: gone, then what it was carrying, then the
+    // countdown that brings it back.
     private void Die(Destroyer by)
     {
         destroyed = true;
         gameObject.SetActive(false);
         GameLog.Info(LogCategory.Enemy, name + " destroyed - " + by);
+        Drop();
         WaitAndReturn();
+    }
+
+    // The factory decides where a drop goes in the hierarchy, so nothing here has to remember that
+    // a child of this object would be switched off with it.
+    private void Drop()
+    {
+        if (drop == DropType.None)
+            return;
+
+        if (drops == null)
+        {
+            GameLog.Warning(LogCategory.Enemy, "No IDropFactory injected on " + name + ", it drops nothing");
+            return;
+        }
+
+        drops.Create(drop, transform.position);
     }
 
     // A Task and not a coroutine: this object is switched off before the wait begins, and Unity

@@ -808,6 +808,29 @@ it and Exercise 3 dropped it, so this is the third time of asking.
 and move on. Nothing else in the project depends on which way this goes, which is exactly why the
 reflection lives here rather than somewhere structural.
 
+**Settled in the design discussion, 10.9.2026, and two of the four items above changed.** The steps
+the stage actually runs: the factory with the enemy drop as its first caller; the ביצה as its
+second; then the debug keys, `CONVENTIONS.md`'s folder paragraph and the log entries.
+
+**Reflection is dropped, and the escape hatch's reason is not the one that applied.** The paragraph
+above says this factory holds "the one switch statement the whole design admits". It does not. Every
+drop is a prefab carrying its own configuration already - `Pickup_Mount_Red` holds the red
+`MountDefinition` and `Pickup_Boomerang` holds its projectile - so the factory's per-type knowledge
+is a `Dictionary<DropType, GameObject>` built once at startup from prefabs that declare which type
+they are, and there is no `switch (type)` to remove. The design as written is also unbuildable:
+mapping `DropType` to `Type` needs one class per drop type, and `WeaponCollectible` serves two while
+`MountCollectible` serves three, so an attribute on a class cannot tell `Pickup_Mount_Blue` from
+`Pickup_Mount_Red`. The full reasoning, including the two alternative homes that were measured and
+lost, is in the Decisions Log. **Reflection is still in the project and worth being able to explain**:
+`[Inject]` is an attribute and every `Construct` in this codebase is called by Zenject through
+reflection.
+
+**Two things the stage gained instead, both from re-reading the sources.** A drop *falls* out of
+whatever held it, which is the verb both sources use four times over, so a ציפור killed high brings its
+reward down rather than leaving it out of reach. And a ביצה cracks for a beat and is then replaced by
+what it held rather than staying as an opened shell, which is what the art supports and what the
+written text describes. Both are now 10.5 to 10.7.
+
 ### Stage 17 — פייה `[ ]`
 
 1. Ten seconds of invincibility.
@@ -2284,3 +2307,100 @@ _(append entries here as we make design decisions.)_
   `Hazard.TryDestroy` at stage 12 and `PlayerGuard.TryAbsorb` at stage 13. Nothing places a token, so
   it was exercised by dragging `Pickup_Mount_Blue` into `Level_1` by hand and deleting it again. Stage
   16 is what gives it a real caller.
+
+- **Reflection is dropped at the one stage reserved for it, and the schedule had nothing to do with
+  it.** The plan expected the factory to hold a switch over drop types and expected an attribute to
+  remove it. Neither is true. Every drop is a `Pickup_` prefab carrying its own configuration
+  already, so the factory is a `Dictionary<DropType, GameObject>` filled once at startup from prefabs
+  that declare their own type, and no `switch (type)` is ever written. The planned design is also
+  unbuildable as stated: `Dictionary<DropType, Type>` needs one class per drop type, and
+  `WeaponCollectible` serves two while `MountCollectible` serves three, so an attribute on a class
+  cannot separate `Pickup_Mount_Blue` from `Pickup_Mount_Red`. Making it buildable costs five empty
+  subclasses, and they would not even be honest - `AxeCollectible` sitting on `Pickup_Boomerang` with
+  the boomerang assigned compiles, runs and works. Two other homes were measured and both lost. An
+  attribute-driven startup audit of the prefab list needs reflection for exactly one catch, a prefab
+  whose drop type disagrees with its class, across five prefabs whose fields are set once. A scan for
+  unassigned `[SerializeField]` references lost on numbers: about 30 serialized reference fields
+  against 69 warning guards, every class owning one already guarding it and saying what stops
+  working, the only class with none of its own being `MountDefinition` whose consumer guards instead,
+  and a runtime scene scan seeing neither a prefab nor a ScriptableObject - checked, and the five
+  `Pickup_` prefabs appear nowhere in `Scene_Game.unity`, which is exactly where this stage's
+  references live. **The defense answer is a real one**: reflection was placed, the place turned out
+  not to need it, and `[Inject]` means every `Construct` in this codebase is called by reflection
+  anyway. Third recorded rejection, after Template for the level reset and Builder for the mounted
+  state.
+- **Drops fall, and the first reading of 8.10 had it backwards.** That requirement was written as a
+  bird kept high signalling "a drop worth the effort of reaching it", which was read here as the drop
+  staying up there. The line behind it says the opposite - "צריך להתאמץ בשביל להרוג אותה ואז היא
+  תפיל משהו" (00:39:58) - so the effort is in killing the bird and the reward then comes
+  down. Both sources use נופל four times between them and neither ever says a drop stays where the
+  enemy was. Peleg's call, and it is the reading that makes a high bird worth shooting at all.
+- **A drop settles rather than being placed, and that is one component on the `Pickup_` prefabs.**
+  `DropSettle` lifts itself out of terrain if it appeared inside any, then falls until something solid
+  is under it. Two cases forced it: a רוח רפאים destroyed while overlapping the ground would otherwise
+  seal its drop inside a tile, and a תהום has no solid floor at all - `Sprite_Spikes` carries a
+  trigger collider, checked, so a falling drop would pass straight through it and out of the world.
+  With nothing solid below within a bounded cast the drop stays where it appeared, which is
+  deterministic and visible where falling forever is neither. **Not on `Collectible`**, because
+  painted fruit has to stay exactly where it was painted.
+- **A dropped collectible is destroyed by a reset where every other collectible is restored.**
+  `Collectible.ResetTo` switches the object back on, which is right for the eight authored pickups and
+  wrong for anything the factory made: kill an enemy, take the לב, mount, lose a strike, and 3.6
+  clears the mount while the reset hands the token straight back. 3.5 settles it - fruit that was
+  eaten, eggs that were opened and "any item placed in the level" come back, and a drop was produced
+  rather than placed. What comes back is its source: the ביצה returns to idle and a dead enemy
+  returns on its own countdown. Restoring both would hand out two. The cost is that a drop left lying
+  when the player dies is gone until that enemy respawns, which is the same shape as the enemy staying
+  dead.
+- **The factory parents every drop to the active level root itself**, by injecting `ILevels`, so no
+  caller passes a parent. Stage 14 left a trap for this stage - a drop parented to the enemy is
+  switched off with it - and a `Transform` parameter would leave that trap open for every caller
+  after this one. It also gets the level change right without anyone thinking about it, since a drop
+  under `Level_1` goes away when that root does and one at the scene root would hang in the air
+  through level 2.
+- **The ביצה is not a `Collectible`, and the reason is the Template's fixed order.** The base
+  deactivates the object and *then* applies the effect, deliberately, so an effect that costs a strike
+  can still be undone by the reset that follows. An egg's whole behaviour is a visible beat between
+  those two steps: cracked frame, a moment, then gone and replaced by what it held. Bending the base
+  to allow that would cost the one property that makes the base worth having. The eight pickups under
+  `Collectible` stay eight. Knowing where the Template stops is the answer to give, rather than one
+  more subclass.
+- **The egg's crack is a coroutine and says so out loud.** It runs on an object that stays alive for
+  the whole wait, cancels nothing and returns nothing, which is the same argument stage 17 makes for
+  the פייה's ten seconds. Two coroutines beside two Tasks is what makes 13.3 answerable in both
+  directions. `ResetTo` has to stop it, or a reset during the crack spawns a drop into a level that
+  has already restarted.
+- **An egg opens on contact rather than on being stepped on.** 10.2 quotes "כשאתה דורך עליה"
+  (00:37:18), and a feet-above-the-middle test was the first proposal. Peleg's call, and the reason
+  is that he will walk into an egg during the recording: one that ignores a walk-in reads as broken,
+  and treading on an egg is a way of touching it, so the looser rule satisfies the stricter reading.
+- **The egg prefab ships holding a לב, and random was turned down in both of its forms.** Rolling at
+  Play is the randomness 8.3 and 10.3 both refuse and that he called the worse choice at 00:37:46.
+  Rolling when the tile is placed would be legitimate - `SpriteVariant.PickOne` already does exactly
+  that and writes a concrete value into the scene - and it loses on authoring, because six identical
+  egg sprites holding six random things means opening six Inspectors to learn what a level contains,
+  against 10.4 wanting every type placed deliberately. A fixed default also fails better than `None`:
+  a forgotten egg dropping a spare לב reads as level design, where one that cracks and yields nothing
+  reads as a broken drop system. `None` on an egg warns in `Awake`; `None` on an enemy is silent,
+  since most enemies drop nothing.
+- **One drop per enemy.** 00:47:03 reads literally as loading every drop type onto a single enemy -
+  "תשימו את כל הדברים על החיה הראשונה... ותראו שהיא מפילה לכם הכל" - and a `DropType[]` would
+  satisfy it exactly, at the cost of a loop and of spreading several drops so they do not land on
+  each other. Peleg's call. What that line is really asking for
+  is every type visible in the opening half-minute, which is 10.4 and belongs to whoever authors the
+  level.
+- **`Ground` comes out of `Enemy` because a falling drop is the second real use.** `IsTerrain`,
+  `DistanceToTerrain` and `SweepToTerrain` are `protected static` on `Enemy`, and "terrain is a
+  non-trigger collider that is not the player" would otherwise be written twice - which matters more
+  than it sounds, since a drop that stops falling on the player's head is what a careless second copy
+  produces. Code quality rule 5 asks for a second real use case before an abstraction, and this is it.
+  `Terrain` is unusable as a name, because `UnityEngine.Terrain` exists and every file has
+  `using UnityEngine`.
+- **The factory goes in `Collectibles/`, and `CONVENTIONS.md`'s folder paragraph gets rewritten.**
+  That paragraph names `Builder/`, `Factory/` and `Pooling/` folders and argues for them on the
+  grounds that "show me the Factory" has to be answerable by opening one folder. None of the three
+  exists - the builder and the pool both live in `Projectiles/`, decided at stage 13 - so the
+  precedent the code set is the opposite of what the file says. Four other things in the same
+  paragraph are stale: it says `Animals/` where the folder is `Mounts/`, it names an `Extensions/`
+  that was never created, and it omits `MVC/`. All five are corrected at the end of this stage, once
+  the folder actually holds the new files.

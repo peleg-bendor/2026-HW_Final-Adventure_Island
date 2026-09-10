@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6314235586895367210}
   - component: {fileID: 5063668302188985697}
   - component: {fileID: 6795107139656380430}
+  - component: {fileID: 2253341654229384405}
   m_Layer: 0
   m_Name: Pickup_Mount_Green
   m_TagString: Untagged
@@ -152,4 +153,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0024d9b17d8db240b77fb81d38da911, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MountCollectible
+  drop: 3
   mount: {fileID: 11400000, guid: 40c2f4aba9f3a0047afb563b2710be0f, type: 2}
+--- !u!114 &2253341654229384405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6129944887139927165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 337c52ed926c25f44a84a980462ff822, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DropSettle
+  fallSpeed: 8
+  maxFall: 20
