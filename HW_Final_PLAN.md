@@ -785,7 +785,7 @@ size, and whether it spits fire. The absorb never reached the asset at all — i
 three, so it lives in `PlayerGuard` and no mount has an opinion about it. Eleven is still data, which
 is the whole of the rejection; the asset earns its keep more than the estimate said, not less.
 
-### Stage 16 — ביצים, drops and collectibles `[ ]`
+### Stage 16 — ביצים, drops and collectibles `[x]`
 
 1. The drop factory, making a collectible from a configured type.
 1. Per-enemy drop configuration, including dropping nothing (8.3).
@@ -2404,3 +2404,52 @@ _(append entries here as we make design decisions.)_
   paragraph are stale: it says `Animals/` where the folder is `Mounts/`, it names an `Extensions/`
   that was never created, and it omits `MVC/`. All five are corrected at the end of this stage, once
   the folder actually holds the new files.
+- **Two prefabs had `Is Trigger` unticked and nobody had noticed.** `Pickup_Axe` and
+  `Pickup_Boomerang` carried solid `CircleCollider2D`s, so `Collectible.OnTriggerEnter2D` could never
+  have fired on either and the player would have walked into them like a wall. It survived stage 13
+  because nothing placed one and the `A` and `B` keys stood in, and it would have survived this stage
+  too except that `Ground` reads any non-trigger collider as terrain - a lying axe would have been
+  something a falling drop could land on. Found by reading the five prefabs before writing the
+  factory rather than by playing.
+- **The drop sank half a cell into the ground, and the arithmetic said why.**
+  `SpriteImportRules.PivotY` is `48 * 0.5 / textureHeight`, so every sprite a whole cell or taller is
+  anchored half a cell above its own bottom edge. A ground tile at integer y has its 1x1 collider
+  spanning y-0.5 to y+0.5, so its surface is half a cell above its transform. `DropSettle` rested the
+  pivot **on** the surface, which put the sprite half a cell under it. The rest position is
+  `surface + 0.5`, and the same error was in the climb-out-of-terrain branch. Worth keeping because
+  the same half cell is why a נחש standing at integer y drops a token that needs to move at all - the
+  cast finds 0.5 and the correction cancels it, so a drop from something standing on the ground now
+  does not move.
+- **`Ground` took three call sites with it, so step 1 was eleven files and not eight.** `Frog`,
+  `SnakeJumper` and `Spider` each called `DistanceToTerrain` or `SweepToTerrain` off the `Enemy`
+  base. One identifier each, and the alternative was leaving forwarding wrappers on `Enemy` that
+  existed only so three lines would not have to change.
+- **`Egg.Hatch` makes the drop before switching the egg off, and the order matters.** Deactivating a
+  GameObject stops its coroutines, and while the statements after `SetActive(false)` do finish on the
+  current stack, relying on that is a trap for whoever edits the method next. The drop is parented to
+  the level rather than to the egg, so the order costs nothing either way.
+- **`DropSettle` settles in `Start` and not in `OnEnable`.** `DiContainer.InstantiatePrefab`
+  reactivates the object as part of the instantiate, which raises `OnEnable` before the factory has
+  positioned it - a settle there would measure the prefab's own origin. Drops are destroyed rather
+  than switched off and on, so `Start` running once is the whole lifetime.
+- **The ביצה's art is 96x48 and an outline rather than a filled egg.** Two cells wide and one tall,
+  so it is centred on the cell it is painted in and overhangs half a cell each side, which is the
+  first thing in this project not to occupy whole cells. Peleg confirmed both are how the source
+  draws it. The collider is a horizontal capsule sized to the oval rather than a box, since a box
+  would open the egg from a corner with no egg in it.
+- **No `LogCategory` was added.** A drop and an egg both log under `Collectible`. `Drop` would have
+  held two lines and `Egg` one, against that enum's own rule that no category ends up holding a
+  single line, and the eight values still cover every system this game has.
+- **Both debug key sets are gone, and five ביצות replaced them.** `DebugWeaponKeys` and
+  `DebugMountKeys` came off the `Scripts` object and their two files were deleted, so `A`, `B`, `Q`,
+  `W` and `E` no longer exist and the only way to hold a weapon or ride a mount is a drop. Level 1
+  was given five eggs first, covering every drop type except the פייה, which has no prefab until
+  stage 17 - the keys could not go until something else could equip the player, and the eggs are what
+  the keys were always standing in for. `DebugFlowKeys` stays: `1` and `2` are stage 20's call.
+- **Saving the level file showed how far behind it had fallen.** `Level01.txt` is written from the
+  scene, so the first Save after this stage's authoring dropped a רוח רפאים the file still listed and
+  confirmed there is no fruit in level 1 at all. Both had gone during stage 15's testing and only the
+  file remembered them. **A note for stage 17**: 9.2 and 8.21 both turn on the פייה being the one
+  thing that destroys a רוח רפאים, so one has to be painted back before that stage can be tested at
+  all. The פייה-then-תהום spot 9.4 asks for is already there, since the pit and its three spike
+  tiles survived.

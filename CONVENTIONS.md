@@ -121,16 +121,16 @@ Sorting layers, back to front: `Background`, `Level`, `Pickups`, `Enemies`, `Pla
 Unity's `Default` is left first and unused, so a prefab whose layer was forgotten renders behind the
 ground and shows itself.
 
-Scripts are grouped under `Assets/Scripts/` by domain, with three folders named for a pattern
-instead: `Builder/`, `Factory/` and `Pooling/`. Grouping by pattern is worse organisation - it
-scatters the projectile system across four folders - and it is kept anyway, because the code video
-is what gets graded and "show me the Factory" has to be answerable by opening one folder. The rest
-are `Editor/`, `Logging/`, `Installers/`, `State/`, `Levels/`, `Player/` with `Weapons/` beneath it,
-`Projectiles/`, `Enemies/`, `Animals/`, `Collectibles/`, `Hazards/`, `Animation/`, `UI/` and
-`Extensions/`. Two of those are not domains. `Animation/` holds the sprite-cycling component, which
-goes on hazards, enemies, animals and a projectile alike. `Projectiles/` sits at the top rather than
-under `Player/` because a weapon is something the player carries while a projectile is something in
-flight, and a snake's fireball and an animal's fire have no weapon behind them at all.
+Scripts are grouped under `Assets/Scripts/` by domain, never by pattern. The folders are `Editor/`,
+`Logging/`, `Installers/`, `State/`, `Levels/`, `Player/` with `Weapons/` beneath it,
+`Projectiles/`, `Enemies/`, `Mounts/`, `Collectibles/`, `Hazards/`, `Animation/`, `MVC/` and `UI/`.
+Two of those are not domains: `Animation/` holds the sprite-cycling component, which goes on
+hazards, enemies, mounts and a projectile alike, and `MVC/` holds the three HUD triads, one folder
+each. `Projectiles/` sits at the top rather than under `Player/` because a weapon is something the
+player carries while a projectile is something in flight, and a snake's fireball and a mount's fire
+have no weapon behind them at all. A pattern's implementation lives with the domain it serves - the
+builder and the pool in `Projectiles/`, the drop factory in `Collectibles/` - so "show me the
+Factory" is answered by naming a file rather than a folder.
 
 There is no `Interfaces/` folder. An interface lives beside the thing implementing it. Exercise 3
 had few enough to collect in one place; this project has `IResettable`, `IDestructible`,
