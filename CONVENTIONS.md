@@ -123,10 +123,11 @@ ground and shows itself.
 
 Scripts are grouped under `Assets/Scripts/` by domain, never by pattern. The folders are `Editor/`,
 `Logging/`, `Installers/`, `State/`, `Levels/`, `Player/` with `Weapons/` beneath it,
-`Projectiles/`, `Enemies/`, `Mounts/`, `Collectibles/`, `Hazards/`, `Animation/`, `MVC/` and `UI/`.
-Two of those are not domains: `Animation/` holds the sprite-cycling component, which goes on
-hazards, enemies, mounts and a projectile alike, and `MVC/` holds the three HUD triads, one folder
-each. `Projectiles/` sits at the top rather than under `Player/` because a weapon is something the
+`Projectiles/`, `Enemies/`, `Mounts/`, `Collectibles/`, `Hazards/`, `Animation/`, `Effects/`, `MVC/`
+and `UI/`. Three of those are not domains: `Animation/` holds the two frame animators, one looping
+and one playing once, which go on hazards, enemies, mounts, projectiles and effects alike;
+`Effects/` holds what is spawned purely to be seen when something is destroyed, and nothing in the
+game can touch any of it; and `MVC/` holds the three HUD triads, one folder each. `Projectiles/` sits at the top rather than under `Player/` because a weapon is something the
 player carries while a projectile is something in flight, and a snake's fireball and a mount's fire
 have no weapon behind them at all. A pattern's implementation lives with the domain it serves - the
 builder and the pool in `Projectiles/`, the drop factory in `Collectibles/` - so "show me the

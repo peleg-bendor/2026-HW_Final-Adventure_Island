@@ -30,6 +30,11 @@ public class GameInstaller : MonoInstaller
     // is another entry here and no change to the factory.
     [SerializeField] private GameObject[] dropPrefabs;
 
+    // What is left on screen when something is destroyed. Typed by the component each one carries,
+    // so a prefab that could not play is refused here rather than failing at the first death.
+    [SerializeField] private OneShotAnimator puffPrefab;
+    [SerializeField] private FallingBody fallPrefab;
+
     public override void InstallBindings()
     {
         Container.BindInterfacesAndSelfTo<SessionState>().AsSingle().WithArguments(startingStrikes);
@@ -61,6 +66,7 @@ public class GameInstaller : MonoInstaller
         Container.BindInterfacesAndSelfTo<WeaponSlot>().AsSingle();
         Container.BindInterfacesTo<MountSlot>().AsSingle();
         Container.BindInterfacesTo<DropFactory>().AsSingle().WithArguments(dropPrefabs);
+        Container.BindInterfacesTo<DeathEffects>().AsSingle().WithArguments(puffPrefab, fallPrefab);
 
         GameLog.Info(LogCategory.Game, "Zenject container built");
     }

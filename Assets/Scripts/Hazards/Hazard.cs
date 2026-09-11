@@ -7,13 +7,15 @@ public abstract class Hazard : MonoBehaviour, IDestructible, IResettable
 {
     private IPlayerGuard guard;
     private IResetRegistry registry;
+    private IPuff puff;
     private int lastTouchFrame = -1;
 
     [Inject]
-    private void Construct(IPlayerGuard guard, IResetRegistry registry)
+    private void Construct(IPlayerGuard guard, IResetRegistry registry, IPuff puff)
     {
         this.guard = guard;
         this.registry = registry;
+        this.puff = puff;
     }
 
     // What is allowed to destroy this hazard. One line per subclass, and it is the whole rule.
@@ -70,6 +72,8 @@ public abstract class Hazard : MonoBehaviour, IDestructible, IResettable
         Hurt();
     }
 
+    // A puff however it went, rather than the fall an enemy takes, since a rock or a fire has nothing
+    // to topple over.
     public bool TryDestroy(Destroyer by)
     {
         if ((DestroyedBy & by) == 0)
@@ -77,6 +81,12 @@ public abstract class Hazard : MonoBehaviour, IDestructible, IResettable
 
         gameObject.SetActive(false);
         GameLog.Info(LogCategory.Hazard, name + " destroyed - " + by);
+
+        if (puff != null)
+            puff.Puff(transform);
+        else
+            GameLog.Warning(LogCategory.Hazard, "No IPuff injected on " + name + ", it vanishes without an effect");
+
         return true;
     }
 

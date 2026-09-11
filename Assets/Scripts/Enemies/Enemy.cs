@@ -21,6 +21,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     private RespawnDelay delay;
     private Player player;
     private IDropFactory drops;
+    private IDeathEffects effects;
 
     private Vector2 home;
     private float feet = -1f;
@@ -32,7 +33,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
 
     [Inject]
     private void Construct(IGameFlow flow, IPlayerGuard guard, IResetRegistry registry,
-        RespawnDelay delay, Player player, IDropFactory drops)
+        RespawnDelay delay, Player player, IDropFactory drops, IDeathEffects effects)
     {
         this.flow = flow;
         this.guard = guard;
@@ -40,6 +41,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         this.delay = delay;
         this.player = player;
         this.drops = drops;
+        this.effects = effects;
     }
 
     // Where this was placed when the level was authored. Everything that puts it back puts it here.
@@ -195,15 +197,34 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         return true;
     }
 
-    // The fixed order, and a subclass has no say in it: gone, then what it was carrying, then the
-    // countdown that brings it back.
+    // The fixed order, and a subclass has no say in it: gone, the picture of it going, what it was
+    // carrying, then the countdown that brings it back.
     private void Die(Destroyer by)
     {
         destroyed = true;
         gameObject.SetActive(false);
         GameLog.Info(LogCategory.Enemy, name + " destroyed - " + by);
+        ShowDeath(by);
         Drop();
         WaitAndReturn();
+    }
+
+    // The fairy's kills puff away like a hazard does; anything else the player did knocks it over.
+    // Either way it is a separate object, so this one still switches off at once.
+    private void ShowDeath(Destroyer by)
+    {
+        if (effects == null)
+        {
+            GameLog.Warning(LogCategory.Enemy, "No IDeathEffects injected on " + name + ", it vanishes without an effect");
+            return;
+        }
+
+        SpriteRenderer picture = GetComponent<SpriteRenderer>();
+
+        if ((by & Destroyer.Fairy) != 0 || picture == null)
+            effects.Puff(transform);
+        else
+            effects.Fall(picture);
     }
 
     // The factory decides where a drop goes in the hierarchy, so nothing here has to remember that
