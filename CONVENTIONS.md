@@ -97,14 +97,20 @@ Cut per sheet, not per sprite: key out the background at native resolution first
 is exact, then upscale the whole sheet, then cut on a 48px grid. A sprite spans one cell, two or six
 depending on what it is, so the grid is the guide rather than the cut size.
 
+The one sprite outside this pipeline is `Sprite_Background_Sky.png`. It is never cut or placed on
+the grid, only scaled to cover the view, so it is stored at its native 166x92, one pixel per block
+of the art it came from, rather than upscaled. Its pixels come out larger than the game's on
+screen, which reads as distance.
+
 Animation assets live in `Assets/Animation/`, flat. A clip takes the `Anim_` prefix and names the
 state it plays, `Anim_Player_Walk`, and a controller takes `Animator_`. Transitions are set to zero
 duration with no exit time: blending means nothing between discrete sprites and only adds lag.
 
-Prefabs live in `Assets/Prefabs/`, flat. Those for objects placed in the level take the `Sprite_`
-prefix, a collectible something spawns takes `Pickup_`, and anything else built at runtime takes
-none. The middle case exists because the two collide otherwise: `Pickup_Axe` is the axe lying in the
-level waiting to be walked into, and `Axe` is the one in flight.
+Prefabs live in `Assets/Prefabs/`, flat, and every one's prefix says what it is: `Sprite_` for
+anything placed in a level, `Pickup_` for a collectible something spawns, `Projectile_` for what
+flies, `Effect_` for what is spawned only to be seen, and the canvas prefixes below for a piece of
+UI, as in `Img_PowerLine`. `Pickup_Axe` is the axe lying in the level waiting to be walked into, and
+`Projectile_Axe` is the one in flight.
 
 Definition assets - the ScriptableObjects the game reads at runtime rather than the ones a tool
 reads - live in `Assets/Data/`, flat. One folder for all of them rather than one per feature, and
@@ -127,11 +133,12 @@ Scripts are grouped under `Assets/Scripts/` by domain, never by pattern. The fol
 and `UI/`. Three of those are not domains: `Animation/` holds the two frame animators, one looping
 and one playing once, which go on hazards, enemies, mounts, projectiles and effects alike;
 `Effects/` holds what is spawned purely to be seen when something is destroyed, and nothing in the
-game can touch any of it; and `MVC/` holds the three HUD triads, one folder each. `Projectiles/` sits at the top rather than under `Player/` because a weapon is something the
-player carries while a projectile is something in flight, and a snake's fireball and a mount's fire
-have no weapon behind them at all. A pattern's implementation lives with the domain it serves - the
-builder and the pool in `Projectiles/`, the drop factory in `Collectibles/` - so "show me the
-Factory" is answered by naming a file rather than a folder.
+game can touch any of it; and `MVC/` holds the three HUD triads, one folder each. `Projectiles/`
+sits at the top rather than under `Player/` because a weapon is something the player carries while
+a projectile is something in flight, and a snake's fireball and a mount's fire have no weapon
+behind them at all. A pattern's implementation lives with the domain it serves - the builder and
+the pool in `Projectiles/`, the drop factory in `Collectibles/` - so "show me the Factory" is
+answered by naming a file rather than a folder.
 
 There is no `Interfaces/` folder. An interface lives beside the thing implementing it. Exercise 3
 had few enough to collect in one place; this project has `IResettable`, `IDestructible`,
@@ -140,11 +147,14 @@ them from its implementation.
 
 In the Hierarchy the scene root holds `Main Camera`, `SceneContext` with `GameInstaller` as its only
 child, `Scripts` for logic-only manager objects, `Logging` for `LogSettings` and `LogFileWriter`,
-`Projectiles` holding the pooled projectiles built at startup, `Level_1` and `Level_2`, and `Canvas`
-holding the GUI objects, each prefixed with what it is - `Txt_` for a label, `Img_` for
-an image, `Btn_` for a button, `Bar_` for a meter, `Count_` for an icon with a number beside it and
-`Popup_` for a panel that covers the game - with the `EventSystem` uGUI adds beside it. Both levels exist in the one scene with one active at a time, because nothing in this
-project loads a scene.
+`Projectiles` holding the pooled projectiles built at startup, `Level_1` and `Level_2`,
+`Canvas_Background` holding only the sky, and `Canvas` holding the GUI objects, each prefixed with
+what it is - `Txt_` for a label, `Img_` for an image, `Btn_` for a button, `Bar_` for a meter,
+`Count_` for an icon with a number beside it and `Popup_` for a panel that covers the game - with
+the `EventSystem` uGUI adds beside it. The two canvases cannot be one: `Canvas` is Screen Space -
+Overlay and draws over everything, while `Canvas_Background` is Screen Space - Camera on the
+`Background` sorting layer, behind the level. Both levels exist in the one scene with one active at
+a time, because nothing in this project loads a scene.
 
 The levels are data-driven. `Assets/Levels/Level01.txt` and `Level02.txt` hold one tile id per cell,
 in Tiled's map format although nothing here is authored in Tiled: `Tools > Level` builds a file into

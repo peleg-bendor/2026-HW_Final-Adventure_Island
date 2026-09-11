@@ -831,7 +831,7 @@ reward down rather than leaving it out of reach. And a ביצה cracks for a bea
 what it held rather than staying as an opened shell, which is what the art supports and what the
 written text describes. Both are now 10.5 to 10.7.
 
-### Stage 17 — פייה `[ ]`
+### Stage 17 — פייה `[x]`
 
 1. Ten seconds of invincibility.
 1. Destroys everything it touches, מדורה and רוח רפאים included.
@@ -845,7 +845,18 @@ it is, answers the question he said outright he will ask — in both directions.
 
 This stage also touches every other system, so it doubles as the integration test.
 
-### Stage 18 — Level 2's mechanics `[ ]`
+**Closed 11.9.2026, and most of it existed before it began.** Every hazard, every enemy and the
+נחש's fireball already answered `Destroyer.Fairy`, and `Spikes` already never asked the guard, so
+the whole of 9.2 and 9.3 came down to one branch in `PlayerGuard.TryAbsorb` and a component to hold the
+ten seconds. **The integration test is narrower than this section promised.** It covered what level 1
+held - the shooting נחש, the רוח רפאים, rocks, the מדורה and the pit. The bird, the frog, both
+spiders and the jumping נחש were not run against a פייה in play, by Peleg's call; all of them
+answer `Fairy` in code, and stage 20's full playthrough is where they meet it.
+
+**Two things landed here that no stage planned**: the destruction effects - a puff, and the upside-down
+fall of an enemy the player killed - and the sky background. Both are in the Decisions Log.
+
+### Stage 18 — Level 2's mechanics `[x]`
 
 1. Vertical camera framing.
 1. Carried state crossing: weapon, animal and fruit count survive; כוח resets.
@@ -857,6 +868,13 @@ this stage only wires them to a second level. **The transition moved out of here
 where `CompleteLevel` had to become a real operation rather than an event that fired and did
 nothing - and once it advances the level, it may as well be generic from the start. What is left
 here is level 2's own mechanics, which is what the stage was named for.
+
+**Closed 11.9.2026 with no code, as this section predicted.** All three items were already met - the
+framing by stage 7, the transition by stage 8, the carried state by stages 13 and 15, and the ending by
+stage 10 - and one session observed what the code guaranteed: the weapon and the mount crossed, כוח
+arrived at 9, the פייה was lost at the door, and level 2 was climbed to its exit, the congratulation
+popup and a clean restart. The fruit count crossing is the one thing still unseen, because level 1 has
+no fruit yet. **Carried into stage 19**: level 2 must be at least 18 cells wide for 11.4 to hold.
 
 ### Stage 19 — Author both levels to spec `[ ]`
 
@@ -2453,3 +2471,124 @@ _(append entries here as we make design decisions.)_
   thing that destroys a רוח רפאים, so one has to be painted back before that stage can be tested at
   all. The פייה-then-תהום spot 9.4 asks for is already there, since the pit and its three spike
   tiles survived.
+
+- **Stage 17 was mostly built before it began.** Every hazard, every enemy and the נחש's fireball
+  answered `Destroyer.Fairy` from the stage that made it, and `Spikes` never asks `IPlayerGuard` at
+  all, so 9.3 - the pit kills through a פייה - is satisfied by omission, the same shape as 8.2. What
+  the stage added was one branch in `TryAbsorb` and something to hold the ten seconds.
+- **`PlayerFairy` is an `IResettable`, and the weapon and mount slots are not, for the same reason
+  read the other way.** The slots subscribe to `GameStarted` and `StrikeLost` because a weapon and a
+  mount are lost on a strike and kept across a level. The פייה is lost on both - Peleg's call, since
+  respawning at the level start still invincible reads as a bug - so a `ResetTo` that clears
+  unconditionally covers a strike, a new game and a level change in one method. Registered on enable
+  like `PlayerReset`, since the player is never switched off. The level-change clear was observed
+  through the identical `ResetAll(Full)` a new game runs.
+- **Its own component rather than a field on `PlayerGuard`.** The guard consults `IMountSlot` rather
+  than holding the mount, so holding the fairy itself would have been the inconsistency. The cost is
+  the player's fifteenth component, taken because the SOLID register's recorded policy for him is
+  split rather than grow.
+- **The guard asks the fairy first and says nothing.** A fairy costs nothing and a mount is spent on
+  the hit, so a player holding both never pays with the mount - observed, riding into the רוח רפאים
+  with both cost neither. No log line in the guard, since whatever the fairy destroys already
+  announces `destroyed - Fairy`.
+- **Two strike sources a פייה does not stop, besides the pit.** כוח running out and the fruit count
+  reaching a multiple of 20. 9.2 says only that it destroys anything he touches, and neither of
+  those is touched. Observed: `Fairy taken`, then `Power ran out - a strike is owed`, then `Fairy
+  lost`.
+- **The ten seconds live on `PlayerFairy`, which retires one of this plan's own sentences.** Stage 1
+  Step 5 justified the drop factory partly by "the פייה carries its duration". It does not: the
+  pickup grants a fairy and the player's component owns how long one lasts, beside `PlayerJump`'s
+  and `PlayerGuard`'s numbers. The factory's real justifications are the ones stage 16 recorded.
+- **The marker is a child of the player and flips with him.** `Sprite_Fairy` faces right, so
+  mirroring when he turns is correct rather than a side effect, and being a child puts the offset in
+  the scene rather than in code.
+- **The destruction effects: a puff for every hazard and every fairy kill, an upside-down fall for
+  every other enemy kill.** Peleg's design, reached through two reversals worth keeping: the puff
+  was first to be for fairy kills alone, with a hazard broken any other way vanishing as before, and
+  then hazards went back to puffing however they went. The רוח רפאים only ever puffs, since only the
+  fairy kills it, and the נחש's fireball gets nothing because it is neither an enemy nor a hazard.
+- **The dying object is never animated; a throwaway object is.** `Enemy.Die` and `Hazard.TryDestroy`
+  still switch off at once, so the respawn, the drop, the reset and `destroyed` are exactly as they
+  were and the Template's fixed order is untouched. Animating the enemy itself would have meant a
+  dying state in the base - collider off, `Behave` suppressed, `Face` fighting a flip over
+  `localScale`, a reset arriving mid-fall.
+- **One class behind two interfaces, which is interface segregation without a second
+  implementation.** `Hazard` asks for `IPuff` and `Enemy` for `IDeathEffects`, which extends it with
+  `Fall`, and `BindInterfacesTo<DeathEffects>` hands both the same instance. Neither base depends on
+  a method it never calls, and `Enemy` stops at seven dependencies rather than eight.
+- **The effect prefabs are typed fields rather than `GameObject`s.** `OneShotAnimator` and
+  `FallingBody` on `GameInstaller`: Unity refuses a prefab without the component, `Instantiate`
+  returns it directly, and two different types pass through `WithArguments` where two bare
+  `GameObject`s would be ambiguous - the problem `ProjectilePrefabs` exists to solve, avoided here
+  rather than wrapped.
+- **Plain `Instantiate`, not the container and not a pool.** Neither effect needs injection, which
+  is the contrast with the drop factory, and a few effects a minute with no cap are not what pooling
+  is for.
+- **`FallingBody` has no collider, and that is the whole of "through everything".** Gravity is the
+  `Rigidbody2D`'s own Gravity Scale rather than a second copy on the component. `flipY` mirrors
+  about the pivot, which sits in the middle of the bottom cell, so a two-cell sprite starts its fall
+  a cell lower: the bird and both נחשים are two cells tall and the frog and spider one, and the
+  shooter's fall was seen and judged fine. The ghost is three cells tall and never falls.
+- **`OneShotAnimator` sits beside `SpriteCycleAnimator` rather than reusing it.** The looping one
+  runs off the shared clock so a row of מדורות flickers together, which is wrong for a sequence that
+  starts when it is made - stage 15's reason for refusing it for the flame. The puff's frames were
+  renamed to `Sprite_Puff_1` to `_3` from `Sprite_Destroyed_`.
+- **Every prefab's prefix now says what it is.** `Projectile_` for the four things that fly,
+  `Effect_` for the two effects, and `Img_PowerLine`, whose root is a UI `Image` and so takes the
+  canvas prefix. This retired `CONVENTIONS`' one rule defined by absence, "anything else built at
+  runtime takes none". Renamed in Unity's Project window, so every GUID and reference survived -
+  checked by resolving every GUID in the scene, the prefabs and the data assets, and none of ours
+  dangles. Log lines built from `prefab.name` changed with them, and `Weapon taken: Projectile_Axe`
+  was accepted rather than adding a display name for one line. The renames went into commit
+  `ddc7df1`, whose message names only the sky; both commits were pushed before that was noticed, so
+  the history stays as it is and this entry is its explanation.
+- **The sky is a canvas, and the first design put it in the world.** It was first a `SpriteRenderer`
+  under `Main Camera` with a component fitting it to the view every frame. Peleg overturned that
+  after seeing the editor: the component could only fit the sky while the game ran, and a canvas
+  looks right before Play. The two objections raised against a canvas did not survive - a Screen
+  Space - Camera canvas has its own sorting layer, so it sits on `Background`, and a backdrop that
+  never moves relative to the screen is screen-space by nature. It needs no code: an `Image` with an
+  `AspectRatioFitter` on Envelope Parent covers the view at any size and aspect. It cannot share the
+  HUD's `Canvas`, which is Screen Space - Overlay and draws over everything.
+- **The sky is stored at its native 166x92, the one sprite outside the 3x rule.** It arrived as
+  5000x2800 of 30px blocks on a grid offset by 5 and 15 pixels, and reducing it to one pixel per
+  block was lossless, with 2 of 61,088 block corners disagreeing. Left at full size, the import rule
+  would have held it uncompressed at about 53 MB, and Unity's default 2048 maximum would have
+  resampled every cloud edge soft by a non-integer 2.44. Its pixels come out about 1.7 times the
+  game's, which cannot be matched without the image failing to cover the view.
+- **Twelve references in Unity's own template settings do not resolve, and none are ours.** The same
+  GUID check found them in `DefaultVolumeProfile.asset`, `PC_Renderer.asset` and `TMP
+  Settings.asset`, last touched between 1.9 and 6.9 and pointing into package internals. The game
+  runs with no warnings, and stage 20 is where to decide whether they are worth chasing.
+- **The `PlayerGuard` comment on the grace window names a fire where it means anything.** "A fire
+  touched inside the same window still kills" invited the question of why a fire would be different,
+  and it is not - the window is keyed on the one thing that took the mount. The rewording, "anything
+  else touched inside the same window costs what it always would", is left for stage 20's comment
+  pass.
+
+- **Stage 18 closed without a line of code, and one session is its evidence.** Every item was
+  already met by an earlier stage - the framing by stage 7, the transition by stage 8, the carried
+  state by stages 13 and 15, the ending by stage 10 - so what this stage owed was observation. In
+  one run the boomerang and the blue mount were taken in level 1; the door gave `Level complete` and
+  `Level started: Level_2`; the פייה held at that moment was `Fairy lost` on arrival, which stage 17
+  had only inferred from a new game; כוח went from 6 to `Power 9 of 16`; the mount was still ridden
+  until a rock took it in level 2; and the weapon stayed held until the restart cleared it. Level 2
+  was then climbed, fourteen jumps and about eighteen seconds of drain, to its own door, giving
+  `Game complete - every level finished`, the congratulation popup, and a restart into level 1 at
+  `Power 11 of 16` with three strikes and nothing carried.
+- **What that session could not show.** The fruit count crossing, since level 1 holds no fruit - it
+  is right by construction, `SessionState` being cleared only by `Restart`, and stage 19's fruit is
+  where it will be seen. The boomerang still throwing once the mount was gone, which Peleg saw: a
+  throw logs only at `Verbose` under `Projectile`, so the log shows the weapon held rather than
+  used. And the log cannot tell level 2's door from debug key `2`, since both call `CompleteLevel`;
+  the climb between arriving and finishing is what says it was walked.
+- **Level 2 has to be at least 18 cells wide.** At 16:9 and orthographic size 5 the view is 17.8
+  units across, and a level narrower than the view cannot contain the camera, so `ClampAxis` centres
+  it and the view shows past both sides of the playable area - against 11.4. The scratch level 2 is
+  15 wide and shows about 1.4 units beyond each wall, filled for now by the sky. The provisional 30
+  by 50 recorded above already clears it; the number is written here so stage 19 cannot undercut it.
+- **Two more things for stage 19 from the same run.** The quarter-up framing leaves 2.5 units of
+  view below the player, chosen for climbing and thin for 11.4's climbing back down, so level 2
+  should not put a hazard at the bottom of a drop the player cannot see into. And the scratch
+  level's door sits at the top left, where 11.2 has the climb end by going right along the top into
+  the exit.
