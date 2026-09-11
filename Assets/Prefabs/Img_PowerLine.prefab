@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1334056744760287645}
   - component: {fileID: 4606756957012300657}
   m_Layer: 5
-  m_Name: PowerLine
+  m_Name: Img_PowerLine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
