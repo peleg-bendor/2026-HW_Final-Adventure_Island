@@ -5,23 +5,35 @@ using Zenject;
 // that absorb a contact, and no hazard or enemy holds either rule itself.
 public class PlayerGuard : MonoBehaviour, IPlayerGuard
 {
-    // How long the thing that took the mount is ignored afterwards, in seconds. Only that one
-    // thing: a fire touched inside the same window still kills.
+// How long the thing that took the mount is ignored afterwards, in seconds. Only that one
+// thing: anything else touched inside the same window costs what it always would.
     [SerializeField] private float absorbGraceSeconds = 0.5f;
 
     private IMountSlot mount;
+    private IPlayerFairy fairy;
 
     private IDestructible lastAbsorbed;
     private float ignoreLastUntil;
 
     [Inject]
-    public void Construct(IMountSlot mount)
+    public void Construct(IMountSlot mount, IPlayerFairy fairy)
     {
         this.mount = mount;
+        this.fairy = fairy;
     }
 
     public bool TryAbsorb(IDestructible source)
     {
+        // Asked before the mount, since a fairy costs nothing and a mount is spent on the hit. It
+        // says nothing to the log: what it destroys announces itself.
+        if (fairy != null && fairy.Active)
+        {
+            if (source != null)
+                source.TryDestroy(Destroyer.Fairy);
+
+            return true;
+        }
+
         // He is left standing inside anything that refused to be destroyed, and the ghost is the
         // one thing that does. Without this it takes the mount and then a strike a frame later.
         if (source != null && source == lastAbsorbed && Time.time < ignoreLastUntil)
