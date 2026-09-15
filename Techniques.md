@@ -45,12 +45,12 @@ using it at all (00:53:19).
 
 ### Where it lives
 
-- Open `Assets/Scripts/Installers/GameInstaller.cs:41`, `InstallBindings`: 27 bindings.
-- 25 MonoBehaviours receive their dependencies through `[Inject] Construct`, and the container builds 15
-  plain C# classes through their constructors.
+- Open `Assets/Scripts/Installers/GameInstaller.cs:41`, `InstallBindings`: 28 bindings.
+- 25 MonoBehaviours receive their dependencies through `[Inject] Construct`, and the container builds 16
+  plain C# classes through their constructors, one of them, `RespawnCountdown`, once for every enemy.
 - Pooled projectiles and drops are instantiated through `IInstantiator`, in `ProjectileBuilder.Build`
   and `DropFactory.Create`, so an object made at runtime is injected like one placed in the scene.
-- If asked who receives: `State/GameFlow.cs:23` for a constructor, `Enemies/Enemy.cs:34` for a
+- If asked who receives: `State/GameFlow.cs:23` for a constructor, `Enemies/Enemy.cs:32` for a
   `Construct` with seven dependencies.
 
 ### What the code shows
@@ -59,7 +59,8 @@ using it at all (00:53:19).
   constructor. No field injection, which the lesson used once.
 - Everything the lesson used, and more of Zenject besides: `WithArguments` for the rule numbers,
   `BindInterfacesTo`, `ITickable` and `IInitializable`, `FromComponentsInHierarchy` for the level roots,
-  and `IInstantiator` for objects made at runtime.
+  `AsTransient` so every enemy gets a respawn countdown of its own, and `IInstantiator` for objects made
+  at runtime.
 - The injected fields are private, carry no `[SerializeField]`, and none of their names appears in
   `Scene_Game.unity`. The installer's own serialized numbers and prefabs do, which is configuration
   entering at the composition root.
@@ -99,7 +100,7 @@ self-bindings went.
 7. "`Collectible` uses its registry in `Awake`. How do you know it was injected by then?" For scene
    objects, `SceneContext` runs at -9999. For spawned ones, `InstantiatePrefab` injects before it
    activates.
-8. "Twenty-seven bindings in one installer. Is that a god class?" Its one job is deciding what goes where.
+8. "Twenty-eight bindings in one installer. Is that a god class?" Its one job is deciding what goes where.
    Zenject allows several installers, and splitting this one would add files without changing a single
    dependency.
 9. "Your plain classes still read `Time`. Where is the testability?" They are MonoBehaviour-free, not
@@ -355,10 +356,10 @@ Four bases, each with its fixed sequence in the base and its varying steps in th
 |---|---|---|---|
 | `Collectible` | `OnTriggerEnter2D` (`:51`): the player? then switch off, then `PickUp` | `PickUp` | 4 classes on 8 prefabs |
 | `Hazard` | `Touch` (`:61`): once a frame, the player, the guard, then `Hurt`. `TryDestroy` (`:78`): `DestroyedBy`, then off and a puff | `Hurt`, `DestroyedBy` | `Fire`, `Rock` |
-| `Enemy` | `Update` (`:149`): near or mid-action, then `Behave`. `TryDestroy` (`:205`): `DestroyedBy`, then `Die`. `Spawn` (`:306`): home, on, then `OnSpawned`. `Awake` (`:110`): register, then `OnAwake` | `Behave`, `DestroyedBy`; optionally `IsMidAction`, `OnSpawned`, `OnAwake` | 6 classes on 7 prefabs |
+| `Enemy` | `Update` (`:146`): near or mid-action, then `Behave`. `TryDestroy` (`:202`): `DestroyedBy`, then `Die`. `Spawn` (`:276`): home, on, then `OnSpawned`. `Awake` (`:106`): register, then `OnAwake` | `Behave`, `DestroyedBy`; optionally `IsMidAction`, `OnSpawned`, `OnAwake` | 6 classes on 7 prefabs |
 | `BaseProjectile` | `Launch` (`:55`): on, placed, velocity and clock cleared, then `OnLaunched`. `Update` (`:81`): `Fly`, then the timeout. `OnTriggerEnter2D` (`:97`): `OnHit` | `OnHit`; optionally `OnLaunched`, `Fly`, `OnAwake` | 4 |
 
-- Open `Assets/Scripts/Enemies/Enemy.cs:149`, `Update`: the shape of the note's `ExecuteBehavior`, a
+- Open `Assets/Scripts/Enemies/Enemy.cs:146`, `Update`: the shape of the note's `ExecuteBehavior`, a
   check the base owns and then the step the subclass writes. The strongest of the four.
 - Then `Assets/Scripts/Projectiles/BaseProjectile.cs:55`, `Launch`: Exercise 3's `Fire()`, public, called
   by a client, fixed steps and a hook.
@@ -542,14 +543,14 @@ The transcript (00:57:58): "אם אתה משתמש בטאסקס, אני רוצה
 
 | | Where | What waits | Why this tool |
 |---|---|---|---|
-| Task | `Enemies/Enemy.cs:260`, `WaitAndReturn` | a killed enemy's countdown | the enemy is switched off before the wait begins, and Unity stops coroutines on a deactivated GameObject |
+| Task | `Enemies/RespawnCountdown.cs:19`, `Begin`, started by `Enemy.WaitAndReturn` | a killed enemy's countdown | the enemy is switched off before the wait begins, and Unity stops coroutines on a deactivated GameObject |
 | Task | `State/GameFlow.cs:130`, `EndGame`, with `UI/Popup.cs:15`, `ShowAsync` | the player clicking a popup's button | `GameFlow` is a plain C# class, so there is nothing to run a coroutine on |
 | Coroutine | `Player/PlayerFairy.cs:64`, `Hold` | the פייה's ten seconds | the player is never switched off, and the wait should freeze under a popup |
 | Coroutine | `Collectibles/Egg.cs:72`, `Hatch` | the crack before the drop | the egg stays alive for the whole wait |
 | Coroutine | `Animation/OneShotAnimator.cs:16`, `Start` | a puff's frames | the object lives exactly as long as its frames |
 
-- Open `Assets/Scripts/Enemies/Enemy.cs:260`: lesson 5's `EnemySpawner`, in this game. Beside it,
-  `PlayerFairy.cs:64` is its `PlayerInvincible`.
+- Open `Assets/Scripts/Enemies/RespawnCountdown.cs:19`: lesson 5's `EnemySpawner`, in this game, in a
+  class whose only job is the countdown. Beside it, `PlayerFairy.cs:64` is its `PlayerInvincible`.
 
 ### What the code shows
 
@@ -557,11 +558,12 @@ The transcript (00:57:58): "אם אתה משתמש בטאסקס, אני רוצה
   whole wait inside `try`/`catch`. The respawn catches cancellation apart from faults, so an abandoned
   countdown returns quietly and a real failure is logged as an error; the ending logs a fault, unfreezes
   time and clears its guard, so an error cannot leave the game locked.
-- The respawn's token source is the enemy's own and new at every death. It is cancelled by a full reset,
-  since a level start brings every enemy back itself; in `OnDestroy`, so nothing touches a destroyed
-  object when Play stops; and not by a strike, since a killed enemy stays dead and its countdown carries
-  on. After the delay, the countdown returns unless it is still the enemy's current one, which covers a
-  reset or a new death landing between the delay ending and the rest of the method running.
+- Each enemy has a `RespawnCountdown` of its own, bound `AsTransient`, with a new token source at every
+  death. The enemy cancels it on a full reset, since a level start brings every enemy back itself; in
+  `OnDestroy`, so nothing touches a destroyed object when Play stops; and not on a strike, since a killed
+  enemy stays dead and its countdown carries on. After the delay, the countdown returns unless it is
+  still the current one, which covers a cancel or a new death landing between the delay ending and the
+  rest of the method running.
 - The popup bridges a click to an `await` with a `TaskCompletionSource` its button completes.
 - The three coroutines wait with `WaitForSeconds`, the slides' example, and each stops with
   `StopAllCoroutines` when its owner resets.
@@ -622,15 +624,26 @@ Not started.
 Collected by every section above and ranked at the end. Found by reading the code before the review
 began, so none of these is verified as a problem yet:
 
-- `Enemy`: 335 lines and seven injected dependencies, having gained the shared pose code the Template
-  step moved out of four subclasses.
-- `LevelWindow` (314 lines) and `TilePlacerWindow` (306). Editor tooling ships with the submission.
-- `IGameFlow`: ten members, and no client uses both the operations and the events. Splitting it was
-  considered and rejected in the Decisions Log.
+- `Enemy`: 308 lines and seven injected dependencies. What is left is the lifecycle a Template base
+  exists to own.
+- The player's components reach each other's concrete classes through `GetComponent`: nine couplings
+  across `PlayerJump`, `PlayerAnimator`, `PlayerMountAnimator`, `PlayerAttack` and `PlayerReset`. Being
+  resolved in the SOLID step's third batch.
+- `GameFlow` and `IGameFlow`: four operations beside the ending sequence, and ten interface members. Kept,
+  and answered in the Decisions Log.
+- `GameLog` is static and used almost everywhere. Answered: cross-cutting logging, its calls stripped
+  from release builds.
+- A fifth projectile would touch `ProjectileDirector`, `ProjectilePool`, `ProjectilePrefabs` and
+  `ProjectileCounts`. Answered: the requirements fix four, and a fifth is out of scope.
 
-Resolved during the review, so no longer candidates: `ProjectileDirector`, which held the recipes,
-filled and grew the pool, and was the `Throw` three shooters injected concretely. Split in the Builder
-and Pooling step.
+Resolved during the review, so no longer candidates:
+
+- `ProjectileDirector`, which held the recipes, filled and grew the pool, and was the `Throw` three
+  shooters injected concretely. Split in the Builder and Pooling step.
+- `LevelWindow` (314 lines), which held the window, the file format, the scene reconciliation and the
+  JSON writing, and `TilePlacerWindow` (306), which repeated part of it. Split into `LevelFile` and
+  `LevelScene`, which both windows use; now 156 and 256 lines.
+- `Enemy`'s respawn Task, its token and its guard, about 45 lines. Moved into `RespawnCountdown`.
 
 ### Reflection
 

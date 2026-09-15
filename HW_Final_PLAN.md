@@ -992,7 +992,7 @@ own discussion:
 1. MVC, all three triads. `[x]`
 1. Async & Tasks, with the three coroutines beside the two Tasks. `[x]`
 1. SOLID: rank the worst-spot candidates and sweep whatever no technique covered, editor tooling
-   included. Then Reflection and the rejected patterns. `[ ]`
+   included. Then Reflection and the rejected patterns. `[~]`, see "Where step 8 stands" below.
 1. Comment pass. `[ ]`
 1. Log pass. `[ ]`
 1. Loose ends: whether `DebugFlowKeys` ships, and whether the twelve template references are chased. `[ ]`
@@ -1039,6 +1039,33 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
 **Temporary, and has to come out before step 12**: a פייה, extra shooting נחשים and a ביצה holding
 עלה at the start of level 1, added by Peleg on 15.9.2026 to test step 3's pool, and saved into
 `Level01.txt` as well as the scene. The risk session and the playthrough have to run on the authored level 1.
+
+**Where step 8 stands, 15.9.2026, written so a new conversation can pick it up.** The sweep measured all
+109 scripts and ranked seven candidates; the reasoning is in the Decisions Log entries of this date.
+
+- **Batch 1, done and confirmed**: the respawn countdown moved out of `Enemy` into `RespawnCountdown`
+  behind `IRespawnCountdown`, bound `AsTransient`.
+- **Batch 2, done and confirmed**: `LevelWindow` split into `LevelFile`, `LevelScene` and `PlacedTile`,
+  with `TilePlacerWindow` using `LevelScene`.
+- **Batch 3, agreed and not yet written**, the player's components. Edited directly, like the two before.
+  1. `PlayerJump` becomes an `IResettable` that clears its own buffered input, and `PlayerMovement` one
+     that clears its own shove and restores its own facing from the current level's `PlayerStart`. Both
+     register on enable, like `PlayerReset` and `PlayerFairy`. `PlayerReset` keeps only position and
+     velocity, and stops calling `ClearInput`, `ClearShove` and `Face`.
+  2. Three narrow interfaces, each bound `FromComponentInHierarchy` in `GameInstaller` and injected
+     rather than fetched: `IPlayerGround` (`IsGrounded`) on `PlayerGround`, read by `PlayerJump`,
+     `PlayerAnimator` and `PlayerMountAnimator`; `IPlayerMotion` (`IsWalking`) on `PlayerMovement`, read
+     by the two animators; `IMountAttack` (`TryAttack`, `IsAttacking`, `AttackProgress`) on
+     `PlayerMountAttack`, used by `PlayerAttack` and `PlayerMountAnimator`.
+  3. `PlayerAttack` injects the `Player` marker instead of `GetComponent<Player>()`.
+  4. The test: jump, walk, ride and attack mounted and on foot, take a rock's shove, die facing left and
+     respawn facing the marker, and press Space under a popup and see no jump after the restart.
+- **Then, write-up only**: the answers for `GameFlow`, the static `GameLog` and a fifth projectile go in
+  `Techniques.md`'s SOLID section (agreed); the Reflection answer; the full list of rejected patterns;
+  and step 8 is marked done.
+- **Open**: candidate 7, `SpriteVariant`'s `#if UNITY_EDITOR` prefab-override call, was not moved into
+  `LevelScene`, because the component's own Pick One context menu needs it. Peleg has not yet said
+  whether to keep it or drop the context menu.
 
 ### Stage 21 — Two video scripts `[ ]`
 
@@ -2970,3 +2997,49 @@ _(append entries here as we make design decisions.)_
   are unchanged: a jumping נחש came back after 15.8, 10.3 and 14.6 seconds, twice across a strike that
   rightly left its countdown running, and its next countdown was cancelled by the level change and
   never logged a return.
+- **The SOLID sweep ranked what a checker would most likely name, since the actual checker is unknown.**
+  All 109 scripts were measured for size, injected dependencies, interfaces and type switches; there is
+  no switch over types and no `is` check on a type anywhere in gameplay code. The proxy for the checker
+  is what the course material itself flags: the SOLID note's `Invoice` for SRP, and the lesson
+  walkthroughs naming `FireFlowerPowerUp`'s `GetComponentInChildren<FireballWeapon>()` as a DIP spot and
+  `SC_CoinsManager` as three jobs in one class. Seven candidates came out, ranked: `LevelWindow` (SRP),
+  `Enemy` (SRP by size), the player's components reaching each other concretely (DIP), `GameFlow` and
+  `IGameFlow` (SRP and ISP, already answered at stage 11), the static `GameLog` (DIP), a fifth
+  projectile touching four files (OCP), and `SpriteVariant`'s editor call in a runtime component.
+- **`Enemy`'s respawn countdown is its own class, bound per enemy.** The Task, its token source and the
+  one-frame guard were about 45 lines of `Enemy` that had nothing to do with the lifecycle a Template base
+  owns. `RespawnCountdown` behind `IRespawnCountdown` holds them now, takes `RespawnDelay` in its
+  constructor, and calls back with the seconds it waited; `Enemy` injects it where `RespawnDelay` was, so
+  it still has seven dependencies, and went from 344 lines to 308. It is bound `AsTransient`, the first
+  use in the project of a binding the course's DI note lists, so every enemy has a countdown of its own
+  rather than all of them sharing one - and the Async example to open at the defense is now a file whose
+  only job is a cancellable countdown. **Confirmed** at 17:43: a countdown cancelled by a level change
+  logged no return, a frog came back after 12.7 seconds across a strike, and nothing warned.
+- **The level tools were split, because `LevelWindow` was the `Invoice`.** It held the window, the level
+  file's parsing, the reconciliation against the scene, the collection of what the scene holds, the
+  hand-written JSON and four kinds of warning, and `TilePlacerWindow` repeated its placing and its idea of
+  a cell. `LevelFile` now holds the format (`Read`, `Cells`, `Pack`, `Write`) and knows nothing about the
+  scene or the prefabs; `LevelScene` holds the scene (finding, placing, clearing, reconciling, collecting,
+  each with its undo); `PlacedTile` is what one produces and the other consumes. `LevelWindow` went from
+  314 lines to 156 and `TilePlacerWindow` from 306 to 256. The one message that changed is a failed
+  instantiate during Build, which now reads `Could not place` like the placer's. **Confirmed**:
+  `Level01.txt` saved with the new tools at 17:56 is byte-identical to a copy taken before the edit,
+  and Build and the placer behaved as before by Peleg's check; `Level02.txt` was not re-saved.
+- **`SpriteVariant` keeps its editor-only call.** Moving `RecordPrefabInstancePropertyModifications` into
+  `LevelScene` would have made the component purely runtime, and would also have broken its own Pick One
+  context menu, whose re-roll would then stop being saved as a prefab override. `#if UNITY_EDITOR` in a
+  runtime component is Unity's standard idiom for exactly this.
+- **The player's components get a better answer than an interface each.** The first proposal was four
+  interfaces with one implementation apiece, or leaving the nine concrete couplings alone; Peleg asked
+  which was better on quality rather than on the checker, and the answer was neither. Three of the
+  couplings are `PlayerReset` clearing state that other components own - `ClearInput`, `ClearShove` and
+  `Face` - which contradicts this plan's own reset design, where each object decides what a reset means
+  to it (stage 8); and stage 10's reason for routing them through `PlayerReset`, "rather than a second
+  `IResettable` on the player", was already overtaken when `PlayerFairy` became exactly that at stage 17.
+  Those three are deleted rather than abstracted: `PlayerJump` and `PlayerMovement` reset themselves. The
+  rest are genuine queries between parts, several of them crossing between `Player/` and `Mounts/`, and
+  stage 12's rule already covers them - a MonoBehaviour another class depends on goes behind an interface,
+  because it carries members that consumer has no business calling. So `IPlayerGround`, `IPlayerMotion`
+  and `IMountAttack`, injected the way `IPlayerShove`, `IPlayerGuard` and `IPlayerFairy` already are.
+  Nothing changes in play; the cost is twelve files and slightly more code, since two components gain a
+  registration.
