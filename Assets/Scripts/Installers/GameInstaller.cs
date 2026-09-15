@@ -64,6 +64,8 @@ public class GameInstaller : MonoInstaller
         Container.BindInterfacesTo<FruitController>().AsSingle().WithArguments(fruitPerStrike);
 
         Container.Bind<RespawnDelay>().FromInstance(respawnDelay).AsSingle();
+        // Transient, so every enemy gets a countdown of its own rather than all of them sharing one.
+        Container.Bind<IRespawnCountdown>().To<RespawnCountdown>().AsTransient();
 
         Container.Bind<ProjectilePrefabs>().FromInstance(projectilePrefabs).AsSingle();
         Container.Bind<ProjectileCounts>().FromInstance(projectileCounts).AsSingle();

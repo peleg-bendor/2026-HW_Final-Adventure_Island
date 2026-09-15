@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using Zenject;
 
@@ -18,7 +15,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     private IGameFlow flow;
     private IPlayerGuard guard;
     private IResetRegistry registry;
-    private RespawnDelay delay;
+    private IRespawnCountdown respawn;
     private Player player;
     private IDropFactory drops;
     private IDeathEffects effects;
@@ -30,16 +27,15 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     private float halfHeight = -1f;
     private bool destroyed;
     private int lastTouchFrame = -1;
-    private CancellationTokenSource respawn;
 
     [Inject]
     private void Construct(IGameFlow flow, IPlayerGuard guard, IResetRegistry registry,
-        RespawnDelay delay, Player player, IDropFactory drops, IDeathEffects effects)
+        IRespawnCountdown respawn, Player player, IDropFactory drops, IDeathEffects effects)
     {
         this.flow = flow;
         this.guard = guard;
         this.registry = registry;
-        this.delay = delay;
+        this.respawn = respawn;
         this.player = player;
         this.drops = drops;
         this.effects = effects;
@@ -141,7 +137,8 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         if (registry != null)
             registry.Unregister(this);
 
-        CancelRespawn();
+        if (respawn != null)
+            respawn.Cancel();
     }
 
     // The base owns Update so the activation range cannot be forgotten. Behaviour goes in Behave,
@@ -255,59 +252,23 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         drops.Create(drop, transform.position);
     }
 
-    // A Task and not a coroutine: this object is switched off before the wait begins, and Unity
-    // stops coroutines on a disabled GameObject.
-    private async void WaitAndReturn()
+    // The countdown waits on its own, since this object is switched off for the whole of it.
+    private void WaitAndReturn()
     {
-        if (delay == null)
+        if (respawn == null)
         {
-            GameLog.Warning(LogCategory.Enemy, "No RespawnDelay injected on " + name + ", it stays destroyed");
+            GameLog.Warning(LogCategory.Enemy, "No IRespawnCountdown injected on " + name + ", it stays destroyed");
             return;
         }
 
-        CancelRespawn();
-        CancellationTokenSource countdown = new CancellationTokenSource();
-        respawn = countdown;
+        respawn.Begin(name, ComeBack);
+    }
 
-        float seconds = UnityEngine.Random.Range(delay.minSeconds, delay.maxSeconds);
-
-        try
-        {
-            await Task.Delay(TimeSpan.FromSeconds(seconds), countdown.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            // A level start brings every enemy back itself, so a pending countdown is abandoned.
-            return;
-        }
-        catch (Exception error)
-        {
-            // async void rather than an unobserved Task, so a fault surfaces here instead of vanishing.
-            GameLog.Error(LogCategory.Enemy, name + " respawn failed - " + error.Message);
-            return;
-        }
-
-        // The delay can end a frame before this line runs. A reset or a new death in that gap has
-        // replaced the countdown, and the enemy is already where that left it.
-        if (respawn != countdown)
-            return;
-
-        respawn = null;
-        countdown.Dispose();
-
+    private void ComeBack(float seconds)
+    {
         destroyed = false;
         Spawn();
         GameLog.Info(LogCategory.Enemy, name + " back after " + seconds.ToString("0.0") + "s");
-    }
-
-    private void CancelRespawn()
-    {
-        if (respawn == null)
-            return;
-
-        respawn.Cancel();
-        respawn.Dispose();
-        respawn = null;
     }
 
     // Coming back is one thing that happens two ways, rather than two that have to agree: the
@@ -331,7 +292,10 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     {
         if (scope == ResetScope.Full)
         {
-            CancelRespawn();
+            // A level start brings every enemy back itself, so a pending countdown is abandoned.
+            if (respawn != null)
+                respawn.Cancel();
+
             destroyed = false;
         }
         else if (destroyed)
