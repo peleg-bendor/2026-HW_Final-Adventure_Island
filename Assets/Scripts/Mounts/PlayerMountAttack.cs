@@ -3,7 +3,7 @@ using Zenject;
 
 // The mount's attack: how long it runs, and putting the hit into the world for that long. Which key
 // starts it is PlayerAttack's, which asks this before it throws anything.
-public class PlayerMountAttack : MonoBehaviour
+public class PlayerMountAttack : MonoBehaviour, IMountAttack
 {
     private IMountSlot slot;
     private IProjectilePool pool;

@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Zenject;
 
 // The player's horizontal movement and which way he faces, whether the keys asked for it or a
 // hazard did. Jump and attack are separate components, because they own state that outlives a frame.
-public class PlayerMovement : MonoBehaviour, IPlayerShove
+public class PlayerMovement : MonoBehaviour, IPlayerShove, IPlayerMotion, IResettable
 {
     [SerializeField] private float speed = 6f;
 
@@ -16,9 +17,17 @@ public class PlayerMovement : MonoBehaviour, IPlayerShove
     // True while a shove is still running, which is what stops a run of rocks charging once each.
     public bool IsShoving { get { return Time.time < shoveUntil; } }
 
-
+    private IResetRegistry registry;
+    private ILevels levels;
     private Rigidbody2D rigid;
     private float shoveUntil = float.NegativeInfinity;
+
+    [Inject]
+    public void Construct(IResetRegistry registry, ILevels levels)
+    {
+        this.registry = registry;
+        this.levels = levels;
+    }
 
     private void Awake()
     {
@@ -26,6 +35,23 @@ public class PlayerMovement : MonoBehaviour, IPlayerShove
 
         if (rigid == null)
             GameLog.Warning(LogCategory.Player, "No Rigidbody2D found, the player will not move");
+    }
+
+    private void OnEnable()
+    {
+        if (registry == null)
+        {
+            GameLog.Warning(LogCategory.Player, "No IResetRegistry injected, the player will keep his facing and a running shove across a reset");
+            return;
+        }
+
+        registry.Register(this);
+    }
+
+    private void OnDisable()
+    {
+        if (registry != null)
+            registry.Unregister(this);
     }
 
     private void FixedUpdate()
@@ -67,9 +93,8 @@ public class PlayerMovement : MonoBehaviour, IPlayerShove
         }
     }
 
-    // Scale rather than the renderer's flipX, so a child spawn point mirrors with him. Public so a
-    // reset can restore his facing without knowing how facing is represented.
-    public void Face(bool right)
+    // Scale rather than the renderer's flipX, so a child spawn point mirrors with him.
+    private void Face(bool right)
     {
         transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
     }
@@ -87,10 +112,16 @@ public class PlayerMovement : MonoBehaviour, IPlayerShove
         rigid.linearVelocity = new Vector2(Mathf.Sign(transform.localScale.x) * shoveSpeed, rigid.linearVelocity.y);
     }
 
-    // Cleared on a reset, or he arrives at the start with the tail of a shove still running and no
-    // control until it expires.
-    public void ClearShove()
+    // The same for both scopes, since both put him at the level start.
+    public void ResetTo(ResetScope scope)
     {
+        // Cleared, or he arrives with the tail of a shove still running and no control until it expires.
         shoveUntil = float.NegativeInfinity;
+
+        PlayerStart start = levels != null && levels.Current != null ? levels.Current.PlayerStart : null;
+
+        // No warning of its own without a start, since PlayerReset reports the same missing marker.
+        if (start != null)
+            Face(start.FacesRight);
     }
 }

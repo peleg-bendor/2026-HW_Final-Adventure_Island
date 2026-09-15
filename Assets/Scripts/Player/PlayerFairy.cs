@@ -32,7 +32,7 @@ public class PlayerFairy : MonoBehaviour, IPlayerFairy, IResettable
         Show(false);
     }
 
-    // Registered on enable like the player's other resettable, since he is never switched off.
+    // Registered on enable like the player's other resettables, since he is never switched off.
     private void OnEnable()
     {
         if (registry == null)

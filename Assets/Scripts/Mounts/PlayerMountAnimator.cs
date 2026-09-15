@@ -10,33 +10,36 @@ public class PlayerMountAnimator : MonoBehaviour
     [SerializeField, Min(0.01f)] private float secondsPerWalkFrame = 0.15f;
 
     private IMountSlot slot;
+    private IPlayerGround ground;
+    private IPlayerMotion motion;
+    private IMountAttack attack;
     private SpriteRenderer art;
-    private PlayerMovement movement;
-    private PlayerGround ground;
-    private PlayerMountAttack attack;
     private Sprite shown;
 
     [Inject]
-    public void Construct(IMountSlot slot)
+    public void Construct(IMountSlot slot, IPlayerGround ground, IPlayerMotion motion, IMountAttack attack)
     {
         this.slot = slot;
+        this.ground = ground;
+        this.motion = motion;
+        this.attack = attack;
     }
 
     private void Awake()
     {
         art = GetComponent<SpriteRenderer>();
-        movement = GetComponent<PlayerMovement>();
-        ground = GetComponent<PlayerGround>();
-        attack = GetComponent<PlayerMountAttack>();
 
-        if (art == null || movement == null || ground == null)
-            GameLog.Warning(LogCategory.Mount, "No SpriteRenderer, PlayerMovement or PlayerGround found, the mount will not animate");
-
-        if (attack == null)
-            GameLog.Warning(LogCategory.Mount, "No PlayerMountAttack found, the mount will not show its attack frames");
+        if (art == null)
+            GameLog.Warning(LogCategory.Mount, "No SpriteRenderer found, the mount will not animate");
 
         if (slot == null)
             GameLog.Warning(LogCategory.Mount, "No IMountSlot injected, the mount will not animate");
+
+        if (ground == null || motion == null)
+            GameLog.Warning(LogCategory.Mount, "No IPlayerGround or IPlayerMotion injected, the mount will not show its jumping or walking frames");
+
+        if (attack == null)
+            GameLog.Warning(LogCategory.Mount, "No IMountAttack injected, the mount will not show its attack frames");
     }
 
     private void Update()
@@ -70,7 +73,7 @@ public class PlayerMountAnimator : MonoBehaviour
         if (ground != null && ground.IsGrounded() == false)
             return mount.Jumping;
 
-        if (movement != null && movement.IsWalking && mount.Walking != null && mount.Walking.Length > 0)
+        if (motion != null && motion.IsWalking && mount.Walking != null && mount.Walking.Length > 0)
             return mount.Walking[(int)(Time.time / secondsPerWalkFrame) % mount.Walking.Length];
 
         return mount.Idle;

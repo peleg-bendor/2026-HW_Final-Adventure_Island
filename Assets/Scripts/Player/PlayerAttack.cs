@@ -11,26 +11,25 @@ public class PlayerAttack : MonoBehaviour
 
     private IProjectilePool pool;
     private IWeaponSlot slot;
+    private IMountAttack mount;
     private Player player;
-    private PlayerMountAttack mount;
 
     [Inject]
-    public void Construct(IProjectilePool pool, IWeaponSlot slot)
+    public void Construct(IProjectilePool pool, IWeaponSlot slot, IMountAttack mount, Player player)
     {
         this.pool = pool;
         this.slot = slot;
+        this.mount = mount;
+        this.player = player;
     }
 
     private void Awake()
     {
-        player = GetComponent<Player>();
-        mount = GetComponent<PlayerMountAttack>();
-
         if (player == null)
-            GameLog.Warning(LogCategory.Player, "No Player found, throws will leave from his feet");
+            GameLog.Warning(LogCategory.Player, "No Player injected, throws will leave from his feet");
 
         if (mount == null)
-            GameLog.Warning(LogCategory.Player, "No PlayerMountAttack found, the key will throw a weapon even while riding");
+            GameLog.Warning(LogCategory.Player, "No IMountAttack injected, the key will throw a weapon even while riding");
     }
 
     private void Update()

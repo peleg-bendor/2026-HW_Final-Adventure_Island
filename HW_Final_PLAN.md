@@ -1029,6 +1029,10 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
   and `IGameFlow`'s ten members, as further SOLID candidates. Step 8.
 - `FairyCollectible.cs` sits in `Player/` where the rest of the `Collectible` family is in
   `Collectibles/`. Step 9.
+- Three comments repeat the פייה's serialized ten seconds, against comment rule 9: the headers of
+  `FairyCollectible` and `PlayerFairy`, and `IPlayerFairy.Take`. And `ProjectilePrefabs`' header gives
+  `WithArguments` as the reason for grouping the prefabs, where the class is bound `FromInstance`. Found
+  at the end of step 8. Step 9.
 - `GameInstaller`'s "Zenject container built" never reaches `GameLog.txt`: `SceneContext` runs
   `InstallBindings` at execution order -9999, before `LogFileWriter` subscribes in `OnEnable` at -100.
   Step 10.
@@ -1047,7 +1051,13 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
   behind `IRespawnCountdown`, bound `AsTransient`.
 - **Batch 2, done and confirmed**: `LevelWindow` split into `LevelFile`, `LevelScene` and `PlacedTile`,
   with `TilePlacerWindow` using `LevelScene`.
-- **Batch 3, agreed and not yet written**, the player's components. Edited directly, like the two before.
+- **Batch 3, written and compiling, awaiting Peleg's test**, the player's components. Edited directly, like
+  the two before. Beyond the specification below: `Face` is private now that nothing outside
+  `PlayerMovement` calls it, `ClearInput` and `ClearShove` became the two `ResetTo`s, `PlayerMovement`'s two
+  interfaces are one multi-type binding, and two comments this made stale were corrected (`IPlayerShove`'s
+  header, `PlayerFairy`'s "other resettable"). Raised with it and not yet answered: whether
+  `PlayerMountAttack`'s `GetComponentInChildren<MountStrike>` goes behind an interface too, and whether
+  `IMountAttack` splits, since its two consumers use disjoint members.
   1. `PlayerJump` becomes an `IResettable` that clears its own buffered input, and `PlayerMovement` one
      that clears its own shove and restores its own facing from the current level's `PlayerStart`. Both
      register on enable, like `PlayerReset` and `PlayerFairy`. `PlayerReset` keeps only position and
@@ -1066,6 +1076,10 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
 - **Open**: candidate 7, `SpriteVariant`'s `#if UNITY_EDITOR` prefab-override call, was not moved into
   `LevelScene`, because the component's own Pick One context menu needs it. Peleg has not yet said
   whether to keep it or drop the context menu.
+- **The next conversation picks up here, Peleg's call**: batch 3, then the write-up, then step 9. The
+  comment pass covers the nine files batch 3 rewrites - `PlayerJump`, `PlayerMovement`, `PlayerReset`,
+  `PlayerGround`, `PlayerAnimator`, `PlayerMountAnimator`, `PlayerAttack`, `PlayerMountAttack` and
+  `GameInstaller` - so finishing step 8 first means those files are commented once.
 
 ### Stage 21 — Two video scripts `[ ]`
 

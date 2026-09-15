@@ -1,15 +1,14 @@
 using UnityEngine;
 using Zenject;
 
-// Restores the player whenever a reset runs: position, facing, velocity and buffered input. His own
-// IResettable rather than something the flow does to him, which keeps a Transform out of the flow.
+// Puts the player back at the current level's start whenever a reset runs, and stops him there. His
+// own IResettable rather than something the flow does to him, which keeps a Transform out of the flow.
+// His facing, a shove and a buffered jump are reset by the components that hold them.
 public class PlayerReset : MonoBehaviour, IResettable
 {
     private IResetRegistry registry;
     private ILevels levels;
     private Rigidbody2D rigid;
-    private PlayerMovement movement;
-    private PlayerJump jump;
 
     [Inject]
     public void Construct(IResetRegistry registry, ILevels levels)
@@ -21,17 +20,9 @@ public class PlayerReset : MonoBehaviour, IResettable
     private void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
-        movement = GetComponent<PlayerMovement>();
-        jump = GetComponent<PlayerJump>();
 
         if (rigid == null)
             GameLog.Warning(LogCategory.Player, "No Rigidbody2D found, the player will keep his velocity across a reset");
-
-        if (movement == null)
-            GameLog.Warning(LogCategory.Player, "No PlayerMovement found, the player will keep his facing and a running shove across a reset");
-
-        if (jump == null)
-            GameLog.Warning(LogCategory.Player, "No PlayerJump found, a jump pressed under a popup will fire after the restart");
     }
 
     private void OnEnable()
@@ -55,14 +46,6 @@ public class PlayerReset : MonoBehaviour, IResettable
     // starting a level puts him there too.
     public void ResetTo(ResetScope scope)
     {
-        // Before the start is looked up, since clearing what he is carrying into the reset is worth
-        // doing even when there is nowhere to put him.
-        if (jump != null)
-            jump.ClearInput();
-
-        if (movement != null)
-            movement.ClearShove();
-
         PlayerStart start = levels != null && levels.Current != null ? levels.Current.PlayerStart : null;
 
         if (start == null)
@@ -76,8 +59,5 @@ public class PlayerReset : MonoBehaviour, IResettable
         // Cleared, or he arrives at the start still carrying the fall that killed him.
         if (rigid != null)
             rigid.linearVelocity = Vector2.zero;
-
-        if (movement != null)
-            movement.Face(start.FacesRight);
     }
 }

@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Zenject;
 
 // The player's jump, with height set by how long Space is held. Whether he is standing on
-// something is PlayerGround's answer, since the animator asks the same question.
-public class PlayerJump : MonoBehaviour
+// something is PlayerGround's answer, since the animators ask the same question.
+public class PlayerJump : MonoBehaviour, IResettable
 {
     // Upward speed at the moment of the jump, in units per second.
     [SerializeField] private float jumpSpeed = 14f;
@@ -15,19 +16,46 @@ public class PlayerJump : MonoBehaviour
     // find the ground underneath it a frame later and start a second.
     [SerializeField] private float jumpCooldown = 0.15f;
 
+    private IResetRegistry registry;
+    private IPlayerGround ground;
     private Rigidbody2D rigid;
-    private PlayerGround ground;
     private float lastJumpTime = float.NegativeInfinity;
     private bool jumpRequested;
     private bool cutRequested;
 
+    [Inject]
+    public void Construct(IResetRegistry registry, IPlayerGround ground)
+    {
+        this.registry = registry;
+        this.ground = ground;
+    }
+
     private void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
-        ground = GetComponent<PlayerGround>();
 
-        if (rigid == null || ground == null)
-            GameLog.Warning(LogCategory.Player, "No Rigidbody2D or PlayerGround found, the player will not jump");
+        if (rigid == null)
+            GameLog.Warning(LogCategory.Player, "No Rigidbody2D found, the player will not jump");
+
+        if (ground == null)
+            GameLog.Warning(LogCategory.Player, "No IPlayerGround injected, the player will not jump");
+    }
+
+    private void OnEnable()
+    {
+        if (registry == null)
+        {
+            GameLog.Warning(LogCategory.Player, "No IResetRegistry injected, a jump pressed under a popup will fire after the restart");
+            return;
+        }
+
+        registry.Register(this);
+    }
+
+    private void OnDisable()
+    {
+        if (registry != null)
+            registry.Unregister(this);
     }
 
     // Update rather than FixedUpdate, where a press shorter than one physics step is missed.
@@ -91,9 +119,9 @@ public class PlayerJump : MonoBehaviour
         rigid.linearVelocity = new Vector2(rigid.linearVelocity.x, rigid.linearVelocity.y * riseCutFactor);
     }
 
-    // Cleared on a reset, because Update keeps reading the keyboard while the game is frozen and a
-    // press made under a popup would be spent on the first physics step after the restart.
-    public void ClearInput()
+    // Both scopes, because Update keeps reading the keyboard while the game is frozen and a press
+    // made under a popup would be spent on the first physics step after the restart.
+    public void ResetTo(ResetScope scope)
     {
         jumpRequested = false;
         cutRequested = false;

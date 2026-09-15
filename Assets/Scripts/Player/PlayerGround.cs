@@ -2,7 +2,7 @@ using UnityEngine;
 
 // Answers whether the player is standing on something. Ground is a contact whose normal points
 // up, so a wall reads as a wall and a trigger is not ground at all.
-public class PlayerGround : MonoBehaviour
+public class PlayerGround : MonoBehaviour, IPlayerGround
 {
     // A rounded bottom perched on a tile corner reports a tilted normal, so ground is anything
     // within about 45 degrees of vertical.
