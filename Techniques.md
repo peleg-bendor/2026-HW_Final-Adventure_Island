@@ -175,7 +175,7 @@ three.
 - `IProjectileBuilder.cs` and `ProjectileBuilder.cs:50`: the steps, and the build.
 - `ProjectilePool.cs:33`: the pool filling itself at startup. `ProjectileCounts.cs`: how many of each,
   serialized on `GameInstaller`.
-- `BaseProjectile.cs:47`, `Launch`: what makes a reused projectile safe.
+- `BaseProjectile.cs:55`, `Launch`: what makes a reused projectile safe.
 - The three shooters: `PlayerAttack.cs:58`, `SnakeShooter.cs:81`, `PlayerMountAttack.cs:78`.
 
 ### What the code shows
@@ -277,7 +277,7 @@ option (00:46:39), and entering what each enemy drops preferred over rolling it 
 - Open `Assets/Scripts/Collectibles/DropFactory.cs:67`, `Create(DropType, Vector2)`.
 - `IDropFactory.cs` is the abstraction both callers depend on; `Collectible` is the abstract product
   `Create` returns.
-- The callers: `Enemies/Enemy.cs:243` and `Collectibles/Egg.cs:78`, each holding only an `IDropFactory`
+- The callers: `Enemies/Enemy.cs:252` and `Collectibles/Egg.cs:78`, each holding only an `IDropFactory`
   and a `DropType`.
 - `DropFactory.cs:25` builds the mapping once from the six `Pickup_` prefabs listed on `GameInstaller`,
   each declaring its own `DropType`.
@@ -365,7 +365,7 @@ Four bases, each with its fixed sequence in the base and its varying steps in th
 
 | Base | Template method | Steps a subclass writes | Subclasses |
 |---|---|---|---|
-| `Collectible` | `OnTriggerEnter2D` (`:51`): the player? then switch off, then `PickUp` | `PickUp` | 4 classes on 8 prefabs |
+| `Collectible` | `OnTriggerEnter2D` (`:50`): the player? then switch off, then `PickUp` | `PickUp` | 4 classes on 8 prefabs |
 | `Hazard` | `Touch` (`:61`): once a frame, the player, the guard, then `Hurt`. `TryDestroy` (`:78`): `DestroyedBy`, then off and a puff | `Hurt`, `DestroyedBy` | `Fire`, `Rock` |
 | `Enemy` | `Update` (`:146`): near or mid-action, then `Behave`. `TryDestroy` (`:202`): `DestroyedBy`, then `Die`. `Spawn` (`:276`): home, on, then `OnSpawned`. `Awake` (`:106`): register, then `OnAwake` | `Behave`, `DestroyedBy`; optionally `IsMidAction`, `OnSpawned`, `OnAwake` | 6 classes on 7 prefabs |
 | `BaseProjectile` | `Launch` (`:55`): on, placed, velocity and clock cleared, then `OnLaunched`. `Update` (`:81`): `Fly`, then the timeout. `OnTriggerEnter2D` (`:97`): `OnHit` | `OnHit`; optionally `OnLaunched`, `Fly`, `OnAwake` | 4 |
@@ -465,7 +465,7 @@ rule.
 
 - Open `Assets/Scripts/MVC/Power/PowerController.cs:62`, `Spend`: input arrives, the model changes, the
   view is told, and at zero the one consequence the controller owns, a strike.
-- The session's changes, for the two counters: `State/GameFlow.cs:75` and `:94`.
+- The session's changes, for the two counters: `State/GameFlow.cs:72` and `:90`.
 
 ### What the code shows
 
@@ -555,13 +555,13 @@ The transcript (00:57:58): "אם אתה משתמש בטאסקס, אני רוצה
 | | Where | What waits | Why this tool |
 |---|---|---|---|
 | Task | `Enemies/RespawnCountdown.cs:19`, `Begin`, started by `Enemy.WaitAndReturn` | a killed enemy's countdown | the enemy is switched off before the wait begins, and Unity stops coroutines on a deactivated GameObject |
-| Task | `State/GameFlow.cs:130`, `EndGame`, with `UI/Popup.cs:15`, `ShowAsync` | the player clicking a popup's button | `GameFlow` is a plain C# class, so there is nothing to run a coroutine on |
-| Coroutine | `Player/PlayerFairy.cs:64`, `Hold` | the פייה's ten seconds | the player is never switched off, and the wait should freeze under a popup |
+| Task | `State/GameFlow.cs:124`, `EndGame`, with `UI/Popup.cs:15`, `ShowAsync` | the player clicking a popup's button | `GameFlow` is a plain C# class, so there is nothing to run a coroutine on |
+| Coroutine | `Player/PlayerFairy.cs:63`, `Hold` | the פייה's ten seconds | the player is never switched off, and the wait should freeze under a popup |
 | Coroutine | `Collectibles/Egg.cs:72`, `Hatch` | the crack before the drop | the egg stays alive for the whole wait |
 | Coroutine | `Animation/OneShotAnimator.cs:16`, `Start` | a puff's frames | the object lives exactly as long as its frames |
 
 - Open `Assets/Scripts/Enemies/RespawnCountdown.cs:19`: lesson 5's `EnemySpawner`, in this game, in a
-  class whose only job is the countdown. Beside it, `PlayerFairy.cs:64` is its `PlayerInvincible`.
+  class whose only job is the countdown. Beside it, `PlayerFairy.cs:63` is its `PlayerInvincible`.
 
 ### What the code shows
 

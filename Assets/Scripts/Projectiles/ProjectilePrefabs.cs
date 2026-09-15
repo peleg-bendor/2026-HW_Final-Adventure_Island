@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
 
-// The projectile prefabs, in one object so the installer passes a single argument. Zenject matches
-// WithArguments by type, and bare GameObjects side by side would be ambiguous.
+// The projectile prefabs, in one object so they can be injected by type. Four bare GameObjects
+// bound side by side would be ambiguous to the container.
 [Serializable]
 public class ProjectilePrefabs
 {

@@ -1,7 +1,7 @@
 using UnityEngine;
 
-// A snake that stands, hops a short way in the direction it faces, and stands again. The hop is
-// level from end to end and carries on falling past it, so it cannot cut through what it left.
+// A snake that stands, hops a short way in the direction it faces, and stands again. Onto lower
+// ground the arc carries on falling past its end, so it never cuts through the edge it left.
 public class SnakeJumper : Enemy
 {
     // A hop shorter than this fraction of a full one is a twitch rather than a bump, so it turns
@@ -34,7 +34,7 @@ public class SnakeJumper : Enemy
     private float landY;
     private float standingSince;
 
-    // An axe, a boomerang, a mount or a fairy, which is every enemy except the ghost.
+    // The same answer as every other enemy but the ghost.
     protected override Destroyer DestroyedBy
     {
         get

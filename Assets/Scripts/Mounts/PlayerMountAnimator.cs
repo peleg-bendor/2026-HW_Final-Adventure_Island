@@ -2,7 +2,7 @@ using UnityEngine;
 using Zenject;
 
 // The player's picture while riding, from the frames on the mount's own asset. Like PlayerAnimator
-// it only reads, so deleting it would leave the game playable and silent.
+// it only reads, so deleting it would leave the game playable and the mount unanimated.
 public class PlayerMountAnimator : MonoBehaviour
 {
     // How long each walking frame is held, in seconds. A rule of the game rather than a property of

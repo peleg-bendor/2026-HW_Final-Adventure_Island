@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 // The list a reset walks, and the walk itself. Its own class rather than part of GameFlow, which
-// was answering a question nobody asks the flow.
+// only ever starts the walk.
 public class ResetRegistry : IResetRegistry, IResetRunner
 {
     private readonly List<IResettable> resettables = new List<IResettable>();

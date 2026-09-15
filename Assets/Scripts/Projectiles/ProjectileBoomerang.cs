@@ -8,8 +8,8 @@ public class ProjectileBoomerang : BaseProjectile
     private Player player;
     private bool returning;
 
-    // The marker is injected rather than an interface, since all it exposes is which object he is
-    // and where the middle of him is.
+    // The marker is injected rather than an interface, since all it exposes is which object he is,
+    // where the middle of him is and which way he faces.
     [Inject]
     public void Construct(Player player)
     {

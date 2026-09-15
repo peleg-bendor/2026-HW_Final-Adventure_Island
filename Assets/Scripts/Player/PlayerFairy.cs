@@ -2,8 +2,7 @@ using System.Collections;
 using UnityEngine;
 using Zenject;
 
-// The fairy the player is holding, and what is left of its ten seconds. An IResettable, unlike the
-// weapon and mount slots: this one is lost on a strike and on a level change alike.
+// The fairy the player is holding, and how long it has left.
 public class PlayerFairy : MonoBehaviour, IPlayerFairy, IResettable
 {
     // How long one fairy lasts, in seconds.
@@ -59,8 +58,8 @@ public class PlayerFairy : MonoBehaviour, IPlayerFairy, IResettable
         StartCoroutine(Hold());
     }
 
-    // A coroutine and not a Task: this runs on the player, who is never switched off, it cancels
-    // nothing and returns nothing, and stopping under a popup is what it should do.
+    // A coroutine rather than a Task, since the player is never switched off and the wait should
+    // freeze under a popup.
     private IEnumerator Hold()
     {
         yield return new WaitForSeconds(seconds);

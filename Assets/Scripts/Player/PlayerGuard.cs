@@ -5,8 +5,8 @@ using Zenject;
 // that absorb a contact, and no hazard or enemy holds either rule itself.
 public class PlayerGuard : MonoBehaviour, IPlayerGuard
 {
-// How long the thing that took the mount is ignored afterwards, in seconds. Only that one
-// thing: anything else touched inside the same window costs what it always would.
+    // How long the thing that took the mount is ignored afterwards, in seconds. Only that one
+    // thing: anything else touched inside the same window costs what it always would.
     [SerializeField] private float absorbGraceSeconds = 0.5f;
 
     private IMountSlot mount;
@@ -24,10 +24,10 @@ public class PlayerGuard : MonoBehaviour, IPlayerGuard
 
     public bool TryAbsorb(IDestructible source)
     {
-        // Asked before the mount, since a fairy costs nothing and a mount is spent on the hit. It
-        // says nothing to the log: what it destroys announces itself.
+        // Asked before the mount, since a fairy costs nothing and a mount is spent on the hit.
         if (fairy != null && fairy.Active)
         {
+            // Nothing logged here: whatever it destroys says so itself.
             if (source != null)
                 source.TryDestroy(Destroyer.Fairy);
 

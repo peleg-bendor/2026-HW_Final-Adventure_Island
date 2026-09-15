@@ -67,8 +67,8 @@ public class Egg : MonoBehaviour, IResettable
         StartCoroutine(Hatch());
     }
 
-    // A coroutine and not a Task: this object stays alive for the whole wait, the wait cancels
-    // nothing and returns nothing, and freezing with Time.timeScale is what a popup should do to it.
+    // A coroutine rather than a Task, since the egg stays alive for the whole wait and the wait should
+    // freeze under a popup.
     private IEnumerator Hatch()
     {
         yield return new WaitForSeconds(crackSeconds);

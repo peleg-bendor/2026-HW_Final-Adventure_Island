@@ -1,7 +1,7 @@
 using System;
 
-// The game's operations and the events they raise. Where the player is depends on ILevels instead,
-// and what a reset restores on IResetRegistry.
+// The game's operations and the events they raise. Which level is on is ILevels' to answer, and
+// joining a reset is IResetRegistry's.
 public interface IGameFlow
 {
     event Action GameStarted;

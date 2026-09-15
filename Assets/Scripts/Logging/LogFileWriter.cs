@@ -11,7 +11,8 @@ public class LogFileWriter : MonoBehaviour
     // Off by default: a trace under every line makes this harder to read than the Console.
     [SerializeField] private bool traceEveryLine;
 
-    // Truncated once per session, then appended; reset explicitly since no scene ever reloads.
+    // Truncated the first time a session opens the file and appended to after. Cleared at the start
+    // of every Play, since a static can outlive one when domain reload is off.
     private static bool fileStarted;
 
     private StreamWriter writer;

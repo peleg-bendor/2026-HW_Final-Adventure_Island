@@ -1,7 +1,7 @@
 using UnityEngine;
 
-// The cell a level starts the player in, and which way he faces there. Its sprite is drawn at 40%
-// alpha for authoring only, so it hides itself rather than being switched off by something else.
+// The cell a level starts the player in, and which way he faces there. Its faded sprite is for
+// authoring only, so it hides itself rather than being switched off by something else.
 public class PlayerStart : MonoBehaviour
 {
     // Read from the marker's own flip rather than a field, so the aid in the Scene view always

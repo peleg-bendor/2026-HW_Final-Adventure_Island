@@ -11,8 +11,8 @@ public class OneShotAnimator : MonoBehaviour
     // How long each frame is held, in seconds.
     [SerializeField, Min(0.01f)] private float secondsPerFrame = 0.08f;
 
-    // A coroutine and not a Task: it runs on this object for the whole of its short life, cancels
-    // nothing and returns nothing, and stopping under a popup is what it should do.
+    // A coroutine rather than a Task, since the object lives exactly as long as its frames and they
+    // should freeze under a popup.
     private IEnumerator Start()
     {
         SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();

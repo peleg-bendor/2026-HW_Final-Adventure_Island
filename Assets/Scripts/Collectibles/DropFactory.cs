@@ -21,7 +21,7 @@ public class DropFactory : IDropFactory, IInitializable
         this.prefabs = prefabs;
     }
 
-    // Read once when the container is built, so no drop ever inspects a prefab's components.
+    // Read once at startup, so no drop ever inspects a prefab's components.
     public void Initialize()
     {
         if (prefabs == null)

@@ -91,7 +91,7 @@ public abstract class Hazard : MonoBehaviour, IDestructible, IResettable
         return true;
     }
 
-    // Everything except enemies comes back, on a strike as well as on a level start.
+    // Back on a strike as well as on a level start, unlike a destroyed enemy.
     public void ResetTo(ResetScope scope)
     {
         gameObject.SetActive(true);

@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Draws the bar as one line per unit of capacity. The lines are built from the number it is given
-// rather than placed by hand, which could not fall out of step with a changed capacity.
+// rather than placed by hand, so they cannot fall out of step with a changed capacity.
 public class PowerView : MonoBehaviour, IPowerView
 {
     [SerializeField] private Image linePrefab;

@@ -13,8 +13,7 @@ public class Ghost : Enemy
 
     private bool chasing;
 
-    // A fairy and nothing else. The one answer of the six that is not the long line, which is why
-    // this property is abstract rather than inherited.
+    // The one enemy whose answer differs from the other five's, which is why the base gives no default.
     protected override Destroyer DestroyedBy
     {
         get { return Destroyer.Fairy; }

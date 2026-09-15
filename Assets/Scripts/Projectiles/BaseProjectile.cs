@@ -37,8 +37,8 @@ public abstract class BaseProjectile : MonoBehaviour
     {
     }
 
-    // Called once by the builder, before this is ever handed out. The numbers come from a recipe
-    // rather than from the prefab, since there is only ever one kind of each projectile.
+    // Called once by the builder, before this is ever handed out, with numbers from the director's
+    // recipe rather than from the prefab.
     public void Configure(float speed, float lift, float gravityScale, float range, float maxSeconds)
     {
         this.speed = speed;

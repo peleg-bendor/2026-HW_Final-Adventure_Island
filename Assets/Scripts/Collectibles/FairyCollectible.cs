@@ -1,8 +1,8 @@
 using UnityEngine;
 using Zenject;
 
-// A fairy lying in the level. All it grants is the ten seconds, which the player's own component is
-// what counts down.
+// A fairy lying in the level. Picking it up hands it to the player, whose own component holds it and
+// counts it down.
 public class FairyCollectible : Collectible
 {
     private IPlayerFairy fairy;

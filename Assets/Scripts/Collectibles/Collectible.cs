@@ -2,7 +2,7 @@ using UnityEngine;
 using Zenject;
 
 // Anything picked up by touching it: detect the player, disappear, then apply an effect. Subclasses
-// write only the effect, which is the one step that differs between the eight kinds. A subclass
+// write only the effect, which is the one step that differs from kind to kind. A subclass
 // declares no Awake: the base owns it, and one of the subclass's own would skip the registration.
 public abstract class Collectible : MonoBehaviour, IResettable
 {
@@ -21,9 +21,8 @@ public abstract class Collectible : MonoBehaviour, IResettable
 
     public DropType Drop { get { return drop; } }
 
-    // Registered in Awake and released on destroy, unlike the project's other resettables: a
-    // collectible switches itself off when taken, so unregistering on disable would drop the very
-    // object a reset has to bring back.
+    // Registered in Awake and released on destroy: a taken collectible switches itself off, so
+    // unregistering on disable would drop the very object a reset has to bring back.
     private void Awake()
     {
         if (registry == null)

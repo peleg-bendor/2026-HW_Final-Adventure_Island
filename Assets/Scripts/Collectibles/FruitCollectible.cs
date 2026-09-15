@@ -1,7 +1,7 @@
 using UnityEngine;
 using Zenject;
 
-// A fruit lying in the level. Gives power and counts towards the every-twenty rule; how much power
+// A fruit lying in the level. Gives power and counts towards a strike's worth of fruit; how much power
 // is on the prefab, since that is the only thing separating the two kinds.
 public class FruitCollectible : Collectible
 {

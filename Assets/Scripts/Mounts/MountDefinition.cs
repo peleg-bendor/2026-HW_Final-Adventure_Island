@@ -1,7 +1,7 @@
 using UnityEngine;
 
-// What one mount looks like and how wide it makes the player, as one asset each. A ScriptableObject
-// rather than a builder, since composing a mount is data and stays editable without a recompile.
+// What one mount looks like, how wide it makes the player and how it attacks, one asset each. A
+// ScriptableObject rather than a builder, since a mount is data and stays editable without a recompile.
 [CreateAssetMenu(fileName = "Mount", menuName = "Mount/Mount Definition")]
 public class MountDefinition : ScriptableObject
 {

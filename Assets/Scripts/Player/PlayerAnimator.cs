@@ -2,7 +2,7 @@ using UnityEngine;
 using Zenject;
 
 // Pushes the player's state into the Animator and does nothing else. It only reads, so deleting
-// it would leave the game playable and silent.
+// it would leave the game playable and the player unanimated.
 public class PlayerAnimator : MonoBehaviour
 {
     private static readonly int GroundedParameter = Animator.StringToHash("Grounded");

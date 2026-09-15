@@ -16,8 +16,8 @@ public class DeathEffects : IDeathEffects
             GameLog.Warning(LogCategory.Game, "No puff or fall prefab assigned on GameInstaller, some things will vanish without an effect");
     }
 
-    // A sibling of what was destroyed rather than a child, which would be switched off with it. It
-    // goes away with the level it happened in for the same reason.
+    // A sibling of what was destroyed rather than a child, which would be switched off with it. Being
+    // in the level, it still goes away with the level it happened in.
     public void Puff(Transform at)
     {
         if (puffPrefab == null)

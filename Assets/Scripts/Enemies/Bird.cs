@@ -17,7 +17,7 @@ public class Bird : Enemy
     private bool returning;
     private float swoopStartedAt;
 
-    // An axe, a boomerang, a mount or a fairy, which is every enemy except the ghost.
+    // The same answer as every other enemy but the ghost.
     protected override Destroyer DestroyedBy
     {
         get

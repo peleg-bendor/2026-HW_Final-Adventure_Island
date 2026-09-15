@@ -8,12 +8,11 @@ public class PlayerGround : MonoBehaviour, IPlayerGround
     // within about 45 degrees of vertical.
     private const float GroundNormalMinimum = 0.7f;
 
-    // How long after the last contact he still counts as standing. The capsule separates from a
-    // flat floor for a frame or two whenever the solver pushes it back out, and both the walk
-    // animation and a jump press fall through that gap without this.
+    // How long after the last contact he still counts as standing, in seconds. The capsule leaves a
+    // flat floor for a frame or two whenever the solver pushes it back out.
     [SerializeField] private float contactGrace = 0.1f;
 
-    // Reused rather than allocated, since the contacts are read every physics step.
+    // Reused rather than allocated, since the contacts are read every frame.
     private readonly ContactPoint2D[] contacts = new ContactPoint2D[8];
 
     private Rigidbody2D rigid;

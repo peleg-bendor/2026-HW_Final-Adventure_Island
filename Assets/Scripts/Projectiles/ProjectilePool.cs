@@ -98,8 +98,8 @@ public class ProjectilePool : IProjectilePool, IResettable, IInitializable
                 return projectile;
         }
 
-        // Refused for a kind whose count is a rule, so a fourth axe and a fourth flame are both
-        // impossible.
+        // Refused for a kind whose count is a rule, which is what caps the axes and the flames in the
+        // air.
         if (growable.Contains(prefab) == false)
         {
             GameLog.Verbose(LogCategory.Projectile, prefab.name + " throw ignored - every copy is already in flight");

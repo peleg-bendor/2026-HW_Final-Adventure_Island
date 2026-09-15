@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 using Zenject;
 
 // The player's horizontal movement and which way he faces, whether the keys asked for it or a
-// hazard did. Jump and attack are separate components, because they own state that outlives a frame.
+// hazard did. Jumping and attacking are components of their own.
 public class PlayerMovement : MonoBehaviour, IPlayerShove, IPlayerMotion, IResettable
 {
     [SerializeField] private float speed = 6f;
@@ -93,7 +93,7 @@ public class PlayerMovement : MonoBehaviour, IPlayerShove, IPlayerMotion, IReset
         }
     }
 
-    // Scale rather than the renderer's flipX, so a child spawn point mirrors with him.
+    // Scale rather than the renderer's flipX, so the mount's hit, a child of his, mirrors with him.
     private void Face(bool right)
     {
         transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);

@@ -49,7 +49,7 @@ public class Frog : Enemy
     private Vector2 velocity;
     private bool warnedLost;
 
-    // An axe, a boomerang, a mount or a fairy, which is every enemy except the ghost.
+    // The same answer as every other enemy but the ghost.
     protected override Destroyer DestroyedBy
     {
         get
@@ -72,7 +72,7 @@ public class Frog : Enemy
         get { return new Vector2((HalfWidth - SkinWidth) * 2f, (HalfHeight - SkinWidth) * 2f); }
     }
 
-    // Taken from the arc, so an undisturbed leap traces the same parabola the old one did.
+    // Taken from the arc, so an undisturbed leap rises jumpHeight and lands after jumpSeconds.
     private float Gravity
     {
         get { return 8f * jumpHeight / (jumpSeconds * jumpSeconds); }
@@ -116,8 +116,6 @@ public class Frog : Enemy
             Crouch();
     }
 
-    // A fresh roll every time rather than a fixed interval, so no two waits are the same and the
-    // jump cannot be timed.
     private void WaitAgain()
     {
         waitUntil = Time.time + Random.Range(minWaitSeconds, maxWaitSeconds);
@@ -130,8 +128,6 @@ public class Frog : Enemy
         Show(crouchSprite);
     }
 
-    // Aimed his way but never for less than a full leap, or the distance left would halve with every
-    // jump and the frog would end up hopping on the spot. Nothing is checked about what lies between.
     private void Launch()
     {
         crouching = false;

@@ -17,7 +17,7 @@ public class ProjectileDirector : IProjectileDirector
     // and never come back to the pool.
     private const float AxeMaxSeconds = 6f;
 
-    // Out on a shallow arc to six cells, then straight home to wherever he is by then. The two legs
+    // Out on a shallow arc to its range, then straight home to wherever he is by then. The two legs
     // taking different paths is what makes the flight read as a loop rather than as one line.
     private const float BoomerangSpeed = 10f;
     private const float BoomerangLift = 6f;

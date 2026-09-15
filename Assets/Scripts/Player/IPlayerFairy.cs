@@ -4,6 +4,6 @@ public interface IPlayerFairy
 {
     bool Active { get; }
 
-    // Replaces whatever is left of the last one, since a second fairy restarts the ten seconds.
+    // Replaces whatever is left of the last one, so a second fairy starts the count again.
     void Take();
 }

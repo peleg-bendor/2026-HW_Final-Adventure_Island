@@ -37,7 +37,7 @@ public class RespawnCountdown : IRespawnCountdown
         }
         catch (OperationCanceledException)
         {
-            // Abandoned by a level start or by the enemy being destroyed, neither of which is a fault.
+            // Abandoned by a level start or by Play stopping, neither of which is a fault.
             return;
         }
         catch (Exception error)

@@ -993,7 +993,7 @@ own discussion:
 1. Async & Tasks, with the three coroutines beside the two Tasks. `[x]`
 1. SOLID: rank the worst-spot candidates and sweep whatever no technique covered, editor tooling
    included. Then Reflection and the rejected patterns. `[x]`, see "Where step 8 stands" below.
-1. Comment pass. `[ ]`
+1. Comment pass. `[x]`, see "How step 9 runs" below.
 1. Log pass. `[ ]`
 1. Loose ends: whether `DebugFlowKeys` ships, and whether the twelve template references are chased. `[ ]`
 1. Risk session: level 2's final save climbed to the congratulation popup, and a פייה against the
@@ -1088,11 +1088,42 @@ reasoning is in the Decisions Log entries of this date. Kept below as the record
 - **Done, compiling, not playable**: a level without a start marker printed three warnings per reset after
   batch 3. It now prints one, `LevelDefinition`'s, guarded once a frame; `PlayerReset` no longer warns.
   Neither authored level lacks a marker, so this was checked by reading only.
-- **The next conversation picks up at step 9**, the comment pass, which opens with its own design
-  discussion. It covers the files step 8 rewrote - `PlayerJump`, `PlayerMovement`, `PlayerReset`,
-  `PlayerGround`, `PlayerAnimator`, `PlayerMountAnimator`, `PlayerAttack`, `PlayerMountAttack`,
-  `MountStrike`, `LevelDefinition`, `GameFlow`, `GameInstaller` and the four new interfaces - along with
-  everything else, so those files are commented once.
+- **Step 9 followed**, and covers the files step 8 rewrote along with everything else, so they are
+  commented once.
+
+**How step 9 runs, agreed 15.9.2026, written so a new conversation can pick it up.**
+
+- **Scope**: all 120 scripts, the editor tools and the logging files included, against `CONVENTIONS.md`'s
+  thirteen comment rules. A mechanical scan found almost nothing, so the work is reading for meaning.
+- **Standard**: fix what breaks a rule or would mislead a cold reader; a comment that already passes is
+  left alone, rather than retightened for taste.
+- **Delivery, per batch**: a findings table (file:line, rule, current text, proposed text) answered by
+  Peleg point by point, then edited directly and reviewed with `git diff`.
+- **Proof that no code moved**: the game assembly is compiled with debug info off before and after each
+  batch, and the two must be byte-identical. Tested at the design discussion: an indented comment and an
+  added comment line leave it identical, a changed number does not, and a changed file path does too.
+- **File moves first, by Peleg in Unity**: `Assets/Scripts/Effects.cs/` renamed to `Effects/`, and
+  `FairyCollectible.cs` moved from `Player/` to `Collectibles/`, before the first "before" hash.
+- **Log findings met on the way go to step 10's list**, not edited; step 10 changes the assembly and needs
+  a Play session, so keeping the steps apart keeps this one's proof clean.
+- **Batches, in order**: `Player/` with `Weapons/`; `State` and `Installers`; `Levels`; `Mounts`;
+  `Enemies`; `Hazards`; `Projectiles`; `Collectibles`, `Effects` and `Animation`; `MVC` and `UI`;
+  `Logging` and `Editor`.
+- **After the last batch**: every `file:line` in `Techniques.md` (34 of them) is checked by script against
+  the method it names, and corrected. Again after step 10.
+- **The two moves are done**, by Peleg in Unity, with both `.meta` files carried along.
+- **Batch 1, `Player/` and `Weapons/`, done**: eleven comments changed across seven files, the assembly
+  byte-identical before and after. Peleg then left the remaining batches' findings to Claude's judgment
+  ("I trust you to make the right decisions"), under the same standard and proof, with every change
+  listed for his diff review.
+- **Batches 2 to 10 done**: 33 more comments across 27 files - `State` 3, `Levels` 1, `Mounts` 2, `Enemies`
+  12, `Hazards` 1, `Projectiles` 5, `Collectibles`, `Effects` and `Animation` 7, `MVC` and `UI` 1,
+  `Logging` 1, `Editor` none. The game assembly hashed identical after every batch, the same hash as
+  before the first. No log findings for step 10 turned up beyond the fruit order already listed.
+- **`Techniques.md`'s line references checked**: 44 of them, the bare `:N` ones in the Template table
+  included. Seven were wrong and are corrected: five moved by step 8 and this pass, and two
+  (`BaseProjectile.cs:47` for `Launch`, `Enemy.cs:243` for the drop) already wrong before either.
+- **Step 9 closed.** 44 comments in 34 files, two scripts moved, no code changed.
 
 ### Stage 21 — Two video scripts `[ ]`
 
@@ -3131,3 +3162,22 @@ _(append entries here as we make design decisions.)_
   `Error`. `Ground`, a second static class, was added to the ranking and answered rather than changed.
   Agreed by Peleg.
 - **`SpriteVariant` keeps its Pick One context menu**, and with it the editor-only call. Peleg's call.
+- **Step 9's comment and log findings are no longer handed over together.** Stage 20's design discussion
+  said they would be listed separately and handed over once per file, which assumed whole-file pastes,
+  where a file needing both is cheaper pasted once. With direct edits reviewed as a diff, touching a
+  file in step 9 and again in step 10 costs nothing, and keeping the steps apart keeps step 9 provable:
+  a comment-only batch compiles to a byte-identical assembly, which a log change does not. Log findings
+  met during step 9 are listed for step 10 instead. Agreed with the rest of step 9's shape.
+- **Step 9 found wrong comments more than long ones.** A mechanical scan of 826 comment lines found two
+  three-line comments and one at column 0; reading every file found 44 changes, and most were claims that
+  had stopped being true: "unlike the project's other resettables" where three others do the same, a
+  "child spawn point" that does not exist, "the power model" for the controller, `ProjectilePrefabs`
+  reasoning from `WithArguments` after it moved to `FromInstance`, a countdown "abandoned by the enemy
+  being destroyed" where the cancel comes from Play stopping. The rest were repeated values (the fairy's
+  ten seconds, the start marker's alpha, the boomerang's six cells, the axe count behind "a fourth axe",
+  the flags every enemy's `DestroyedBy` comment spelled out again), changelog voice ("the old one did",
+  "was answering"), the same point made twice in one file (`Frog`, `PlayerFairy`), and four coroutine
+  comments that argued with four reasons each, rewritten to the one sentence the Async section gives.
+  Comments that already passed were left alone, including the five identical `-9997` comments, since each
+  file is read on its own and the number is Zenject's. The proof held for all ten batches: one hash
+  before and after every batch, identical throughout.

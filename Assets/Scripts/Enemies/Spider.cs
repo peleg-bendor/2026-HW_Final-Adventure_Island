@@ -14,7 +14,7 @@ public class Spider : Enemy
     private float spawnedAt;
     private bool warnedNoFloor;
 
-    // An axe, a boomerang, a mount or a fairy, which is every enemy except the ghost.
+    // The same answer as every other enemy but the ghost.
     protected override Destroyer DestroyedBy
     {
         get
@@ -24,8 +24,7 @@ public class Spider : Enemy
         }
     }
 
-    // Measured at every spawn rather than once, so a spider that came back somewhere else still
-    // stops at the floor under it.
+    // Measured at every spawn rather than once, so the drop matches the floor beneath it at the time.
     protected override void OnSpawned()
     {
         travel = moves ? MeasureDrop() : 0f;
