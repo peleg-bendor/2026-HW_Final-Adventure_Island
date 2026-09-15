@@ -23,6 +23,7 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     private IDropFactory drops;
     private IDeathEffects effects;
 
+    private SpriteRenderer art;
     private Vector2 home;
     private float feet = -1f;
     private float halfWidth = -1f;
@@ -86,6 +87,14 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         transform.localScale = new Vector3(right ? 1f : -1f, 1f, 1f);
     }
 
+    // Shows one of its poses. The base holds the renderer, so a subclass with poses needs none of its
+    // own.
+    protected void Show(Sprite sprite)
+    {
+        if (art != null && sprite != null)
+            art.sprite = sprite;
+    }
+
     // What is allowed to destroy this enemy. One line per subclass, and it is the whole rule.
     protected abstract Destroyer DestroyedBy { get; }
 
@@ -104,6 +113,11 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
 
         if (GetComponent<Collider2D>() == null)
             GameLog.Warning(LogCategory.Enemy, "No Collider2D found on " + name + ", it cannot be touched or destroyed");
+
+        art = GetComponent<SpriteRenderer>();
+
+        if (art == null)
+            GameLog.Warning(LogCategory.Enemy, "No SpriteRenderer found on " + name + ", it will not change pose or fall when destroyed");
 
         if (registry != null)
             registry.Register(this);
@@ -219,12 +233,10 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
             return;
         }
 
-        SpriteRenderer picture = GetComponent<SpriteRenderer>();
-
-        if ((by & Destroyer.Fairy) != 0 || picture == null)
+        if ((by & Destroyer.Fairy) != 0 || art == null)
             effects.Puff(transform);
         else
-            effects.Fall(picture);
+            effects.Fall(art);
     }
 
     // The factory decides where a drop goes in the hierarchy, so nothing here has to remember that

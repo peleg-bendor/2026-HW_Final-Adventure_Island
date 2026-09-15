@@ -11,7 +11,6 @@ public class Ghost : Enemy
     [SerializeField] private Sprite frozenSprite;
     [SerializeField] private Sprite chasingSprite;
 
-    private SpriteRenderer art;
     private bool chasing;
 
     // A fairy and nothing else. The one answer of the six that is not the long line, which is why
@@ -19,14 +18,6 @@ public class Ghost : Enemy
     protected override Destroyer DestroyedBy
     {
         get { return Destroyer.Fairy; }
-    }
-
-    protected override void OnAwake()
-    {
-        art = GetComponent<SpriteRenderer>();
-
-        if (art == null)
-            GameLog.Warning(LogCategory.Enemy, "No SpriteRenderer found on " + name + ", it will not change pose");
     }
 
     protected override void OnSpawned()
@@ -60,11 +51,5 @@ public class Ghost : Enemy
     private bool IsWatched()
     {
         return (transform.position.x > PlayerPosition.x) == PlayerFacesRight;
-    }
-
-    private void Show(Sprite sprite)
-    {
-        if (art != null && sprite != null)
-            art.sprite = sprite;
     }
 }

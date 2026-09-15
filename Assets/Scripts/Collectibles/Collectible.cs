@@ -2,7 +2,8 @@ using UnityEngine;
 using Zenject;
 
 // Anything picked up by touching it: detect the player, disappear, then apply an effect. Subclasses
-// write only the effect, which is the one step that differs between the eight kinds.
+// write only the effect, which is the one step that differs between the eight kinds. A subclass
+// declares no Awake: the base owns it, and one of the subclass's own would skip the registration.
 public abstract class Collectible : MonoBehaviour, IResettable
 {
     // Which drop type this prefab is, which is what lets a factory find it. None for anything only

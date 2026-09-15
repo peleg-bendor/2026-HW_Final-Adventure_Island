@@ -39,7 +39,6 @@ public class Frog : Enemy
     [SerializeField] private Sprite crouchSprite;
     [SerializeField] private Sprite jumpingSprite;
 
-    private SpriteRenderer art;
     private bool crouching;
     private bool jumping;
     private float waitUntil;
@@ -77,14 +76,6 @@ public class Frog : Enemy
     private float Gravity
     {
         get { return 8f * jumpHeight / (jumpSeconds * jumpSeconds); }
-    }
-
-    protected override void OnAwake()
-    {
-        art = GetComponent<SpriteRenderer>();
-
-        if (art == null)
-            GameLog.Warning(LogCategory.Enemy, "No SpriteRenderer found on " + name + ", it will not change pose");
     }
 
     protected override void OnSpawned()
@@ -228,11 +219,5 @@ public class Frog : Enemy
         warnedLost = true;
         GameLog.Warning(LogCategory.Enemy, "No ground under " + name + " at x " +
             transform.position.x.ToString("0.0") + ", its jump had nowhere to land");
-    }
-
-    private void Show(Sprite sprite)
-    {
-        if (art != null && sprite != null)
-            art.sprite = sprite;
     }
 }

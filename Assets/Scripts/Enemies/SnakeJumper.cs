@@ -24,7 +24,6 @@ public class SnakeJumper : Enemy
     [SerializeField] private Sprite standingSprite;
     [SerializeField] private Sprite jumpingSprite;
 
-    private SpriteRenderer art;
     private bool authoredRight;
 
     private bool hopping;
@@ -53,11 +52,6 @@ public class SnakeJumper : Enemy
 
     protected override void OnAwake()
     {
-        art = GetComponent<SpriteRenderer>();
-
-        if (art == null)
-            GameLog.Warning(LogCategory.Enemy, "No SpriteRenderer found on " + name + ", it will not change pose");
-
         // Read before anything flips it, so a snake that turned at a wall still comes back facing
         // the way it was placed.
         authoredRight = FacesRight;
@@ -167,11 +161,5 @@ public class SnakeJumper : Enemy
 
         // Measured from the middle, so its front stops at the wall face rather than inside it.
         return Mathf.Clamp(wall - HalfWidth, 0f, hopDistance);
-    }
-
-    private void Show(Sprite sprite)
-    {
-        if (art != null && sprite != null)
-            art.sprite = sprite;
     }
 }

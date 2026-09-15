@@ -979,7 +979,7 @@ own discussion:
 1. DI. `[x]`
 1. Builder and Pooling, as one step, since `ProjectileDirector` is part of both. `[x]`
 1. Factory. `[x]`
-1. Template, all four bases. `[ ]`
+1. Template, all four bases. `[x]`
 1. MVC, all three triads. `[ ]`
 1. Async & Tasks, with the three coroutines beside the two Tasks. `[ ]`
 1. SOLID: rank the worst-spot candidates and sweep whatever no technique covered, editor tooling
@@ -2899,3 +2899,26 @@ _(append entries here as we make design decisions.)_
   cost is that a seventh drop type means a line in `DropType.cs` as well as a prefab on the installer;
   the factory itself is not opened. Recorded here because the choice was made at stage 16 and never
   written down, and it is the second question the factory is likely to draw.
+- **All four Template bases now own their Unity messages the same way.** `BaseProjectile.Awake` was
+  `protected virtual`, and `ProjectileMountFire` overrode it with a `base.Awake()` call - the shape the
+  `OnAwake` entry at stage 14 rejected for `Enemy`, because an override that forgets the call leaves
+  `Body` null and the projectile never flies. It came from Exercise 3's graded base, so nothing had
+  marked it down; the project's own reasoning had. `Awake` is private now and calls an empty
+  `OnAwake`, which the mount's fire overrides. The limit worth saying out loud at the defense: nothing
+  in C# stops a subclass declaring its own `Awake`, and Unity would call it and skip the base's
+  silently. What guards it is the base owning the message privately, a hook for what a subclass
+  legitimately needs, and the header saying so - which `Collectible` and `Hazard` did not, and now do.
+- **The enemies' poses moved into `Enemy`, by the project's own third-copy rule.** `Ghost`,
+  `SnakeShooter`, `SnakeJumper` and `Frog` each held a `SpriteRenderer`, looked it up in `OnAwake` with
+  the same warning, and carried an identical `Show(Sprite)`, while `Enemy.ShowDeath` looked the renderer
+  up again at every death. The base holds it now and offers `Show`; three of the four subclasses lost
+  their `OnAwake` entirely and the four shrank by 57 lines between them, against 12 added to `Enemy`,
+  which is on the worst-spot list for its size. Duplication rather than a SOLID violation, and said
+  that way when Peleg asked: the case for it was the rule this plan wrote at stage 14 - the third copy
+  is the one that gets extracted - applied to a fourth.
+- **Confirmed by one session with `Enemy` and `Projectile` at `Verbose`**: no missing-renderer or
+  missing-body warning at startup; the ghost switched between frozen and chasing dozens of times; the
+  frog crouched, leapt and landed; the shooters fired; the boomerang, the snake's fireballs and the red
+  mount's fire all flew; enemies killed by weapons and by the mount fell, and the ghost, a spider and
+  three fires went to the פייה. The axe was not thrown in that session; it launches through the same
+  `BaseProjectile.Awake` as the other three.

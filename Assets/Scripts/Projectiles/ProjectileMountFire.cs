@@ -14,10 +14,8 @@ public class ProjectileMountFire : BaseProjectile
 
     private SpriteRenderer art;
 
-    protected override void Awake()
+    protected override void OnAwake()
     {
-        base.Awake();
-
         art = GetComponent<SpriteRenderer>();
 
         if (art == null)

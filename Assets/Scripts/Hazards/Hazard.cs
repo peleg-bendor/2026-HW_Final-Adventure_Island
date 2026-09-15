@@ -2,7 +2,8 @@ using UnityEngine;
 using Zenject;
 
 // Something dangerous to touch that can also be destroyed: detect the player, let his guard absorb
-// the contact, then apply the effect. Spikes are deliberately not one of these.
+// the contact, then apply the effect. Spikes are deliberately not one of these. A subclass declares
+// no Awake: the base owns it, and one of the subclass's own would skip the registration.
 public abstract class Hazard : MonoBehaviour, IDestructible, IResettable
 {
     private IPlayerGuard guard;

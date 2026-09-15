@@ -330,7 +330,92 @@ Nothing from these files goes on the worst-spot list.
 
 ## Template Method
 
-Not started.
+### What the course means
+
+The lecture note, `Course/Lesson 10 - Factory, Template, Performance & Optimization/Template Design
+Pattern.md`: the skeleton of an algorithm in an abstract class, with subclasses overriding specific steps
+without changing its structure. Three parts: the abstract class; the template method, which holds the
+sequence and calls some steps the base implements and some abstract ones; and the concrete classes that
+supply the abstract steps. Its example is `EnemyAI.ExecuteBehavior()`: `Patrol(); if (DetectPlayer())
+Attack();`.
+
+The lesson project has none. `Lesson 10.md` searched every script and concludes that Template Method is
+lecture-only in that lesson, so the note's `EnemyAI` is the instructor's only worked example.
+
+Exercise 3's text (`Course/Exercises/Exercise 03.md:26-29`): "צרו קובץ BaseProjectile עם פעולות כלליות
+כמו Fire(). הקליע החדש יירש ממנה ויממש את הירי ישר למעלה בלבד". The graded answer was
+`BaseProjectile.Fire(direction)`, with `GetLaunchImpulse`, `TryHandleTarget`, `OnTerrainHit` and `Expire`
+as the steps a subclass supplies.
+
+### Where it lives
+
+Four bases, each with its fixed sequence in the base and its varying steps in the subclasses:
+
+| Base | Template method | Steps a subclass writes | Subclasses |
+|---|---|---|---|
+| `Collectible` | `OnTriggerEnter2D` (`:51`): the player? then switch off, then `PickUp` | `PickUp` | 4 classes on 8 prefabs |
+| `Hazard` | `Touch` (`:61`): once a frame, the player, the guard, then `Hurt`. `TryDestroy` (`:78`): `DestroyedBy`, then off and a puff | `Hurt`, `DestroyedBy` | `Fire`, `Rock` |
+| `Enemy` | `Update` (`:149`): near or mid-action, then `Behave`. `TryDestroy` (`:205`): `DestroyedBy`, then `Die`. `Spawn` (`:306`): home, on, then `OnSpawned`. `Awake` (`:110`): register, then `OnAwake` | `Behave`, `DestroyedBy`; optionally `IsMidAction`, `OnSpawned`, `OnAwake` | 6 classes on 7 prefabs |
+| `BaseProjectile` | `Launch` (`:55`): on, placed, velocity and clock cleared, then `OnLaunched`. `Update` (`:81`): `Fly`, then the timeout. `OnTriggerEnter2D` (`:97`): `OnHit` | `OnHit`; optionally `OnLaunched`, `Fly`, `OnAwake` | 4 |
+
+- Open `Assets/Scripts/Enemies/Enemy.cs:149`, `Update`: the shape of the note's `ExecuteBehavior`, a
+  check the base owns and then the step the subclass writes. The strongest of the four.
+- Then `Assets/Scripts/Projectiles/BaseProjectile.cs:55`, `Launch`: Exercise 3's `Fire()`, public, called
+  by a client, fixed steps and a hook.
+
+### What the code shows
+
+- All four match the note: a fixed sequence in the base, abstract steps in the subclasses.
+- The fixed steps cannot be reordered or skipped. Every base keeps `Awake` private, and the two that
+  need a per-frame step own `Update` and hand out `Behave` or `Fly`. Where a subclass has something of
+  its own to set up, the base calls an `OnAwake` hook after its own work.
+- Where each base stops is decided and recorded. `Egg` is not a `Collectible`, since it needs a visible
+  beat between switching off and yielding its drop; `Spikes` is not a `Hazard`, since nothing may destroy
+  it or absorb it; `Enemy` is not a `Hazard`, since it changes both of `Hazard`'s fixed steps.
+- No abstract step has a shared default. `DestroyedBy` stays abstract though five of the six enemies give
+  the same answer, so each file states its whole rule.
+- What the subclasses share lives in the base rather than being repeated: an enemy's terrain
+  measurements, its facing, the player's position, and its poses through `Show`.
+- The limit: nothing in C# stops a subclass declaring its own `Awake` or `Update`, and Unity would call
+  it and silently skip the base's. The guards are the base owning the message privately, a hook for
+  what a subclass needs, and each base's header saying so.
+
+Verdict: matches both definitions, the note's and Exercise 3's. The review made the four bases own their
+Unity messages the same way, since `BaseProjectile.Awake` had been `protected virtual`, and moved the
+enemies' shared pose code into `Enemy`; the plan's Decisions Log has both.
+
+### What could be challenged
+
+1. "Show me the template method." `Enemy.Update`: is he near, or am I part-way through something? Then
+   behave. It is your `ExecuteBehavior`. For projectiles, `Launch` is Exercise 3's `Fire()`.
+2. "Unity calls your `Update`, not a client." Unity is the client. The base owns the message privately
+   so that no subclass can replace it.
+3. "What stops a subclass writing its own `Awake`?" Nothing in the language. The base owns it privately,
+   offers `OnAwake` for what a subclass needs, and says so in its header, and that is true of all four.
+4. "Five enemies return the same `DestroyedBy`. Why no default?" A default would hide the one answer that
+   differs, the ghost's, and would hand a new kind of destroyer to five enemies without anyone deciding it.
+5. "Your static spider's `Behave` does nothing. Isn't that your `FriendlyEnemy`?" The base promises the
+   contact damage, the destruction and the respawn, and all of them still happen. `Behave` only promises
+   what it does while he is near, and a spider may stand still.
+6. "Why isn't the egg a `Collectible`?" The base switches the object off before applying the effect, so a
+   strike can undo it. The egg's whole behaviour is a beat between those two steps, and bending the base
+   for it would cost the property that makes the base worth having.
+7. "Why isn't `Enemy` a `Hazard`?" An enemy changes both of `Hazard`'s fixed steps - its destruction
+   starts a respawn and its reset leaves a dead one dead - and a subclass that overrides its template's
+   fixed steps is not following that template.
+
+Rejected along the way, all in the Decisions Log: a Template for the full and partial reset, and for the
+camera's follow and frame modes, each of which is one flag; an intermediate `DestroyingProjectile`
+between the base and three of its subclasses; and a `Leave` helper on `Enemy` with no caller.
+
+Nothing from these files goes on the worst-spot list. `Enemy`'s size is already on it.
+
+### The defense sentence
+
+> Every enemy runs a lifecycle its base owns: behave while the player is near, cost a strike on contact,
+> die in a fixed order, drop, count down and come back. The six subclasses write only what they do while
+> alive and what may destroy them, so a new enemy cannot forget to respawn. The projectiles are your
+> Exercise 3 `Fire()`: the launch is fixed in the base, and the flight and the hit are left to each kind.
 
 ## MVC
 
@@ -349,7 +434,8 @@ Not started.
 Collected by every section above and ranked at the end. Found by reading the code before the review
 began, so none of these is verified as a problem yet:
 
-- `Enemy`: 323 lines and seven injected dependencies.
+- `Enemy`: 335 lines and seven injected dependencies, having gained the shared pose code the Template
+  step moved out of four subclasses.
 - `LevelWindow` (314 lines) and `TilePlacerWindow` (306). Editor tooling ships with the submission.
 - `IGameFlow`: ten members, and no client uses both the operations and the events. Splitting it was
   considered and rejected in the Decisions Log.

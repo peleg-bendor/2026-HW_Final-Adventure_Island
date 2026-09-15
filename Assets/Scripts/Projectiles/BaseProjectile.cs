@@ -21,12 +21,20 @@ public abstract class BaseProjectile : MonoBehaviour
     // Where this flight began, so a projectile with a range can tell how far it has come.
     protected Vector2 LaunchOrigin { get; private set; }
 
-    protected virtual void Awake()
+    private void Awake()
     {
         Body = GetComponent<Rigidbody2D>();
 
         if (Body == null)
             GameLog.Warning(LogCategory.Projectile, "No Rigidbody2D found on " + name + ", it will not fly");
+
+        OnAwake();
+    }
+
+    // Where a subclass caches its own components. The base owns Awake, so a subclass cannot skip
+    // finding the body by declaring one of its own.
+    protected virtual void OnAwake()
+    {
     }
 
     // Called once by the builder, before this is ever handed out. The numbers come from a recipe

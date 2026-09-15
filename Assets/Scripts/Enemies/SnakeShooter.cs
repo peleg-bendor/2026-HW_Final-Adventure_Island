@@ -20,7 +20,6 @@ public class SnakeShooter : Enemy
 
     private IProjectilePool pool;
     private ProjectilePrefabs prefabs;
-    private SpriteRenderer art;
     private float lastShotAt;
     private bool posing;
 
@@ -41,14 +40,6 @@ public class SnakeShooter : Enemy
             return Destroyer.Axe | Destroyer.Boomerang | Destroyer.MountAttack | Destroyer.Riding |
                    Destroyer.Fairy;
         }
-    }
-
-    protected override void OnAwake()
-    {
-        art = GetComponent<SpriteRenderer>();
-
-        if (art == null)
-            GameLog.Warning(LogCategory.Enemy, "No SpriteRenderer found on " + name + ", it will not change pose");
     }
 
     protected override void OnSpawned()
@@ -95,11 +86,5 @@ public class SnakeShooter : Enemy
         float direction = FacesRight ? 1f : -1f;
         Vector2 origin = (Vector2)transform.position + new Vector2(muzzle.x * direction, muzzle.y);
         fireball.Launch(origin, direction);
-    }
-
-    private void Show(Sprite sprite)
-    {
-        if (art != null && sprite != null)
-            art.sprite = sprite;
     }
 }
