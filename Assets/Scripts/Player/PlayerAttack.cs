@@ -9,15 +9,15 @@ public class PlayerAttack : MonoBehaviour
     // How far in front of his middle a throw leaves, in units. X mirrors with his facing.
     [SerializeField] private Vector2 throwOffset = new Vector2(0.6f, 0f);
 
-    private ProjectileDirector director;
+    private IProjectilePool pool;
     private IWeaponSlot slot;
     private Player player;
     private PlayerMountAttack mount;
 
     [Inject]
-    public void Construct(ProjectileDirector director, IWeaponSlot slot)
+    public void Construct(IProjectilePool pool, IWeaponSlot slot)
     {
-        this.director = director;
+        this.pool = pool;
         this.slot = slot;
     }
 
@@ -43,9 +43,9 @@ public class PlayerAttack : MonoBehaviour
         if (mount != null && mount.TryAttack())
             return;
 
-        if (director == null || slot == null)
+        if (pool == null || slot == null)
         {
-            GameLog.Warning(LogCategory.Player, "No ProjectileDirector or IWeaponSlot injected, nothing is thrown");
+            GameLog.Warning(LogCategory.Player, "No IProjectilePool or IWeaponSlot injected, nothing is thrown");
             return;
         }
 
@@ -55,9 +55,15 @@ public class PlayerAttack : MonoBehaviour
             return;
         }
 
+        // Null when every copy is already in the air, which the pool has already said.
+        BaseProjectile projectile = pool.Get(slot.Held);
+
+        if (projectile == null)
+            return;
+
         float direction = Mathf.Sign(transform.localScale.x);
         Vector2 middle = player != null ? player.Middle : (Vector2)transform.position;
         Vector2 origin = middle + new Vector2(throwOffset.x * direction, throwOffset.y);
-        director.Throw(slot.Held, origin, direction);
+        projectile.Launch(origin, direction);
     }
 }

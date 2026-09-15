@@ -970,8 +970,8 @@ submission.
 own discussion:
 
 1. Design discussion. `[x]`
-1. DI. `[ ]`
-1. Builder and Pooling, as one step, since `ProjectileDirector` is part of both. `[ ]`
+1. DI. `[x]`
+1. Builder and Pooling, as one step, since `ProjectileDirector` is part of both. `[x]`
 1. Factory. `[ ]`
 1. Template, all four bases. `[ ]`
 1. MVC, all three triads. `[ ]`
@@ -1017,6 +1017,13 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
 - `GameInstaller`'s "Zenject container built" never reaches `GameLog.txt`: `SceneContext` runs
   `InstallBindings` at execution order -9999, before `LogFileWriter` subscribes in `OnEnable` at -100.
   Step 10.
+- An axe logs `Axe hit the ground` twice when it lands: it touches two ground tiles in the same physics
+  step, before its own `SetActive(false)` stops the second callback. Seen in step 3's session, eight
+  lines for four axes. Step 10.
+
+**Temporary, and has to come out before step 12**: a פייה, extra shooting נחשים and a ביצה holding
+עלה at the start of level 1, added by Peleg on 15.9.2026 to test step 3's pool, and saved into
+`Level01.txt` as well as the scene. The risk session and the playthrough have to run on the authored level 1.
 
 ### Stage 21 — Two video scripts `[ ]`
 
@@ -1380,7 +1387,8 @@ _(append entries here as we make design decisions.)_
   reorders the Hierarchy. Authoring the number on the root matches the decision that a level's size
   is authored there too, so adding a third level is one root with one number and nothing else to
   remember. It also lets `CurrentLevel` be an array lookup rather than the per-frame scene scan the
-  camera would otherwise drive.
+  camera would otherwise drive. **The scan left `Levels` at stage 20**: the installer binds the roots
+  with `FromComponentsInHierarchy` and `Levels` receives them as an array, sorting as before.
 - **Neither ending restarts by itself.** `CompleteLevel` on the last level and `LoseStrike` on the
   last פסילה both raise their event and stop. The first draft had the game-complete path calling
   `StartGame` on its own, which reads as convenient and is wrong: 2.3 and 2.4 both specify a popup
@@ -1466,7 +1474,9 @@ _(append entries here as we make design decisions.)_
   object for the whole game, at the scene root, never destroyed - so the reason is gone and the lookup
   would be inherited ceremony. The level is still found rather than referenced, by
   `FindObjectsByType<LevelDefinition>`, which excludes inactive objects and so answers with whichever
-  level is switched on.
+  level is switched on. **Both halves were later replaced**: the level lookup moved to `GameFlow` at
+  stage 8 and to `Levels` at stage 11, and at stage 20 the camera stopped holding the player's Transform and injects `Player`
+  like every other class that needs him.
 
 - **The תהום has a floor, and the spike sprite is only ever the תהום.** Peleg's design, and it
   replaces the fall line `LevelDefinition` was going to carry. The fall line answered "how far does he
@@ -1913,7 +1923,9 @@ _(append entries here as we make design decisions.)_
   projectile. It also removes a temporal coupling, since a lazily-creating pool would have to call
   the builder while the director's setters were still loaded. **Half of that was overturned at stage
   14**: the cap and the size are the same number only where the cap is a requirement, which is the
-  axe and the boomerang and not the נחש's fireball - see the entry on a pool that grows.
+  axe and the boomerang and not the נחש's fireball - see the entry on a pool that grows. **And the
+  filling moved at stage 20**: the recipes stay constants in the Director, but `ProjectilePool` fills
+  itself through it, and the counts left the code for `ProjectileCounts` on the installer.
 - **The cap is his number, not ours.** 00:31:35: "אתם לא יכולים לזרוק 10 אלף, אתם זורקים איזה שלוש,
   אחת, שתיים, שלוש" - three axes, and he describes the cap and the delay of 6.7 as the same
   observation. One boomerang, since it returns to the player and having two in the air has no
@@ -1925,6 +1937,8 @@ _(append entries here as we make design decisions.)_
   without either being threaded through the builder as a setter. The cost is one class depending on
   the container, which is the service-locator shape DI usually avoids - it is the standard Zenject
   idiom for a factory, and the alternative is a builder that carries dependencies as well as numbers.
+  **Narrowed at stage 20**: the builder and the drop factory take `IInstantiator`, the interface the
+  container registers itself under, which can instantiate and inject but cannot resolve anything.
 - **`Range` is on the base, and the axe is the one that does not use it.** The boomerang turns at
   its range, and stage 14's נחש fireball and stage 15's mount fire both stop at theirs, so three of
   the four use it and the axe passes zero. Keeping it off the base was the alternative, and it needs
@@ -1952,7 +1966,9 @@ _(append entries here as we make design decisions.)_
   adding a projectile stops growing that class - Peleg's question, and the honest half of the answer.
   The other half: the *recipes* still grow one method each, which is what a Director is, and the
   point they would stop being worth it is around eight or ten, where moving them into one asset per
-  projectile beats a file that grows linearly. Four is fixed by the requirements.
+  projectile beats a file that grows linearly. Four is fixed by the requirements. **`Throw` went at
+  stage 20**, with the split of the director: a shooter asks `IProjectilePool.Get` for the prefab and
+  launches what comes back, which is still one method however many projectiles there are.
 - **`WeaponSlot` is a plain C# class subscribing to `GameStarted` and `StrikeLost`.** That is 3.6 and
   6.3 in two lines and it is why `CarriedState` is not written. It follows `StrikesController`'s
   idiom exactly - subscribe in `Initialize`, never unsubscribe, because both live for the scene.
@@ -2262,7 +2278,11 @@ _(append entries here as we make design decisions.)_
   happens again, since pools do not shrink. The axe and the boomerang refuse to grow, so a fourth axe
   is still impossible. The claim gets longer and more accurate: *the axe's pool exists because three
   is a rule of the game; the snake's exists so the game stops allocating, so its size is a starting
-  point.*
+  point.* **Two corrections at stage 20.** The growing moved from the director into the pool. And "the
+  first seconds of a level" did not survive a session with extra shooters at level 1's start: the
+  fireball pool grew 23 times, from 4 to 27, as more shooters came into range, with 25 in the air at
+  the level change. What stays true is that it stops once it holds the most that have been in flight
+  at once.
 - **Three ways were weighed and two rejected, one of them Exercise 3's.** Not pooling enemy shots at
   all is what Exercise 3 did - `EnemyRangedAttack.Shoot` calls `Instantiate` every time, and only the
   player's laser was ever pooled, by a singleton with a static `Instance` that returned null and
@@ -2811,3 +2831,44 @@ _(append entries here as we make design decisions.)_
 - **The full playthrough runs with `Enemy` and `Projectile` at `Verbose`.** The ghost freezing and
   chasing, the bird's swoop and the boomerang turning and being caught are logged nowhere else, and a
   requirement checked in the log is better evidence than one remembered from the screen.
+- **The DI review changed four things, and none of them changes how the game plays.** Peleg asked
+  what each one actually buys, and the answer was weighed rather than assumed. `ProjectileBuilder` and
+  `DropFactory` take `IInstantiator` instead of `DiContainer`: the whole container can resolve any
+  service, which is the service-locator shape the course's definition of DI exists to replace, and
+  `IInstantiator` can only instantiate and inject. It also removes the only two dependencies on a
+  concrete framework class, which an automated check listing concrete dependencies would report.
+  `Levels` receives the level roots through `FromComponentsInHierarchy` instead of calling
+  `FindObjectsByType`, which the course's notes name as the "before" picture DI replaces; the scan
+  still happens, in the installer, as the plural of lesson 12's own `FromComponentInHierarchy`, and
+  `EnsureFound` went with it. `LevelCamera` injects `Player` instead of holding his Transform, so
+  every class reaches him one way, and lost an `IGameFlow` field nothing assigned or read since
+  stage 11. `PowerController`, `ProjectilePool` and `WeaponSlot` lost their unused self-bindings,
+  which was tidiness and rode along because the installer was open anyway. Confirmed by one session:
+  the pools, the drop registry, three egg drops, a level change, a game over and a restart, with no
+  errors. **A consequence for the log pass**: `Levels` now runs its duplicate-number warning while
+  the container is built, before `LogFileWriter` has opened the file.
+- **`ProjectileDirector` was split along the course's own roles, because it was doing three jobs.** It
+  held the recipes, filled and grew the pool, and was the `Throw` all three shooters called, each of
+  them injecting it as a concrete class. Lesson 9's director holds only the recipe, its pool owns the
+  quantity and the filling, and its weapon asks the pool and fires. The project now has that chain with
+  four kinds instead of one: `PlayerAttack`, `SnakeShooter` and `PlayerMountAttack` inject
+  `IProjectilePool`, call `Get` and `Launch` themselves; `ProjectilePool` fills itself through
+  `IProjectileDirector` at startup, parks what it builds, refuses a fourth axe and grows the snake's
+  fireball; the Director holds the four recipes behind one `Build(prefab)`, which runs the recipe and
+  the build in one call; and the builder no longer parents or deactivates. Lesson 12's own pool takes
+  its director as a concrete class, so the concrete dependency was the weaker half of the case; the
+  three jobs were the stronger. The cost is that a fifth projectile touches the pool's fill list as
+  well as the Director. Peleg's call to edit it directly, ten files in one batch, since the shooters
+  stop calling `Throw` in the same change that removes it.
+- **The counts are serialized, because 6.7 writes them in backticks.** `Exercise Adventure Island.md`
+  says a number written that way belongs in a serialized field the instructor may ask to change, and
+  a grep of every backticked number in it found the axe's `3` and the boomerang's `1` the only two
+  still constants. `ProjectileCounts` on `GameInstaller` holds all four, the mount fire's and the
+  snake's starting size with them so the counts live in one place; which kinds may grow stays in code,
+  since that is a design fact rather than a number. Same route as `RespawnDelay`.
+- **Confirmed by one session, with a פייה and extra shooting נחשים added to level 1 for it**: the four
+  `Pooled` lines came out identical, a fourth axe was refused fifteen times across the session, a second
+  boomerang was refused while the first was out and it turned and was caught, the snake's fireball
+  pool grew 23 times, and a level change recalled 25 in flight. The red mount's fire, which that
+  session never rode, was seen in a second one from an עלה ביצה added beside the others: three flames
+  out, a fourth refused eight times, no growth, and a jumping נחש killed by `MountAttack`.

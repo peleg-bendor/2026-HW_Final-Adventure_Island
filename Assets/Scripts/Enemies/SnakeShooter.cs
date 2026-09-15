@@ -18,7 +18,7 @@ public class SnakeShooter : Enemy
     [SerializeField] private Sprite idleSprite;
     [SerializeField] private Sprite shootingSprite;
 
-    private ProjectileDirector director;
+    private IProjectilePool pool;
     private ProjectilePrefabs prefabs;
     private SpriteRenderer art;
     private float lastShotAt;
@@ -27,9 +27,9 @@ public class SnakeShooter : Enemy
     // The prefabs come from the installer rather than a field of its own, since the pool is keyed on
     // the prefab and a second reference could point somewhere the pool never built from.
     [Inject]
-    public void Construct(ProjectileDirector director, ProjectilePrefabs prefabs)
+    public void Construct(IProjectilePool pool, ProjectilePrefabs prefabs)
     {
-        this.director = director;
+        this.pool = pool;
         this.prefabs = prefabs;
     }
 
@@ -78,18 +78,23 @@ public class SnakeShooter : Enemy
     {
         lastShotAt = Time.time;
 
-        if (director == null || prefabs == null || prefabs.snakeFireball == null)
+        if (pool == null || prefabs == null || prefabs.snakeFireball == null)
         {
-            GameLog.Warning(LogCategory.Enemy, "No ProjectileDirector or no snake fireball prefab, " + name + " cannot shoot");
+            GameLog.Warning(LogCategory.Enemy, "No IProjectilePool or no snake fireball prefab, " + name + " cannot shoot");
             return;
         }
 
         posing = true;
         Show(shootingSprite);
 
+        BaseProjectile fireball = pool.Get(prefabs.snakeFireball);
+
+        if (fireball == null)
+            return;
+
         float direction = FacesRight ? 1f : -1f;
         Vector2 origin = (Vector2)transform.position + new Vector2(muzzle.x * direction, muzzle.y);
-        director.Throw(prefabs.snakeFireball, origin, direction);
+        fireball.Launch(origin, direction);
     }
 
     private void Show(Sprite sprite)

@@ -1,11 +1,9 @@
 using UnityEngine;
 
-// Hands out projectiles that already exist. Everything is built once at startup, so the game never
-// instantiates a projectile while it is running.
+// Hands out a projectile of a given kind that is not in flight. Nothing is ever handed back: a
+// projectile that switches itself off is free again.
 public interface IProjectilePool
 {
-    void Add(GameObject prefab, BaseProjectile projectile);
-
-    // Null when every copy of this prefab is already in flight, which is what caps how many can be.
+    // Null when every copy of this prefab is in flight and its count is a rule of the game.
     BaseProjectile Get(GameObject prefab);
 }

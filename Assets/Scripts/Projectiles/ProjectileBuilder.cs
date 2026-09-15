@@ -8,7 +8,6 @@ public class ProjectileBuilder : IProjectileBuilder
     // The container's instantiating half rather than the whole DiContainer, which could resolve
     // anything at all.
     private readonly IInstantiator instantiator;
-    private readonly Transform parent;
 
     private float speed;
     private float lift;
@@ -16,10 +15,9 @@ public class ProjectileBuilder : IProjectileBuilder
     private float range;
     private float maxSeconds;
 
-    public ProjectileBuilder(IInstantiator instantiator, Transform parent)
+    public ProjectileBuilder(IInstantiator instantiator)
     {
         this.instantiator = instantiator;
-        this.parent = parent;
     }
 
     public void SetSpeed(float speed)
@@ -67,11 +65,7 @@ public class ProjectileBuilder : IProjectileBuilder
             return null;
         }
 
-        if (parent != null)
-            instance.transform.SetParent(parent);
-
         projectile.Configure(speed, lift, gravityScale, range, maxSeconds);
-        instance.SetActive(false);
         return projectile;
     }
 }

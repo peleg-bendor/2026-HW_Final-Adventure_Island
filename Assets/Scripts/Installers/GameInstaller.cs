@@ -23,6 +23,9 @@ public class GameInstaller : MonoInstaller
     // The prefabs the projectile builder makes copies of.
     [SerializeField] private ProjectilePrefabs projectilePrefabs;
 
+    // How many of each projectile the pool builds when the game starts.
+    [SerializeField] private ProjectileCounts projectileCounts;
+
     // Where the pooled projectiles are parked in the Hierarchy, so they do not litter the root.
     [SerializeField] private Transform projectileParent;
 
@@ -63,9 +66,10 @@ public class GameInstaller : MonoInstaller
         Container.Bind<RespawnDelay>().FromInstance(respawnDelay).AsSingle();
 
         Container.Bind<ProjectilePrefabs>().FromInstance(projectilePrefabs).AsSingle();
-        Container.Bind<IProjectileBuilder>().To<ProjectileBuilder>().AsSingle().WithArguments(projectileParent);
-        Container.BindInterfacesTo<ProjectilePool>().AsSingle();
-        Container.BindInterfacesAndSelfTo<ProjectileDirector>().AsSingle();
+        Container.Bind<ProjectileCounts>().FromInstance(projectileCounts).AsSingle();
+        Container.Bind<IProjectileBuilder>().To<ProjectileBuilder>().AsSingle();
+        Container.Bind<IProjectileDirector>().To<ProjectileDirector>().AsSingle();
+        Container.BindInterfacesTo<ProjectilePool>().AsSingle().WithArguments(projectileParent);
         Container.BindInterfacesTo<WeaponSlot>().AsSingle();
         Container.BindInterfacesTo<MountSlot>().AsSingle();
         Container.BindInterfacesTo<DropFactory>().AsSingle().WithArguments(dropPrefabs);
