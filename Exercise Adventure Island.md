@@ -243,6 +243,8 @@ objects and enemies.
     (00:44:04).
 23. One is enough (00:43:21): "תעשה אחד, לא צריך כמה".
 24. Its sprite is not in the sheets he provided; he could not extract one (00:21:34).
+25. Level 2 has a second one, Peleg's call. 8.23 is how many are enough, not a limit, and the one in each
+    level is killed only by that level's פייה.
 
 ## 9. פייה
 
@@ -265,10 +267,11 @@ objects and enemies.
    rule, since treading on one is a way of touching it. Decided that way because he will walk into an
    egg on camera, and one that ignores a walk-in reads as broken.
 3. An egg yields an animal token, a weapon or a פייה. Which one is set per egg, never rolled.
-4. The first few enemies and eggs in level 1 should between them yield every drop type, so that all
-   of them can be seen in the opening half-minute instead of after an hour of play (00:47:03): "אז
-   תשימו את כל הדברים על החיה הראשונה, תלחמו איתה ותראו שהיא מפילה לכם הכל". This is the payoff of
-   8.3 and it is how he intends to check the drop code.
+4. Every drop type appears somewhere across the two levels, rather than all of them inside level 1's
+   opening. Read in context, 00:47:03 is advice to the developer on testing a drop system that is
+   configured rather than rolled, not a rule about how a level is laid out: "אז
+   תשימו את כל הדברים על החיה הראשונה, תלחמו איתה ותראו שהיא מפילה לכם הכל". What it asks for is every type
+   seen without an hour of play, and 14.7's features recording answers that as well as a level can.
 5. A drop falls out of whatever held it and settles on the ground below. Both sources use that verb,
    four times between them: "מתוך הביצה נופל את הלב, או נופל העלה, או נופל הכוכב" (00:36:53),
    "נופל, יוצא מהביצה. לפעמים זה גם נופל מאויבים" (00:37:18), and "להפיל חיה לאיסוף" in
@@ -285,7 +288,9 @@ objects and enemies.
 
 1. Level 1 runs left to right, start to exit, like a classic Mario level.
 2. Level 2 climbs bottom to top by jumping between platforms, then goes right at the top into the
-   exit (00:51:13).
+   exit (00:51:13). The written text's "מבוך" means that climb rather than a maze: the transcript
+   describes platforms and a top exit twice (00:47:46, 00:51:13), and the level he pointed at has one
+   route up with no branch and no dead end in it.
 3. Falling in level 2 returns the player to the start of the level (00:49:33).
 4. The player can climb back down to parts of level 2 he has already passed. The camera does not
    leave the playable area (00:50:30). Falling only kills into a תהום or onto spikes.
@@ -331,6 +336,14 @@ objects and enemies.
 5. If the files are too large for Moodle, a download link or a YouTube link, and it has to stay live
    (00:55:25): "תדאגו שהלינק יהיה חי... לינק אבל שהוא לא ימות".
 6. Oral defense on 28, 29 or 30 September, between 18:00 and 21:00, booked by email.
+7. Three files, which are 14.2's two recordings with the gameplay one split under 14.4.
+   `1-Gameplay-Playthrough` is one run of both levels showing every enemy, up to 5 minutes.
+   `2-Gameplay-Features` is what a single run cannot hold, 5 to 10 minutes: every drop type, the
+   20-fruit פסילה, an אבן surviving an axe and breaking to a boomerang (00:18:44), and the Inspector
+   on a bird's dip and an enemy's drop, which is what proves 8.3, 8.7 and 8.9 are authored per
+   instance. `3-Code` walks the code, up to 15 minutes.
+8. `2-Gameplay-Features` ships with a text file listing what it shows and at what time, so a feature
+   he wants to check can be found without watching the whole recording.
 
 ## 15. Deliberately not doing
 
@@ -340,7 +353,6 @@ check in 13.2 can find its worst spot in.
 
 - A third level, a third weapon, a seventh enemy, a fourth animal.
 - The other two animals from the sheets, and the skateboard.
-- More than one רוח רפאים.
 - A rolling rock and a falling coconut.
 - A start menu and a pause button.
 - Crouching.

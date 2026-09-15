@@ -876,7 +876,7 @@ arrived at 9, the פייה was lost at the door, and level 2 was climbed to its 
 popup and a clean restart. The fruit count crossing is the one thing still unseen, because level 1 has
 no fruit yet. **Carried into stage 19**: level 2 must be at least 18 cells wide for 11.4 to hold.
 
-### Stage 19 — Author both levels to spec `[ ]`
+### Stage 19 — Author both levels to spec `[x]`
 
 1. Level 1 painted in `Tools > Tile Placer`, against mechanics that are finished by now.
 1. Level 2 the same, climbing bottom to top.
@@ -885,8 +885,64 @@ no fruit yet. **Carried into stage 19**: level 2 must be at least 18 cells wide 
 1. The פייה-then-תהום spot he said he will look for.
 
 **What it needs: no code at all.** This is authoring, and it is where the requirements that only
-level design can satisfy get satisfied: the כוח arithmetic, every drop type reachable early, and the
+level design can satisfy get satisfied: the כוח arithmetic, every drop type placed somewhere, and the
 place he said he will go looking for.
+
+**Settled in the design discussion, 13.9.2026**, against the instructor's own reference footage, now in
+`Adventure Island References/` at the parent level. Level 1 is 200 by 18 and level 2 is 30 by 52, side walls two tiles
+thick and level 1's floor four, level 1 in `Sprite_Tile_Earth_1` and level 2 in `Sprite_Tile_Earth_2`, both
+under the one sky. Level 1 runs flat with its shape carried by steps, a plateau, three pits and one
+staircase to a high ledge; level 2 is a walled shaft of staggered one-row platforms with the door set in
+the right-hand wall at the top. A weapon comes first, the first mount about a quarter of the way and the
+second about three quarters. Level 1 holds the axe, לב, the פייה and עלה; level 2 holds the boomerang
+and כוכב, so all six drop types, both weapons and all three animals are placed without front-loading any
+of it. No maze, no spikes in level 2, 18 fruit in level 1 against 12 in level 2.
+
+**Level 1 built, then reworked by Peleg in the editor, 14.9.2026.** The drafted map went in as a verified
+file and he reshaped most of it by hand: a trough holding the jumping נחש, a raised block under the axe
+ביצה, a two-step plateau, a stepped mound under the רוח רפאים, a smaller mound, a block under the second
+moving spider, pits three rows deep, arcs of fruit in the air, and a two-row ceiling. The staircase and its
+high ledge went, and the second mount became כוכב, dropped by a ציפור at x141, so level 2 now owes the
+boomerang and עלה. Seventeen fruit, so a player who takes all of them meets the 20th in level 2. Three
+things were raised and kept as his call: two rocks against the plateau wall at x74-75, which pin a player
+who does not jump out; the trough exit, two jumps over three fires with a two-cell landing between; and a
+static spider at head height over the step at x130. A triple fire at x181-183, which left a take-off window
+of about 0.4 units, was cut to two.
+
+**Level 2 built from the drafted map, then rebuilt by Peleg, 15.9.2026.** The simulated zigzag was
+replaced with his own layout, 30 by 57 with four-row floor and ceiling: platforms across the whole width,
+a route that changes direction, and ledges three rows up that a full jump catches on the capsule's rounded
+bottom. Eggs hold the boomerang on the floor, עלה at row 22 and the פייה at row 32. It holds two shooting
+נחשים, two moving spiders, a static spider, the jumping נחש without a pen, a ציפור, a צפרדע on the floor
+and a second רוח רפאים. The checker, with the capsule modelled, finds the door reachable on foot and
+mounted and no dead ends. Kept as his call: the rock two cells from the fires at the first climb, which the
+boomerang can clear. Four fixes came out of the review: the egg that had defaulted to לב now holds the
+פייה, so עלה appears in the game; a fire on the only route under a two-unit ceiling became a rock; the
+height was set to cover the tiles; and three rocks one shove apart were thinned. The ביצה with כוכב
+beside level 1's start is a testing aid and comes out when level 2 is signed off.
+
+**Closed 15.9.2026.** Both levels are saved with the scene and their level files agreeing on every cell,
+and the checker finds each door reachable with no dead ends, level 2 on a mount as well. What only level
+design could satisfy is placed:
+
+- every drop type across the two levels: the axe, לב, the פייה and כוכב in level 1, and the boomerang,
+  עלה and the פייה in level 2;
+- the axe as level 1's weapon and the boomerang as level 2's (11.6);
+- a first mount about a quarter of the way through level 1 and a second about three quarters;
+- the 9.4 spot: level 1's פייה ביצה at x118 with the pit four cells after it;
+- level 2's exit at the top right (11.2), and a height that keeps the whole level in frame (11.4);
+- 32 fruit (17 and 15), so a player who takes everything meets the 20th at level 2's start.
+
+The testing ביצה beside level 1's start is gone. **Not yet seen in play:** no session has reached the
+congratulation popup on the final level 2, so stage 20's playthrough is its first complete run.
+
+**Carried into stage 20:**
+
+- three rocks in level 2 within a shove of a fire, kept by Peleg's call and recorded below;
+- the jumping נחש meets a פייה only if the player drops back down to it from level 2's egg;
+- every level change logs two spurious "No floor under" warnings for level 1's moving spiders;
+- a script folder named `Effects.cs` where `CONVENTIONS.md` says `Effects/`;
+- the `PlayerGuard` grace-window comment, reworded but sitting at column 0 above an indented field.
 
 ### Stage 20 — Final testing, comments and log check `[ ]`
 
@@ -2592,3 +2648,74 @@ _(append entries here as we make design decisions.)_
   should not put a hazard at the bottom of a drop the player cannot see into. And the scratch
   level's door sits at the top left, where 11.2 has the climb end by going right along the top into
   the exit.
+
+- **The instructor's reference footage is in the repo now, and it settled both levels' shape.**
+  `Adventure Island References/` holds 17 frames of the level 1 he pointed at and 18 of level 2. Level 1
+  is flat ground two rows thick for its whole length, dense with small things - fires, spiders at head
+  height, a coiled נחש, rocks, an egg, fruit every few steps - with trees and grass as background that
+  nothing collides with, and one staircase of pillars at the very end. Level 2 is a walled shaft of
+  one-row platforms five to nine tiles wide, staggered left and right two or three rows apart, fruit
+  floating between them, a closed ceiling, and the exit as a cave mouth set into the right-hand wall at
+  the top. What the footage has that we cannot copy is decoration: this project has no tree, grass or
+  backdrop sprites and is not cutting any, so the shape of the terrain is what has to carry level 1.
+- **There is no maze, and 11.2 now says so.** The written text's "מבוך" is the only place in either
+  source that asks for one, and nothing else supports it: the transcript describes jumping up platforms
+  to the top twice (00:47:46, 00:51:13), and the level he pointed at has a single route up with no
+  branch and no dead end. Peleg's call. The earlier proposal to add a maze requirement is dropped rather
+  than recorded, and 11.2 carries the reading so the word cannot resurface at the defense.
+- **10.4 loses its front-loading.** It used to say the first few enemies and eggs in level 1 must between
+  them yield every drop type. Read in context 00:47:03 is advice to the developer - "כי אתם תרצו לבדוק
+  כל דבר, אז תשימו את כל הדברים על החיה הראשונה" - about testing a drop system that is configured rather
+  than rolled, not an instruction about level layout. Peleg's call. What survives is that every type is
+  placed somewhere across the two levels, which the levels need anyway; the features recording is what
+  shows them together.
+- **Three video files, which are 14.2's two recordings rather than a third thing he did not ask for.**
+  A playthrough of both levels showing every enemy, a features recording for everything one run cannot
+  hold, and the code walkthrough. 14.4 already allows several short recordings in place of one long take,
+  so the split is his own allowance and the file names make the mapping obvious. The features recording
+  is where 5.3 gets shown - an אבן surviving an axe and breaking to a boomerang, which he asked to watch
+  at 00:18:44 - and where the Inspector proves the per-instance fields of 8.3, 8.7 and 8.9. It ships with
+  a text file listing what is shown and when.
+- **Level 1 is 200 by 18, level 2 is 30 by 52, side walls two tiles thick and level 1's floor four.**
+  Peleg's bounds, and the floor is four rows because two of them read as thin. That puts his feet at 3.5,
+  and the height went from 16 to 18 with it: at 16 the camera's bottom clamp binds and he sits 40% up the
+  screen rather than the quarter the framing is built around, while at 18 the clamp stops binding and the
+  view runs 1.0 to 11.0 with him at 3.5. A pit then cuts the top two rows of the floor and keeps two rows
+  of earth under its spikes, so it reads as a hole in a thick floor rather than a hole through the world. Level 2's interior is 26 by 48, and
+  48 rows at two rows a step is 24 jumps, which is the climb the reference shows. Level 1 is
+  `Sprite_Tile_Earth_1` (orange) and level 2 `Sprite_Tile_Earth_2` (pink); the third tile stays unused.
+  One sky serves both, since a cave backdrop would mean cutting a sprite and giving each level root its
+  own background canvas, and the sky costs nothing.
+- **No spikes in level 2, and every fall there is safe.** He offered them at 00:50:15 as "עוד תהום", the
+  reference has none, and the quarter-up framing leaves only 2.5 units of view below the player, so a
+  fall onto them is unseen. The three pits stay in level 1 where they are always on screen, and level 2's
+  falls cost time exactly as 11.3 describes. A second פייה ביצה goes into level 2 so the ציפור, the
+  צפרדע, both spiders and the jumping נחש can meet one in play, which stage 17 never tested.
+- **Level 2's layout is checked by simulation, not by eye.** A first sketch looked sound and hid a pocket at
+  the bottom that a fall could drop the player into with no way back out. That is easy to miss in a shaft,
+  where a platform two rows overhead is a ceiling and one four rows overhead cuts a jump short. A throwaway
+  C# model of the jump - 13 up, gravity 29.43, run 6, braking 40, early release halving the rise, a body
+  0.9 wide on foot and 1.7 mounted - tries every take-off on every platform with a spread of jump timings,
+  and reports whether the door can be reached and whether any reachable platform is a dead end. It runs
+  outside the project and is not part of the submission.
+- **A ledge three rows up is reachable, and the jump arithmetic said it was not.** The player's collider is
+  a capsule, and when a ledge's edge meets the lower curve of it near the top of a jump, the physics lifts
+  him onto the ledge: a full jump reaches 2.87 plus most of the 0.45 radius. Found when the rebuilt level 2
+  climbed three-row ledges throughout and the checker, which then used a box, called it unclimbable. The
+  checker now lifts over edges within the radius and tests hazard contact against the capsule's shape.
+  Mounted, the radius is 0.85, so a mount catches higher ledges still, but its width is also what made a
+  fire under a two-unit ceiling impossible to clear on a mount.
+- **Level 2 has a second רוח רפאים.** Peleg's call. 8.23 records how many the instructor said were enough,
+  not a limit; section 15's line against more than one is removed and 8.25 records the second.
+- **Level 2 keeps three rocks within a shove of a fire.** A shove is 3 units and braking after it adds
+  about 1.25, so a rock fewer than 5 cells before a fire, in the direction the player walks, puts him in
+  the fire. Level 2 has three: at the start (rock at 22, fires from 24), on the row-41 platform walked
+  leftward (rock at 19, fire at 15), and on the door approach (rock at 20, fire at 24). In the session of
+  15.9, 6 of 11 פסילות came on the log line after a rock touch, including the best run, which ended at the
+  door. Peleg's call to keep them: each is crossable by jumping, and the boomerang, which level 2 hands out
+  on its floor, breaks them.
+- **Level changes log two spurious warnings.** Entering a level runs a full reset over everything
+  registered, including the moving spiders of the level just switched off. Both levels share world
+  coordinates, so each of those spiders measures its drop against whichever level is active and finds no
+  floor. Nothing plays wrong, since entering a level measures again, but it prints two warnings with stack
+  traces on every transition. Left for stage 20's log pass.
