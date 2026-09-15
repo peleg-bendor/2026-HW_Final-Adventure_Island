@@ -266,13 +266,14 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
         }
 
         CancelRespawn();
-        respawn = new CancellationTokenSource();
+        CancellationTokenSource countdown = new CancellationTokenSource();
+        respawn = countdown;
 
         float seconds = UnityEngine.Random.Range(delay.minSeconds, delay.maxSeconds);
 
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(seconds), respawn.Token);
+            await Task.Delay(TimeSpan.FromSeconds(seconds), countdown.Token);
         }
         catch (OperationCanceledException)
         {
@@ -285,6 +286,14 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
             GameLog.Error(LogCategory.Enemy, name + " respawn failed - " + error.Message);
             return;
         }
+
+        // The delay can end a frame before this line runs. A reset or a new death in that gap has
+        // replaced the countdown, and the enemy is already where that left it.
+        if (respawn != countdown)
+            return;
+
+        respawn = null;
+        countdown.Dispose();
 
         destroyed = false;
         Spawn();

@@ -396,7 +396,12 @@ resets and again when the object is destroyed."*
 And for the popup: *"await returns which button was pressed; a coroutine returns nothing."* The
 answer in the other direction, which is the one he said he asks: *"the פייה's ten seconds is a
 coroutine, because it runs on an object that stays alive throughout, needs no cancellation and
-returns nothing. A Task there would be worse."*
+returns nothing. A Task there would be worse."* **Corrected at stage 20.** The popup's reason was
+retired at stage 10, since both popups have one button: the waiting code, `GameFlow`, is a plain C#
+class with no MonoBehaviour to run a coroutine on. And the question to expect is sharper than this
+paragraph prepared for. The lecture slides' own "When to use Coroutines" page lists animations, UI
+updates and timed events, which is a respawn countdown and a popup both; the answer for each is
+structural, and the Decisions Log entry on lifetime and clock gives it.
 
 **Two patterns deliberately rejected**, recorded because a rejection with a reason defends better
 than an application without one: Template for the full-versus-partial level reset, which is one
@@ -2940,3 +2945,16 @@ _(append entries here as we make design decisions.)_
   against the course's own definition, which is the question the defense will put. The answer leans on
   the slide's "any necessary changes", and on the כוח triad being the full one. No code changed in this
   step.
+- **13.3 has one answer in both directions: lifetime and clock.** A coroutine lives on an active
+  GameObject and waits on Unity's scaled clock; a Task belongs to no object and `Task.Delay` counts real
+  time. The respawn cannot have the first, because the enemy is switched off before its countdown
+  begins and Unity stops coroutines on a deactivated GameObject. The popup wait cannot have it either,
+  because the code that waits is `GameFlow`, which is not a MonoBehaviour. The פייה, the ביצה's crack and
+  the puff want both - objects that stay alive for the whole wait, and a wait that should freeze while a
+  popup is up, which `WaitForSeconds` does. The slides (`Course/Lesson 05 - Async/Async & Tasks.pdf`)
+  put timed events and UI under coroutines, so the Tasks sit on the side of that list the slides do not
+  recommend, and saying why is stronger than pretending otherwise. What the Tasks also use is what the
+  same slides credit Tasks with and deny coroutines: a cancellation token, where page 3 says of
+  coroutines "No Cancelation option within the function", and `try`/`catch` around the wait. The
+  pairing is lesson 5's own - `EnemySpawner` on `Task.Delay` with a token beside `PlayerInvincible` on a
+  coroutine - and `Enemy.WaitAndReturn` and `PlayerFairy.Hold` are those two, in this game.
