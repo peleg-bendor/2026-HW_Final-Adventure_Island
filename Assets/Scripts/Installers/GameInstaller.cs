@@ -38,6 +38,9 @@ public class GameInstaller : MonoInstaller
     public override void InstallBindings()
     {
         Container.BindInterfacesAndSelfTo<SessionState>().AsSingle().WithArguments(startingStrikes);
+        // Every level root in the scene, the switched-off one included, for Levels to receive as an
+        // array. Nothing asks for a single LevelDefinition.
+        Container.Bind<LevelDefinition>().FromComponentsInHierarchy().AsSingle();
         Container.Bind<ILevels>().To<Levels>().AsSingle();
         Container.Bind(typeof(IResetRegistry), typeof(IResetRunner)).To<ResetRegistry>().AsSingle();
         Container.Bind<IPopups>().To<Popups>().FromComponentInHierarchy().AsSingle();
@@ -49,7 +52,7 @@ public class GameInstaller : MonoInstaller
 
         Container.Bind<IPowerModel>().To<PowerModel>().AsSingle().WithArguments(powerCapacity);
         Container.Bind<IPowerView>().To<PowerView>().FromComponentInHierarchy().AsSingle();
-        Container.BindInterfacesAndSelfTo<PowerController>().AsSingle().WithArguments(drainSeconds);
+        Container.BindInterfacesTo<PowerController>().AsSingle().WithArguments(drainSeconds);
 
         Container.Bind<IStrikesView>().To<StrikesView>().FromComponentInHierarchy().AsSingle();
         Container.BindInterfacesTo<StrikesController>().AsSingle();
@@ -61,9 +64,9 @@ public class GameInstaller : MonoInstaller
 
         Container.Bind<ProjectilePrefabs>().FromInstance(projectilePrefabs).AsSingle();
         Container.Bind<IProjectileBuilder>().To<ProjectileBuilder>().AsSingle().WithArguments(projectileParent);
-        Container.BindInterfacesAndSelfTo<ProjectilePool>().AsSingle();
+        Container.BindInterfacesTo<ProjectilePool>().AsSingle();
         Container.BindInterfacesAndSelfTo<ProjectileDirector>().AsSingle();
-        Container.BindInterfacesAndSelfTo<WeaponSlot>().AsSingle();
+        Container.BindInterfacesTo<WeaponSlot>().AsSingle();
         Container.BindInterfacesTo<MountSlot>().AsSingle();
         Container.BindInterfacesTo<DropFactory>().AsSingle().WithArguments(dropPrefabs);
         Container.BindInterfacesTo<DeathEffects>().AsSingle().WithArguments(puffPrefab, fallPrefab);

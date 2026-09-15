@@ -5,7 +5,9 @@ using Zenject;
 // whatever prefab it is given. What those numbers should be is the director's business.
 public class ProjectileBuilder : IProjectileBuilder
 {
-    private readonly DiContainer container;
+    // The container's instantiating half rather than the whole DiContainer, which could resolve
+    // anything at all.
+    private readonly IInstantiator instantiator;
     private readonly Transform parent;
 
     private float speed;
@@ -14,9 +16,9 @@ public class ProjectileBuilder : IProjectileBuilder
     private float range;
     private float maxSeconds;
 
-    public ProjectileBuilder(DiContainer container, Transform parent)
+    public ProjectileBuilder(IInstantiator instantiator, Transform parent)
     {
-        this.container = container;
+        this.instantiator = instantiator;
         this.parent = parent;
     }
 
@@ -55,7 +57,7 @@ public class ProjectileBuilder : IProjectileBuilder
             return null;
         }
 
-        GameObject instance = container.InstantiatePrefab(prefab);
+        GameObject instance = instantiator.InstantiatePrefab(prefab);
         BaseProjectile projectile = instance.GetComponent<BaseProjectile>();
 
         if (projectile == null)

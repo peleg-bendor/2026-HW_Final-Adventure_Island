@@ -2710,8 +2710,8 @@ _(append entries here as we make design decisions.)_
   level's door sits at the top left, where 11.2 has the climb end by going right along the top into
   the exit.
 
-- **The instructor's reference footage is in the repo now, and it settled both levels' shape.**
-  `Adventure Island References/` holds 17 frames of the level 1 he pointed at and 18 of level 2. Level 1
+- **The instructor's reference footage is saved beside the project now, and it settled both levels' shape.**
+  `Adventure Island References/`, in the parent folder and outside this repo, holds 17 frames of the level 1 he pointed at and 18 of level 2. Level 1
   is flat ground two rows thick for its whole length, dense with small things - fires, spiders at head
   height, a coiled נחש, rocks, an egg, fruit every few steps - with trees and grass as background that
   nothing collides with, and one staircase of pillars at the very end. Level 2 is a walled shaft of

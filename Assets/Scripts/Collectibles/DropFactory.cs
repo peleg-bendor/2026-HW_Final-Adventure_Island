@@ -6,15 +6,17 @@ using Zenject;
 // it is, so a new drop type is another prefab on the installer rather than an edit here.
 public class DropFactory : IDropFactory, IInitializable
 {
-    private readonly DiContainer container;
+    // The container's instantiating half rather than the whole DiContainer, which could resolve
+    // anything at all.
+    private readonly IInstantiator instantiator;
     private readonly ILevels levels;
     private readonly GameObject[] prefabs;
 
     private readonly Dictionary<DropType, GameObject> byType = new Dictionary<DropType, GameObject>();
 
-    public DropFactory(DiContainer container, ILevels levels, GameObject[] prefabs)
+    public DropFactory(IInstantiator instantiator, ILevels levels, GameObject[] prefabs)
     {
-        this.container = container;
+        this.instantiator = instantiator;
         this.levels = levels;
         this.prefabs = prefabs;
     }
@@ -77,7 +79,7 @@ public class DropFactory : IDropFactory, IInitializable
 
         // Instantiated through the container rather than with Object.Instantiate, so the pickup is
         // injected like anything else - a token needs the mount slot and a weapon needs the weapon slot.
-        GameObject instance = container.InstantiatePrefab(prefab);
+        GameObject instance = instantiator.InstantiatePrefab(prefab);
         Collectible dropped = instance.GetComponent<Collectible>();
 
         if (dropped == null)

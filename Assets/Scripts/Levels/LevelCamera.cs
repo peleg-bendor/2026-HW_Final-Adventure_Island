@@ -5,8 +5,6 @@ using Zenject;
 // is a testing aid rather than anything the game uses.
 public class LevelCamera : MonoBehaviour, IResettable
 {
-    [SerializeField] private Transform target;
-
     // Half the view's height in world units. Owned here rather than left on the Camera, because
     // framing the whole level overwrites it and has to give it back.
     [SerializeField] private float followSize = 5f;
@@ -19,9 +17,9 @@ public class LevelCamera : MonoBehaviour, IResettable
 
     [SerializeField] private bool frameWholeLevel;
 
-    private IGameFlow flow;
     private ILevels levels;
     private IResetRegistry registry;
+    private Player player;
 
     private Camera view;
     private Vector3 followVelocity;
@@ -34,10 +32,11 @@ public class LevelCamera : MonoBehaviour, IResettable
     private float cameraZ;
 
     [Inject]
-    public void Construct(ILevels levels, IResetRegistry registry)
+    public void Construct(ILevels levels, IResetRegistry registry, Player player)
     {
         this.levels = levels;
         this.registry = registry;
+        this.player = player;
     }
 
     private void Awake()
@@ -48,8 +47,8 @@ public class LevelCamera : MonoBehaviour, IResettable
         if (view == null)
             GameLog.Warning(LogCategory.Game, "No Camera found, the view will not move");
 
-        if (target == null)
-            GameLog.Warning(LogCategory.Game, "No target assigned, the camera will not follow");
+        if (player == null)
+            GameLog.Warning(LogCategory.Game, "No Player injected, the camera will not follow");
     }
 
     private void OnEnable()
@@ -97,7 +96,7 @@ public class LevelCamera : MonoBehaviour, IResettable
 
         view.orthographicSize = followSize;
 
-        if (target == null)
+        if (player == null)
             return;
 
         Vector3 wanted = FollowPosition(level);
@@ -110,12 +109,13 @@ public class LevelCamera : MonoBehaviour, IResettable
     {
         Rect area = level.PlayableArea;
         float halfHeight = view.orthographicSize;
+        Vector3 target = player.transform.position;
 
         // Biased before clamping, so pushing the view up can still never take it past the level.
-        float wantedY = target.position.y + halfHeight * (1f - 2f * targetViewportY);
+        float wantedY = target.y + halfHeight * (1f - 2f * targetViewportY);
 
         return new Vector3(
-            ClampAxis(target.position.x, area.xMin, area.xMax, halfHeight * view.aspect),
+            ClampAxis(target.x, area.xMin, area.xMax, halfHeight * view.aspect),
             ClampAxis(wantedY, area.yMin, area.yMax, halfHeight),
             cameraZ);
     }
