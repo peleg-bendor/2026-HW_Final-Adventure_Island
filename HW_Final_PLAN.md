@@ -1247,7 +1247,8 @@ the Decisions Log entries of this date.
 Steps, one at a time, each opening with its own discussion:
 
 1. Design discussion. `[x]`
-1. `Recordings/Coverage.md`. `[ ]`
+1. `Recordings/Coverage.md`. `[~]`, written 16.9.2026: 126 rows, checked by script against the requirements
+   file's numbering, awaiting Peleg's review.
 1. `Recordings/2-Gameplay-Features.md`: the cuts, what each one stages in the level, and how the staging
    comes back out. `[ ]`
 1. The features cuts, each followed by a log copy and a reading, then 14.8's text file. `[ ]`
@@ -1267,8 +1268,8 @@ Steps, one at a time, each opening with its own discussion:
   fruit makes the 20th cost a פסילה at level 2's start.
 - **Not seen in a log since Stage 20's code changes**: כוכב and the green mount it gives, whose spin no
   Stage 20 session records; an אבן surviving an axe; and the congratulation popup on the final level 2.
-  Peleg has seen the second and third work in play. A break found during a take is a re-take, and a fix
-  may reopen a section of `Techniques.md`.
+  Peleg has seen all three work in play. A break found during a take is a re-take, and a fix may reopen a
+  section of `Techniques.md`.
 - **A killed enemy's respawn runs on real time**, so one can come back under a popup. Accepted, and
   answered in `Techniques.md`'s Async section.
 - **`Techniques.md`'s `file:line` references are current** as of Stage 20's close, and are checked again if
@@ -3471,7 +3472,9 @@ _(append entries here as we make design decisions.)_
   file line. It would have made 9.1's ten seconds, 4.2's drain and 8.18's uneven leaps readable from a log,
   and found a line in the video without scrubbing; for 14.8's text file it would only have drafted the
   times, since every edit shifts what follows it. Peleg's call to leave `LogFileWriter` as it is, so those
-  three are shown on screen and in the code.
+  three are shown on screen and in the code. Raising `Player` to `Verbose` for the gameplay takes, proposed
+  for 4.2 and 4.6, went with it: a log with no times cannot show a three-second interval, and what remained
+  was level 2's `Power 9 of 16`, which the bar shows, and a line per jump. `LogSettings` stays as saved.
 - **The coverage list is a file of its own.** `Recordings/Coverage.md`, like Exercise 1's notes for the
   video, but per numbered requirement: where it is shown, the evidence as the exact log text or "screen",
   and after the take where it was seen. It assigns rows to all three recordings, and both scripts are
@@ -3487,3 +3490,15 @@ _(append entries here as we make design decisions.)_
   Appended at the end of section 8 under its own heading, per the file's rule that a number once given
   stays put, it restores both. Nothing cited it in fourth place. Found while counting the requirements for
   the coverage list.
+- **The coverage list counts a requirement under the playthrough only if it reads as working with nothing
+  said.** Agreed at step 2's discussion, 16.9.2026. The playthrough is silent, so a requirement that needs a
+  word or a setup goes to a features cut even where the playthrough will show it too: the twentieth fruit
+  is on both, since the silent version is the one that reads as a fault. Evidence is a log line copied from
+  the code, and only one the saved `LogSettings` prints; six lines that fire on contact or on a timer sit at
+  `Verbose` in categories saved at `Info`, so those rows say "screen". Where a requirement is something not
+  happening, such as an axe leaving a rock standing, the row names the line that must not appear.
+- **2.5 has log evidence, found while writing the coverage list.** A scene reload would build the container
+  again, so `Zenject container built`, `Drops registered: 6` and the four `Pooled` lines appearing once, above
+  the first `Game started`, and never after a restart, is the log's proof that a game over reloads nothing.
+  The code half is that `Assets/Scripts` holds no `LoadScene`: the one editor tool naming `SceneManager` only
+  reads the active scene's roots.
