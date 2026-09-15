@@ -944,10 +944,19 @@ congratulation popup on the final level 2, so stage 20's playthrough is its firs
 - a script folder named `Effects.cs` where `CONVENTIONS.md` says `Effects/`;
 - the `PlayerGuard` grace-window comment, reworded but sitting at column 0 above an indented field.
 
-### Stage 20 — Final testing, comments and log check `[ ]`
+### Stage 20 — Final testing, comments and log check `[~]`
 
 A full playthrough of both levels covering every requirement in one session, plus a pass over
 comments and log lines against `CONVENTIONS.md`. Same shape as Exercise 3's Stage 7, but larger.
+
+**Added 15.9.2026, and the most important part of the stage: the techniques review.** SOLID and the
+seven techniques the instructor named, one at a time: what the course means by each, where it lives in
+this project, whether the code matches that meaning, and how it is explained out loud. That includes the
+patterns deliberately rejected, and the answer to "why a Task and not a coroutine" in both directions
+(13.3). Stage 1 Step 5 wrote the first version of every answer before any code existed, and later stages
+corrected parts of it: stage 10 replaced the popup's Async reason, stage 12 added `Hazard` as a fourth
+Template hierarchy, and stage 16 dropped Reflection and found no switch in the drop factory. The review is
+made against the code as it stands, not against Step 5.
 
 Worth remembering here: the instructor runs an automated SOLID check over the submitted code and
 grades against the worst thing it finds, not the average.
@@ -956,6 +965,58 @@ Also decided here: whether `DebugFlowKeys` ships. Keys `1` and `2` force a strik
 completion, which is development speed rather than anything the game needs, and they let anyone
 holding the build skip the game. Nothing forbids them; the question is only whether they belong in a
 submission.
+
+**Settled in the design discussion, 15.9.2026.** Thirteen steps, one at a time, each opening with its
+own discussion:
+
+1. Design discussion. `[x]`
+1. DI. `[ ]`
+1. Builder and Pooling, as one step, since `ProjectileDirector` is part of both. `[ ]`
+1. Factory. `[ ]`
+1. Template, all four bases. `[ ]`
+1. MVC, all three triads. `[ ]`
+1. Async & Tasks, with the three coroutines beside the two Tasks. `[ ]`
+1. SOLID: rank the worst-spot candidates and sweep whatever no technique covered, editor tooling
+   included. Then Reflection and the rejected patterns. `[ ]`
+1. Comment pass. `[ ]`
+1. Log pass. `[ ]`
+1. Loose ends: whether `DebugFlowKeys` ships, and whether the twelve template references are chased. `[ ]`
+1. Risk session: level 2's final save climbed to the congratulation popup, and a פייה against the
+   ציפור, the צפרדע, both spiders and the jumping נחש. `[ ]`
+1. Full playthrough: every numbered requirement in one session, checked against a list that marks
+   each one as shown by the log or on screen only, with `Enemy` and `Projectile` at `Verbose`. `[ ]`
+
+**The review is written in `Techniques.md`**, at the project root beside `Exercise Adventure Island.md`,
+and not in this section. Each technique's step fills its own section there in five parts: what the
+course means, read from `Course/` itself and split into the lecture notes and what the lesson project
+built; where it lives, with the one `file:line` to open; what the code shows, ending in a verdict; what
+could be challenged; and the defense sentence, in English. A code change a step agrees on is made inside
+that step, so each section describes code that will not move again.
+
+**SOLID is step 8 and also every step's fourth part.** Each technique adds what it finds in its own
+files to a list of worst-spot candidates at the bottom of `Techniques.md`, and step 8 ranks the list.
+
+**Carried into the review from reading all 109 scripts**, none of it recorded in this plan before:
+
+- `DropFactory` is a simple factory, one class choosing its product from a dictionary, where the
+  course's notes and lesson 10's code are both Factory Method, an abstract creator with a subclass per
+  product. Exercise 3's `LaserFactory` had the same shape. Step 4.
+- `ProjectileDirector` holds the recipes, fills and grows the pool, and is the `Throw` every shot goes
+  through, and `PlayerAttack`, `SnakeShooter` and `PlayerMountAttack` inject it with no interface. In
+  lesson 9 the director held only the recipe. Steps 2 and 3, and the first worst-spot candidate.
+- `BaseProjectile.Awake` is `protected virtual` and `ProjectileMountFire` calls `base.Awake()`, the shape
+  the `OnAwake` entry in the Decisions Log rejected for `Enemy`; the other three bases keep `Awake`
+  private. And the course's example has one template method where `Enemy` spreads its fixed sequence over
+  `Update`, `TryDestroy`, `Spawn` and `Awake`. Step 5.
+- `StrikesController` and `FruitController` never update their model, which the course's definition
+  gives a controller as its job; `GameFlow` writes `SessionState`. Step 6.
+- `Enemy` at 323 lines and seven injected dependencies, `LevelWindow` at 314, `TilePlacerWindow` at 306,
+  and `IGameFlow`'s ten members, as further SOLID candidates. Step 8.
+- `FairyCollectible.cs` sits in `Player/` where the rest of the `Collectible` family is in
+  `Collectibles/`. Step 9.
+- `GameInstaller`'s "Zenject container built" never reaches `GameLog.txt`: `SceneContext` runs
+  `InstallBindings` at execution order -9999, before `LogFileWriter` subscribes in `OnEnable` at -100.
+  Step 10.
 
 ### Stage 21 — Two video scripts `[ ]`
 
@@ -2719,3 +2780,34 @@ _(append entries here as we make design decisions.)_
   coordinates, so each of those spiders measures its drop against whichever level is active and finds no
   floor. Nothing plays wrong, since entering a level measures again, but it prints two warnings with stack
   traces on every transition. Left for stage 20's log pass.
+
+- **Stage 20's playthrough moves to the end, and the risk session sits just before it.** The stage was
+  written playthrough first. Last, it is the regression test for whatever the review and the two passes
+  change, and the `GameLog.txt` it leaves is the one the gameplay recording works from; first, it would
+  have to be run twice. The risk session, level 2's final save climbed to its popup and the five enemies
+  that have never met a פייה, was proposed as step 2, since it holds the only things left that could
+  still force a code fix. Peleg's call to run it just before the playthrough instead. The cost is worth
+  knowing going in: a fix found there reopens whichever section of `Techniques.md` it touches.
+- **The techniques review lives in its own file.** `Techniques.md` at the project root, not a block
+  inside stage 20. This plan is past 230KB, and the review is what gets read in the days before the
+  defense and walked through in the code recording, so it has to be findable without scrolling past
+  nineteen stages. It sits beside `Exercise Adventure Island.md` and is versioned with the project.
+- **DI first, Builder and Pooling as one step, SOLID last.** DI is how every other technique is wired,
+  so what it finds, what is injected concretely and where the container itself is injected, comes up
+  again in the rest. Builder and Pooling share `ProjectileDirector`, the likeliest code change in the
+  review. SOLID is last because the worst spot is a ranking and cannot be ranked before everything has
+  been looked at; Peleg's condition is that it stays in view throughout, which is why every step adds
+  what it finds in its own files to a running list.
+- **"What the course means" is read from `Course/` and split into the notes and the lesson project**,
+  because the two differ where the defense turns. Template never reached lesson 10's code, so the notes'
+  `EnemyAI.ExecuteBehavior` is the only reference; lesson 9's builder setters take no values; lesson 7's
+  controller is a MonoBehaviour that builds its own model. The instructor built the lesson versions on
+  camera, so an answer that names his version and says what differs is stronger than one that recites a
+  textbook definition. Stage 1 Step 5 is not a source for this part.
+- **Comment and log findings are listed separately and handed over once per file.** `CONVENTIONS.md`
+  keeps separate rules for each, so the findings are clearer apart; a file that needs both is still
+  pasted once, since every handover is the whole file.
+- **Defense sentences are in English**, like Stage 1 Step 5 and the rest of this plan. Hebrew is Stage 21's.
+- **The full playthrough runs with `Enemy` and `Projectile` at `Verbose`.** The ghost freezing and
+  chasing, the bird's swoop and the boomerang turning and being caught are logged nowhere else, and a
+  requirement checked in the log is better evidence than one remembered from the screen.
