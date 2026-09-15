@@ -959,7 +959,7 @@ congratulation popup on the final level 2, so stage 20's playthrough is its firs
 - a script folder named `Effects.cs` where `CONVENTIONS.md` says `Effects/`;
 - the `PlayerGuard` grace-window comment, reworded but sitting at column 0 above an indented field.
 
-### Stage 20 — Final testing, comments and log check `[~]`
+### Stage 20 — Final testing, comments and log check `[x]`
 
 A full playthrough of both levels covering every requirement in one session, plus a pass over
 comments and log lines against `CONVENTIONS.md`. Same shape as Exercise 3's Stage 7, but larger.
@@ -1000,7 +1000,8 @@ own discussion:
 1. Risk session: level 2's final save climbed to the congratulation popup, and a פייה against the
    ציפור, the צפרדע, both spiders and the jumping נחש. `[x]`, run ahead of step 11, see "Step 12" below.
 1. Full playthrough: every numbered requirement in one session, checked against a list that marks
-   each one as shown by the log or on screen only, with `Enemy` and `Projectile` at `Verbose`. `[ ]`
+   each one as shown by the log or on screen only, with `Enemy` and `Projectile` at `Verbose`. Moved
+   into Stage 21 on 15.9.2026, where the gameplay recordings are the check; see that stage.
 
 **The review is written in `Techniques.md`**, at the project root beside `Exercise Adventure Island.md`,
 and not in this section. Each technique's step fills its own section there in five parts: what the
@@ -1198,6 +1199,12 @@ Claude ("I trust you to make the right decisions for the logs. Edit directly").
   compiles from the current file list; and `Techniques.md` reads 27 injected MonoBehaviours.
 - **Step 11 closed.**
 
+**Stage 20 closed, 15.9.2026.** Steps 1 to 12 are done, and step 13 moved into Stage 21 by Peleg's call,
+recorded in the Decisions Log. The review is in `Techniques.md`, whose `file:line` references were checked
+by script after the last code change that moved any of them. What the stage changed in the code is in the
+Decisions Log entries of this date. Three things have not appeared in a log since those changes: כוכב, an
+אבן surviving an axe, and the congratulation popup on the final level 2.
+
 ### Stage 21 — Two video scripts `[ ]`
 
 **Two separate recordings this time**, which is new. The instructor watches the gameplay one first,
@@ -1214,6 +1221,35 @@ Modeled on `2026-HW_3-Mario/HW_3-Script.md`: spoken lines in block quotes, stage
 them, every requirement called out in Hebrew, one take per part, and every part written to a measured
 word count. The rates from three recorded videos: about 160 spoken words a minute where the camera is
 on a file, about 90 where it is on the game.
+
+**Carried from Stage 20, 15.9.2026.** Stage 21 opens with its own design discussion, in a fresh
+conversation; nothing below marked as proposed has been agreed.
+
+- **Three files, per 14.7**: `1-Gameplay-Playthrough`, one run of both levels showing every enemy, up to
+  5 minutes; `2-Gameplay-Features`, what one run cannot hold, 5 to 10 minutes, with 14.8's text file of
+  what it shows and when; `3-Code`, up to 15 minutes, walking `Techniques.md`, whose defense sentences are
+  in English while the recordings' Hebrew is this stage's.
+- **The playthrough take is also the final check that Stage 20's step 13 was.** Proposed: before the take, a
+  checklist from `Exercise Adventure Island.md` marks every requirement as shown in the playthrough, by the
+  log or on screen only, as left to the features recording, or as code only; after the take, its log copy
+  is read against the list. Proposed home: `Recordings/1-Gameplay-Playthrough.md`.
+- **Proposed: the playthrough is silent and unscripted**, as Exercise 3's full-playthrough part was, at five
+  spoken words; a spoken intro could be its own short take under 14.4.
+- **Every gameplay take's log is copied before Play is pressed again**, since the next Play overwrites
+  `GameLog.txt`. Proposed destination: `Recordings/` at the project root, committed, rather than `Logs/`,
+  which `.gitignore` excludes, or anywhere under `Assets/`, which Unity would import. The video files stay
+  out of git.
+- **Proposed: `LogFileWriter` stamps each file line with the time since Play started**, unscaled so a popup
+  does not stop it, so one offset lines a log copy up with its video and 14.8's text file can be read off
+  the log. About three lines, file only, the Console untouched.
+- **Before any gameplay take**: the Game view at 16:9, since the camera's framing and level 2's minimum
+  width assume it; the Console off screen; a 20-second test recording. `LogSettings` is saved with `Enemy`
+  and `Projectile` at `Verbose` and the rest at `Info`.
+- **No debug keys**: every take is played, and a game over sends the run back to level 1. Taking all 32
+  fruit makes the 20th cost a פסילה at level 2's start.
+- **Not seen in a log since Stage 20's code changes**: כוכב, an אבן surviving an axe, and the congratulation
+  popup on the final level 2, whose climb Peleg has seen work. A break found during a take is a re-take, and
+  a fix may reopen a section of `Techniques.md`.
 
 ## Notes / Decisions Log
 
@@ -3371,3 +3407,12 @@ _(append entries here as we make design decisions.)_
 - **Step 12 closed without the climb to the congratulation popup in a log.** Peleg has seen the final
   level 2 climbed, and step 13 climbs it to the door regardless, so the one thing the risk session held
   back from the playthrough is covered there.
+- **Step 13 moved into Stage 21, and Stage 20 closed without it.** Peleg's call. The full playthrough was
+  the regression test for the review and the two passes, and each of those changes already had a session
+  of its own confirming it. The recordings have to run the whole game anyway, and 14.7 splits gameplay into
+  a five-minute playthrough and a features recording, so one session covering every requirement would
+  have been played once as a test and again as takes. The design discussion for step 13 had proposed
+  exactly that merge, with the playthrough take as the check; moving the step makes it Stage 21's to
+  settle, with the proposals carried in that stage's section. The cost: כוכב, an אבן surviving an axe and
+  the congratulation popup on the final level 2 have not appeared in a log since the stage's code changes,
+  so a break in one of them would surface during a take.
