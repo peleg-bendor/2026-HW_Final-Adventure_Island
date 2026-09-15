@@ -234,7 +234,99 @@ The one worst-spot candidate these files held, `ProjectileDirector`, was resolve
 
 ## Factory
 
-Not started.
+### What the course means
+
+The course uses the word two ways, and the instructor wrote both.
+
+The lecture note, `Course/Lesson 10 - Factory, Template, Performance & Optimization/Factory Design
+Pattern.md`, is Factory Method: an abstract creator declares a factory method, and a concrete creator
+subclass overrides it for each product. Its reasons for using one are complex creation, decoupling
+creation from use, adding types without editing existing code, and one central place for creation
+logic such as caching, logging or configuration.
+
+The lesson projects (`Lesson 10.md`, and again `Lesson 11.md`) build exactly that: `MarioEnemyFactory`
+as the abstract creator, `GoombaFactory` and `KoopaFactory` as its subclasses, and a client holding a
+`MarioEnemyFactory`. The caller picks the product by picking the factory object. Lesson 10's own
+walkthrough faults two things in it: the factory method returns `GameObject` rather than the product
+type, and the client asks for `GetComponent<GoombaEnemy>()`, naming the concrete class the pattern
+exists to hide.
+
+Exercise 3's text (`Course/Exercises/Exercise 03.md:15-18`) defines the Factory the instructor graded
+differently: "צרו קובץ LaserFactory שמחזיר קליע לייזר מוכן, באמצעות הבילדר. המטרה היא לאפשר למערכות
+המשחק להשתמש בנשק החדש בלי להכיר את תהליך הבנייה". A class that hands back a finished object, so nothing
+else learns how it is built, with no creator hierarchy. At 00:54:05 he points back at that exercise:
+"פקטורי עשינו, עשינו אפילו את כולם ביחד".
+
+The transcript on drops: define it in the development and make it smart, with dropping nothing as an
+option (00:46:39), and entering what each enemy drops preferred over rolling it (00:37:46).
+
+### Where it lives
+
+- Open `Assets/Scripts/Collectibles/DropFactory.cs:67`, `Create(DropType, Vector2)`.
+- `IDropFactory.cs` is the abstraction both callers depend on; `Collectible` is the abstract product
+  `Create` returns.
+- The callers: `Enemies/Enemy.cs:243` and `Collectibles/Egg.cs:78`, each holding only an `IDropFactory`
+  and a `DropType`.
+- `DropFactory.cs:25` builds the mapping once from the six `Pickup_` prefabs listed on `GameInstaller`,
+  each declaring its own `DropType`.
+
+### What the code shows
+
+- Exercise 3's definition exactly. A caller says what and where. The factory alone knows which prefab
+  that is, instantiates it through `IInstantiator` so the pickup is injected, parents it under the
+  active level, and marks it dropped so the next reset destroys it rather than restoring it.
+- Not the lecture's structure: one concrete creator, with the product chosen by a parameter rather than
+  by a creator subclass.
+- Right on both counts lesson 10's walkthrough faulted: `Create` returns the abstract `Collectible`, and
+  neither caller names a concrete class.
+- Every reason the note gives for a factory: creation that is more than `Instantiate`, two unrelated
+  callers kept apart from it, a new drop added as a prefab on the installer with no edit to the factory,
+  and the rules and the logging in one place. The limit worth stating: a new drop type also adds a value
+  to `DropType.cs`.
+- No `switch` over drop types anywhere.
+
+Verdict: matches the course's definition of a Factory, Exercise 3's and the note's reasons for one, and
+not the lecture's Factory Method structure. That difference is answered rather than changed; the plan's
+Decisions Log has why.
+
+### What could be challenged
+
+1. "That isn't the Factory I taught. Where are the creator subclasses?" In Factory Method the calling
+   code picks the product by holding a particular factory. Here it is picked by data authored on each
+   enemy and egg in the Inspector, since drops are configured and never rolled, so the caller holds a
+   `DropType` and not a creator. Six creator subclasses would share one line of body and still need a
+   map from the type to the creator, which is the dictionary again. It is the Factory from Exercise 3.
+2. "Why not a prefab reference on the enemy?" A plain `Instantiate` there makes a pickup that is not
+   injected, so a token has no mount slot; is parented to the enemy, so it is switched off with it; and
+   is handed back by the next reset instead of destroyed. The factory is the one place those three rules
+   live.
+3. "Why an enum and not a prefab field?" The enum is a dropdown of the six drops and `None` on every
+   enemy and egg in both levels. A prefab field would accept a fruit, an enemy or a projectile dragged in
+   by mistake, and only fail at the moment of the drop. The cost is a line in `DropType.cs` per new type.
+4. "Why do projectiles use a Builder and drops a Factory?" Projectiles of a kind differ in numbers set
+   step by step, and are built once and pooled. Drops differ in which prefab they are, and are made on
+   demand and destroyed on a reset.
+5. "Why doesn't `DeathEffects` use the factory?" It makes effects, not pickups: there is nothing to
+   inject, it is placed beside whatever was destroyed, and it removes itself within about a second, so a
+   reset has nothing to clear.
+6. "Why not reflection, like `EnemyCreator`?" It was planned for this factory and dropped, since there
+   was no switch for it to remove and one class serves several drop types. The Reflection part of the
+   SOLID section has the full reasoning.
+
+Rejected along the way, all in the Decisions Log: Factory Method's creator-per-product shape, for the
+reason in question 1; a random drop, which the requirements refuse and the instructor called the weaker choice; and a list
+of drops per enemy, since what that line of the transcript asks for is every type seen early, which is
+the levels' job.
+
+Nothing from these files goes on the worst-spot list.
+
+### The defense sentence
+
+> An enemy and an egg each hold a drop type set in the Inspector and ask the factory for it by name; only
+> the factory knows which prefab that is, builds it so it is injected, puts it in the level rather than
+> under whatever dropped it, and marks it so a reset clears it. It is the Factory from your Exercise 3, a
+> class that hands back a finished object so nothing else learns how it is built, and the product is
+> chosen by data, which is why there is one factory and not a creator class per drop.
 
 ## Template Method
 

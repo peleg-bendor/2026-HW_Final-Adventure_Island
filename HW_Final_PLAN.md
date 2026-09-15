@@ -363,7 +363,13 @@ and never rolled, so an enemy holds a drop type and an egg holds a drop type, an
 to build a פייה."* The probe to expect is "why not just a prefab reference on the enemy", and the
 honest answer is that several drop types need setup past instantiation — a token has to know which
 animal it mounts, a weapon has to register in the slot, the פייה carries its duration — and the
-caller should not learn which ones do.
+caller should not learn which ones do. **That answer did not survive the build, corrected at stage
+20.** The token's mount is on its prefab (stage 16), the פייה's duration is on the player (stage 17),
+and a weapon reaches the slot when it is picked up rather than when it is made. What the factory
+really does past instantiation is the same for every drop: it instantiates through the container so
+the pickup is injected, parents it to the active level rather than to what dropped it, and marks it
+dropped so a reset destroys it instead of handing it back. A prefab reference and a plain
+`Instantiate` on the enemy would break all three.
 
 **Template — three hierarchies: `BaseProjectile`, `Enemy`, `Collectible`.** *"Enemy is the clearest.
 Spawn, behave, take damage, die, drop, wait, return — six subclasses, and only Behave and the
@@ -972,7 +978,7 @@ own discussion:
 1. Design discussion. `[x]`
 1. DI. `[x]`
 1. Builder and Pooling, as one step, since `ProjectileDirector` is part of both. `[x]`
-1. Factory. `[ ]`
+1. Factory. `[x]`
 1. Template, all four bases. `[ ]`
 1. MVC, all three triads. `[ ]`
 1. Async & Tasks, with the three coroutines beside the two Tasks. `[ ]`
@@ -2872,3 +2878,24 @@ _(append entries here as we make design decisions.)_
   pool grew 23 times, and a level change recalled 25 in flight. The red mount's fire, which that
   session never rode, was seen in a second one from an עלה ביצה added beside the others: three flames
   out, a fourth refused eight times, no growth, and a jumping נחש killed by `MountAttack`.
+- **The drop factory stays a simple factory, and the course gives it two definitions to answer to.**
+  The lecture note and lessons 10 and 11 build Factory Method: an abstract creator and one creator
+  subclass per product, the caller choosing the product by which factory object it holds. Exercise 3's
+  own text defines the Factory the instructor graded differently, as a class "שמחזיר קליע לייזר מוכן"
+  so that the game's systems use it "בלי להכיר את תהליך הבנייה", and at 00:54:05 he points back at that
+  exercise as where the Factory was done. `DropFactory` is that second definition exactly, and it also
+  meets every reason the note gives for using one. Converting it to Factory Method was considered and
+  refused: the product here is chosen by data authored on each enemy and egg, so the caller holds a
+  `DropType` and not a creator, and six creator subclasses would share one line of body and still need
+  a map from the type to the creator, which is the dictionary this factory already is. Lesson 10's own
+  walkthrough faults its factory for returning `GameObject` and its client for naming `GoombaEnemy`;
+  this one returns the abstract `Collectible` and neither caller names a concrete class. No code
+  changed in this step.
+- **A drop is configured as a `DropType`, not as a prefab reference on each enemy and egg.** The enum
+  is a dropdown of the six drops the requirements name plus `None`, on every enemy and ביצה across both
+  levels; a prefab field would accept a fruit, an enemy or a projectile dragged into it by mistake, and
+  would only fail at the moment of the drop. The six prefabs are listed once, on `GameInstaller`, each
+  declaring its own type, so a duplicate or a gap is warned about at startup rather than in play. The
+  cost is that a seventh drop type means a line in `DropType.cs` as well as a prefab on the installer;
+  the factory itself is not opened. Recorded here because the choice was made at stage 16 and never
+  written down, and it is the second question the factory is likely to draw.
