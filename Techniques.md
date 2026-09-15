@@ -46,7 +46,7 @@ using it at all (00:53:19).
 ### Where it lives
 
 - Open `Assets/Scripts/Installers/GameInstaller.cs:41`, `InstallBindings`: 31 bindings.
-- 28 MonoBehaviours receive their dependencies through `[Inject] Construct`, and the container builds 16
+- 27 MonoBehaviours receive their dependencies through `[Inject] Construct`, and the container builds 16
   plain C# classes through their constructors, one of them, `RespawnCountdown`, once for every enemy.
 - Pooled projectiles and drops are instantiated through `IInstantiator`, in `ProjectileBuilder.Build`
   and `DropFactory.Create`, so an object made at runtime is injected like one placed in the scene.

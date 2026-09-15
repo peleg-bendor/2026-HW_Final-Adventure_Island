@@ -976,7 +976,7 @@ made against the code as it stands, not against Step 5.
 Worth remembering here: the instructor runs an automated SOLID check over the submitted code and
 grades against the worst thing it finds, not the average.
 
-Also decided here: whether `DebugFlowKeys` ships. Keys `1` and `2` force a strike and a level
+Also decided here, at step 11, and it does not: whether `DebugFlowKeys` ships. Keys `1` and `2` force a strike and a level
 completion, which is development speed rather than anything the game needs, and they let anyone
 holding the build skip the game. Nothing forbids them; the question is only whether they belong in a
 submission.
@@ -995,9 +995,10 @@ own discussion:
    included. Then Reflection and the rejected patterns. `[x]`, see "Where step 8 stands" below.
 1. Comment pass. `[x]`, see "How step 9 runs" below.
 1. Log pass. `[x]`, see "How step 10 runs" below.
-1. Loose ends: whether `DebugFlowKeys` ships, and whether the twelve template references are chased. `[ ]`
+1. Loose ends: whether `DebugFlowKeys` ships, and whether the twelve template references are chased. `[x]`,
+   see "Step 11" below.
 1. Risk session: level 2's final save climbed to the congratulation popup, and a פייה against the
-   ציפור, the צפרדע, both spiders and the jumping נחש. `[ ]`
+   ציפור, the צפרדע, both spiders and the jumping נחש. `[x]`, run ahead of step 11, see "Step 12" below.
 1. Full playthrough: every numbered requirement in one session, checked against a list that marks
    each one as shown by the log or on screen only, with `Enemy` and `Projectile` at `Verbose`. `[ ]`
 
@@ -1043,9 +1044,10 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
   `FruitCollectible.PickUp` logs after `flow.TakeFruit()`; `PlayerGuard` already logs before acting for
   exactly this reason. Seen in the session of 19:14, lines 192-196. Step 10.
 
-**Temporary, and has to come out before step 12**: a פייה, extra shooting נחשים and a ביצה holding
-עלה at the start of level 1, added by Peleg on 15.9.2026 to test step 3's pool, and saved into
-`Level01.txt` as well as the scene. The risk session and the playthrough have to run on the authored level 1.
+**Temporary, and already gone**: a פייה, extra shooting נחשים and a ביצה holding עלה at the start of
+level 1, added by Peleg on 15.9.2026 to test step 3's pool. Checked before step 11: `Level01.txt` has had
+no commit since stage 19's, and every prefab instance in the committed scene matches that commit's, so
+neither file holds them. The playthrough runs on the authored level 1.
 
 **Step 8, closed 15.9.2026.** The sweep measured all 109 scripts and ranked seven candidates; the
 reasoning is in the Decisions Log entries of this date. Kept below as the record of how it ran.
@@ -1165,6 +1167,36 @@ Claude ("I trust you to make the right decisions for the logs. Edit directly").
   entry of that name.
 - **Step 10 closed.** The next conversation picks up at step 11, the loose ends, which opens with its own
   design discussion.
+
+**Step 12, run ahead of step 11 on 15.9.2026.** Peleg ran the פייה half before step 11's discussion.
+
+- **The פייה half, done and confirmed** by the session of 20:58: one of each enemy and a ביצה were
+  painted beside level 1's start and saved into `Level01.txt` for the run, then taken back out of the
+  file. Peleg's call that testing against placed enemies is enough for this half, since the risk was each
+  enemy's own answer to a פייה. The evidence is in the Decisions Log entry of that date.
+- **The spiders**: Peleg saw the moving spiders drop as before, the on-screen check step 10's log could
+  not make.
+- **The climb to the congratulation popup, closed by Peleg's call** without a session showing it: he has
+  seen the climb work, and step 13 climbs level 2 to its door in any case. Neither session of 15.9 reaches
+  the popup, so step 13's log is the first to record it.
+- **Step 12 closed.**
+
+**Step 11, agreed 15.9.2026.** The loose ends, after step 12.
+
+- **`DebugFlowKeys` is deleted.** Peleg removes the component from `Scripts` and saves the scene, then
+  deletes `Assets/Scripts/State/DebugFlowKeys.cs` in the Project window; Claude then checks that the scene
+  holds no reference to its script, that the game assembly compiles, and that `Techniques.md`'s count of
+  injected MonoBehaviours drops from 28 to 27. Nothing else in the code or the documents names it.
+- **The twelve template references stay.** What each one is was found this step and is recorded in the
+  Decisions Log.
+- **`LogSettings` is set for step 13**: `Enemy` and `Projectile` at `Verbose`, the rest at `Info`. Peleg set
+  it in the same scene save that removed the component.
+- **Step 3's test objects need nothing**: neither file holds them, as the note under "Carried into the
+  review" now records.
+- **Done and verified**: the scene's diff is the component's removal and the log levels and nothing else,
+  so none of step 12's placements were saved; no file refers to the script's GUID; the game assembly
+  compiles from the current file list; and `Techniques.md` reads 27 injected MonoBehaviours.
+- **Step 11 closed.**
 
 ### Stage 21 — Two video scripts `[ ]`
 
@@ -3301,3 +3333,41 @@ _(append entries here as we make design decisions.)_
   the guard now keeps silent, though a mount always spans two; the reorders in `Rock`, `Enemy.ComeBack`
   and `Levels.Enter`, where nothing logs in between in a working game; and the five warning texts, checked
   by compiling only.
+- **Step 12's פייה half, confirmed by the session of 20:58**: 427 lines, no warning. With one of each enemy
+  painted beside level 1's start, one פייה destroyed a moving spider (line 24), the jumping נחש (25, 38), a
+  static spider (30, 49), the צפרדע (32), the ציפור (33), a shooting נחש (34), the רוח רפאים (36), three
+  fires and three snake fireballs, and no strike was lost while it held. It was consulted before the mount:
+  the blue mount was taken at 56 with the פייה still active, the fireballs at 60 and 62 went to the פייה,
+  and the mount lasted until the ghost took it at 116. All six kinds came back from their countdowns
+  (73-82). The level change at 83 cancelled level 1's pending ones: after it, every `back after` line
+  answers exactly one kill made in level 2. Level 2's own פייה ביצה, taken at 289, destroyed a fire, the
+  ghost and a static spider in play. Level 1 reached `Level complete` about 21 seconds in, by the power
+  drain, across a level 200 cells wide, so that was debug key `2`.
+- **`DebugFlowKeys` does not ship.** Keys `1` and `2` stayed after stage 10 and stage 16 for one reason,
+  running the loop fast while it was being built, and that work is over: step 13 is a full playthrough and
+  stage 21 records gameplay. Both are worse with the keys present. Step 13's log is meant to show every
+  requirement, and a `Level complete` from key `2` reads exactly like the door, while key `1` is the one
+  strike source with no cause line. The gameplay recording is what the instructor watches first, writing
+  down problems, and a skipped level or an unexplained strike would be one. Keeping them until after the
+  recordings was weighed, and it only moves the deletion to a point where it is easier to forget. Shipping
+  them behind `#if UNITY_EDITOR` hides nothing from someone who runs the project in the editor. Nothing
+  else goes with them: `GameFlow`'s `ending` guard was written because of the keys, and it is still
+  reached without them, by a second contact in the physics step of the last strike or a door touched in
+  the step a fire ends the game. What is lost is test speed if step 13 forces a fix; a level's starting
+  power still reaches a game over in seconds, and git history holds the file. Peleg's call.
+- **The twelve unresolved template references stay, now that each is identified.** Four are in
+  `Assets/Settings/DefaultVolumeProfile.asset`: the scripts of `OutlineVolumeComponent`,
+  `TestAnimationCurveVolumeComponent`, `OasisFogVolumeComponent` and `TestVolume`. URP's own
+  `Editor/Volume/DefaultVolumeProfile.asset`, in the package, carries the first three as well, so they are
+  Unity's internal test components in the file Unity ships, and the scene has no Volume. Seven are in
+  `PC_Renderer.asset`'s `probeVolumeResources`, the probe-volume debug shaders, mesh, texture and compute
+  shader: URP's `Runtime/Deprecated.cs` marks that field `[Obsolete]` since 2023.3, nothing reads it, and a
+  sprite game uses no probe volumes. One is `TMP Settings.asset`'s default sprite asset, TMP's emoji sheet,
+  which was never imported and is read only for `<sprite>` tags or emoji, of which the scene has none.
+  Cleaning them would change nothing in play, in a build or in a check that reads code, and two of the three
+  would mean hand-editing render pipeline YAML. Found by indexing every `.meta` under `Assets`, `Packages` and
+  the package cache; a first pass that split paths on spaces reported sixteen, since it missed TextMesh Pro's
+  own folder. Peleg's call to leave them.
+- **Step 12 closed without the climb to the congratulation popup in a log.** Peleg has seen the final
+  level 2 climbed, and step 13 climbs it to the door regardless, so the one thing the risk session held
+  back from the playthrough is covered there.
