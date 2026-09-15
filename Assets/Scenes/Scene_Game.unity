@@ -14624,7 +14624,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9038725961988231049, guid: 45f72aab88f5de3409379ce08bde652a, type: 3}
       propertyPath: drop
-      value: 2
+      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -78542,6 +78542,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Sprite_Fruit_Common
       objectReference: {fileID: 0}
+    - target: {fileID: 1670928804992885918, guid: 5c64fbea873f8944a8782a48adad0a22, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 116c8a710bb245a41b1d70aef899e1f2, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-// Editor window for painting the level one cell at a time, alongside the level window's
-// all-at-once build. It places only what the tile prefab map knows about, so everything it
-// creates can be written back out as level data.
+// Editor window for painting the level one cell at a time, alongside the level window's all-at-once
+// build. It places only what the tile prefab map knows about, so everything it creates can be written
+// back out as level data.
 public class TilePlacerWindow : EditorWindow
 {
     private enum Mode { Off, Place, Erase }
@@ -20,7 +20,7 @@ public class TilePlacerWindow : EditorWindow
 
     // One press-drag-release as one undo entry, unserialized since it can't outlive its drag.
     private bool painting;
-    private Vector3 paintedCell;
+    private Vector2Int paintedCell;
     private int strokeUndoGroup;
     private int strokePlaced;
     private int strokeVaried;
@@ -113,11 +113,11 @@ public class TilePlacerWindow : EditorWindow
             return;
         }
 
-        if (!TryGetCell(current.mousePosition, out Vector3 cell))
+        if (!TryGetCell(current.mousePosition, out Vector2Int cell))
             return;
 
         Handles.color = mode == Mode.Erase ? Color.red : Color.yellow;
-        Handles.DrawWireCube(levelParent.transform.TransformPoint(cell), Vector3.one);
+        Handles.DrawWireCube(levelParent.transform.TransformPoint(new Vector3(cell.x, cell.y, 0f)), Vector3.one);
 
         if (current.type == EventType.MouseMove)
             sceneView.Repaint();
@@ -168,13 +168,13 @@ public class TilePlacerWindow : EditorWindow
             Debug.Log("Erased " + strokeErased + " object(s)");
     }
 
-    private void Paint(GameObject prefab, Vector3 cell)
+    private void Paint(GameObject prefab, Vector2Int cell)
     {
         paintedCell = cell;
 
         if (mode == Mode.Erase)
         {
-            strokeErased += ClearCell(cell);
+            strokeErased += LevelScene.ClearCell(levelParent.transform, cell);
             return;
         }
 
@@ -182,6 +182,23 @@ public class TilePlacerWindow : EditorWindow
 
         if (Place(prefab, cell))
             strokePlaced++;
+    }
+
+    // A cell already holding this prefab is not rebuilt, so dragging back over it costs nothing. If the
+    // prefab draws one of several sprites, painting it again rolls a new one.
+    private bool Place(GameObject prefab, Vector2Int cell)
+    {
+        Transform occupant = LevelScene.FindInCell(levelParent.transform, cell);
+        if (occupant != null && PrefabUtility.GetCorrespondingObjectFromSource(occupant.gameObject) == prefab)
+        {
+            if (LevelScene.PickVariant(occupant.gameObject))
+                strokeVaried++;
+
+            return false;
+        }
+
+        LevelScene.ClearCell(levelParent.transform, cell);
+        return LevelScene.Place(levelParent.transform, prefab, cell, "Place Tile") != null;
     }
 
     private List<TilePrefabMap.Entry> UsableEntries()
@@ -199,9 +216,9 @@ public class TilePlacerWindow : EditorWindow
         return usable;
     }
 
-    private bool TryGetCell(Vector2 mousePosition, out Vector3 cell)
+    private bool TryGetCell(Vector2 mousePosition, out Vector2Int cell)
     {
-        cell = Vector3.zero;
+        cell = Vector2Int.zero;
 
         // The level is flat on z = 0, so a cell is where the cursor's ray crosses that plane. A
         // view rotated to look along it has no answer, hence the failure case.
@@ -212,95 +229,7 @@ public class TilePlacerWindow : EditorWindow
 
         // Rounded in the parent's space, not world, or placements shift by the parent's offset.
         Vector3 local = levelParent.transform.InverseTransformPoint(ray.GetPoint(distance));
-        cell = new Vector3(Mathf.Round(local.x), Mathf.Round(local.y), 0f);
+        cell = new Vector2Int(Mathf.RoundToInt(local.x), Mathf.RoundToInt(local.y));
         return true;
-    }
-
-    private bool Place(GameObject prefab, Vector3 cell)
-    {
-        // A cell already holding this prefab is not rebuilt, so dragging back over it costs
-        // nothing. If the prefab draws one of several sprites, painting it again rolls a new one.
-        Transform occupant = FindInCell(cell);
-        if (occupant != null && PrefabUtility.GetCorrespondingObjectFromSource(occupant.gameObject) == prefab)
-        {
-            if (PickVariant(occupant.gameObject))
-                strokeVaried++;
-
-            return false;
-        }
-
-        ClearCell(cell);
-
-        GameObject tile = PrefabUtility.InstantiatePrefab(prefab, levelParent.transform) as GameObject;
-        if (tile == null)
-        {
-            Debug.LogWarning("Could not place " + prefab.name);
-            return false;
-        }
-
-        tile.transform.localPosition = cell;
-        PickVariant(tile);
-
-        // PrefabUtility, not Instantiate, so the tile keeps the link that gives it its id.
-        Undo.RegisterCreatedObjectUndo(tile, "Place Tile");
-        return true;
-    }
-
-    // Answers with whether the tile had variants at all, so a stroke over plain ground reports
-    // nothing.
-    private static bool PickVariant(GameObject tile)
-    {
-        SpriteVariant variant = tile.GetComponent<SpriteVariant>();
-
-        if (variant == null)
-            return false;
-
-        SpriteRenderer renderer = tile.GetComponent<SpriteRenderer>();
-
-        if (renderer != null)
-            Undo.RecordObject(renderer, "Vary Tile");
-
-        variant.PickOne();
-        return true;
-    }
-
-    private Transform FindInCell(Vector3 cell)
-    {
-        Transform parent = levelParent.transform;
-
-        for (int i = 0; i < parent.childCount; i++)
-        {
-            Transform child = parent.GetChild(i);
-            if (IsInCell(child, cell))
-                return child;
-        }
-
-        return null;
-    }
-
-    private int ClearCell(Vector3 cell)
-    {
-        Transform parent = levelParent.transform;
-
-        int removed = 0;
-
-        // A cell holds one tile, all the file can store, so painting over something replaces it.
-        for (int i = parent.childCount - 1; i >= 0; i--)
-        {
-            Transform child = parent.GetChild(i);
-            if (IsInCell(child, cell))
-            {
-                Undo.DestroyObjectImmediate(child.gameObject);
-                removed++;
-            }
-        }
-
-        return removed;
-    }
-
-    private static bool IsInCell(Transform child, Vector3 cell)
-    {
-        return Mathf.RoundToInt(child.localPosition.x) == Mathf.RoundToInt(cell.x)
-            && Mathf.RoundToInt(child.localPosition.y) == Mathf.RoundToInt(cell.y);
     }
 }
