@@ -53,6 +53,7 @@ public class GameInstaller : MonoInstaller
         Container.Bind<IPlayerGuard>().To<PlayerGuard>().FromComponentInHierarchy().AsSingle();
         Container.Bind<IPlayerFairy>().To<PlayerFairy>().FromComponentInHierarchy().AsSingle();
         Container.Bind<IMountAttack>().To<PlayerMountAttack>().FromComponentInHierarchy().AsSingle();
+        Container.Bind<IMountStrike>().To<MountStrike>().FromComponentInHierarchy().AsSingle();
         Container.Bind<IGameFlow>().To<GameFlow>().AsSingle().WithArguments(fruitPerStrike);
 
         Container.Bind<IPowerModel>().To<PowerModel>().AsSingle().WithArguments(powerCapacity);

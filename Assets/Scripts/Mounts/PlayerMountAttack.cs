@@ -8,17 +8,18 @@ public class PlayerMountAttack : MonoBehaviour, IMountAttack
     private IMountSlot slot;
     private IProjectilePool pool;
     private ProjectilePrefabs prefabs;
-    private MountStrike strike;
+    private IMountStrike strike;
 
     private float attackUntil = float.NegativeInfinity;
     private float attackSeconds;
 
     [Inject]
-    public void Construct(IMountSlot slot, IProjectilePool pool, ProjectilePrefabs prefabs)
+    public void Construct(IMountSlot slot, IProjectilePool pool, ProjectilePrefabs prefabs, IMountStrike strike)
     {
         this.slot = slot;
         this.pool = pool;
         this.prefabs = prefabs;
+        this.strike = strike;
     }
 
     // True while an attack is running, which both picks the attack frames and refuses a second press.
@@ -33,10 +34,8 @@ public class PlayerMountAttack : MonoBehaviour, IMountAttack
 
     private void Awake()
     {
-        strike = GetComponentInChildren<MountStrike>(true);
-
         if (strike == null)
-            GameLog.Warning(LogCategory.Mount, "No MountStrike found under the player, a mount attack will hit nothing");
+            GameLog.Warning(LogCategory.Mount, "No IMountStrike injected, a mount attack will hit nothing");
     }
 
     // Answers whether it took the key, so a held weapon is thrown only when he is on foot.

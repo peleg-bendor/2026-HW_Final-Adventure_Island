@@ -45,8 +45,8 @@ using it at all (00:53:19).
 
 ### Where it lives
 
-- Open `Assets/Scripts/Installers/GameInstaller.cs:41`, `InstallBindings`: 28 bindings.
-- 25 MonoBehaviours receive their dependencies through `[Inject] Construct`, and the container builds 16
+- Open `Assets/Scripts/Installers/GameInstaller.cs:41`, `InstallBindings`: 31 bindings.
+- 28 MonoBehaviours receive their dependencies through `[Inject] Construct`, and the container builds 16
   plain C# classes through their constructors, one of them, `RespawnCountdown`, once for every enemy.
 - Pooled projectiles and drops are instantiated through `IInstantiator`, in `ProjectileBuilder.Build`
   and `DropFactory.Create`, so an object made at runtime is injected like one placed in the scene.
@@ -73,14 +73,19 @@ using it at all (00:53:19).
   changes it, while the displays read `ISessionState`. The `Player` marker answers only where he is and
   which way he faces. `ProjectilePrefabs`, `ProjectileCounts` and `RespawnDelay` hold data. Every
   service a class receives is behind an interface apart from those.
+- The player's components reach each other the same way. The ground check, his walking, the mount's
+  attack and the mount's hit are injected behind `IPlayerGround`, `IPlayerMotion`, `IMountAttack` and
+  `IMountStrike`, and none of his parts fetches another with `GetComponent`.
 - Still outside the container: the static `GameLog`, `Time` and `Keyboard.current` read where they are
-  used, and `GetComponent` between the player's own components, which are parts of one object rather
-  than services.
+  used; `GetComponent` for Unity's own components on the same object, such as a `Rigidbody2D`; and
+  `GetComponent<Player>()` on whatever collider touched a hazard, a pickup, a door or a projectile, which
+  arrives through a physics callback and cannot be injected.
 
 Verdict: matches the course's definition and the lesson's usage. The review changed four things, all
 recorded in the plan: `IInstantiator` replaced `DiContainer` in the builder and the drop factory, `Levels`
 stopped searching the scene, the camera stopped holding the player's Transform, and three unused
-self-bindings went.
+self-bindings went. The SOLID step later injected the player's components into each other in place of
+ten `GetComponent` calls and a `GetComponentInChildren`.
 
 ### What could be challenged
 
@@ -109,6 +114,12 @@ self-bindings went.
 10. "Why not field injection, like `FireballWeapon`?" A `Construct` method lists everything a
     MonoBehaviour depends on in one signature, which is as close as a MonoBehaviour gets to a
     constructor.
+11. "The jump and the ground check are on the same GameObject. Why inject instead of `GetComponent`?"
+    Your DI note names `GetComponent` among what injection replaces, and lesson 4's walkthrough flags
+    `GetComponentInChildren<FireballWeapon>()` for reaching a concrete class. The mount's animator and
+    attack live in `Mounts/` and read parts of the player; each now sees one narrow interface and cannot
+    call anything else on the component. `GetComponent` stays for Unity's own components, like the
+    `Rigidbody2D`, which are not services.
 
 Rejected along the way, all in the Decisions Log: VContainer, which was the fallback had Zenject not
 compiled on Unity 6; an `IInputService` and an injected clock, each of which would have had one
@@ -165,7 +176,7 @@ three.
 - `ProjectilePool.cs:33`: the pool filling itself at startup. `ProjectileCounts.cs`: how many of each,
   serialized on `GameInstaller`.
 - `BaseProjectile.cs:47`, `Launch`: what makes a reused projectile safe.
-- The three shooters: `PlayerAttack.cs:59`, `SnakeShooter.cs:90`, `PlayerMountAttack.cs:79`.
+- The three shooters: `PlayerAttack.cs:58`, `SnakeShooter.cs:81`, `PlayerMountAttack.cs:78`.
 
 ### What the code shows
 
@@ -626,9 +637,6 @@ began, so none of these is verified as a problem yet:
 
 - `Enemy`: 308 lines and seven injected dependencies. What is left is the lifecycle a Template base
   exists to own.
-- The player's components reach each other's concrete classes through `GetComponent`: nine couplings
-  across `PlayerJump`, `PlayerAnimator`, `PlayerMountAnimator`, `PlayerAttack` and `PlayerReset`. Being
-  resolved in the SOLID step's third batch.
 - `GameFlow` and `IGameFlow`: four operations beside the ending sequence, and ten interface members. Kept,
   and answered in the Decisions Log.
 - `GameLog` is static and used almost everywhere. Answered: cross-cutting logging, its calls stripped
@@ -644,6 +652,12 @@ Resolved during the review, so no longer candidates:
   JSON writing, and `TilePlacerWindow` (306), which repeated part of it. Split into `LevelFile` and
   `LevelScene`, which both windows use; now 156 and 256 lines.
 - `Enemy`'s respawn Task, its token and its guard, about 45 lines. Moved into `RespawnCountdown`.
+- The player's components reaching each other's concrete classes: ten `GetComponent` calls across
+  `PlayerJump`, `PlayerAnimator`, `PlayerMountAnimator`, `PlayerAttack` and `PlayerReset`, and
+  `PlayerMountAttack`'s `GetComponentInChildren<MountStrike>`. `PlayerReset`'s two fetched `PlayerJump`
+  and `PlayerMovement` only to clear state they own, and went when those two became resettables of their
+  own. The rest are injected: behind `IPlayerGround`, `IPlayerMotion`, `IMountAttack` and `IMountStrike`,
+  and the `Player` marker into `PlayerAttack`.
 
 ### Reflection
 

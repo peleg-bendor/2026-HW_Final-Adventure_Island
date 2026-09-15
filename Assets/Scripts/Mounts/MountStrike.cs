@@ -2,7 +2,7 @@ using UnityEngine;
 
 // The hit an attack puts into the world: a shape that appears for as long as the attack lasts and
 // destroys what it touches. One object switched on and off, rather than a pool of one.
-public class MountStrike : MonoBehaviour
+public class MountStrike : MonoBehaviour, IMountStrike
 {
     private CapsuleCollider2D shape;
     private SpriteRenderer art;

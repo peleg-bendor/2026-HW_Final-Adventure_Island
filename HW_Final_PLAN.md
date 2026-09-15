@@ -1051,13 +1051,13 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
   behind `IRespawnCountdown`, bound `AsTransient`.
 - **Batch 2, done and confirmed**: `LevelWindow` split into `LevelFile`, `LevelScene` and `PlacedTile`,
   with `TilePlacerWindow` using `LevelScene`.
-- **Batch 3, written and compiling, awaiting Peleg's test**, the player's components. Edited directly, like
-  the two before. Beyond the specification below: `Face` is private now that nothing outside
-  `PlayerMovement` calls it, `ClearInput` and `ClearShove` became the two `ResetTo`s, `PlayerMovement`'s two
-  interfaces are one multi-type binding, and two comments this made stale were corrected (`IPlayerShove`'s
-  header, `PlayerFairy`'s "other resettable"). Raised with it and not yet answered: whether
-  `PlayerMountAttack`'s `GetComponentInChildren<MountStrike>` goes behind an interface too, and whether
-  `IMountAttack` splits, since its two consumers use disjoint members.
+- **Batch 3, done and confirmed**, the player's components, as specified below. Beyond the specification:
+  `Face` is private now that nothing outside `PlayerMovement` calls it, `ClearInput` and `ClearShove` became
+  the two `ResetTo`s, `PlayerMovement`'s two interfaces are one multi-type binding, and two comments this
+  made stale were corrected (`IPlayerShove`'s header, `PlayerFairy`'s "other resettable"). Confirmed by the
+  session of 18:34. **Added after that session, by Peleg's call, compiling but not yet played**: `IMountStrike`
+  on `MountStrike`, injected into `PlayerMountAttack` in place of its `GetComponentInChildren`. Its test is
+  one mounted attack that destroys something. `IMountAttack` stays one interface, also Peleg's call.
   1. `PlayerJump` becomes an `IResettable` that clears its own buffered input, and `PlayerMovement` one
      that clears its own shove and restores its own facing from the current level's `PlayerStart`. Both
      register on enable, like `PlayerReset` and `PlayerFairy`. `PlayerReset` keeps only position and
@@ -1076,10 +1076,14 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
 - **Open**: candidate 7, `SpriteVariant`'s `#if UNITY_EDITOR` prefab-override call, was not moved into
   `LevelScene`, because the component's own Pick One context menu needs it. Peleg has not yet said
   whether to keep it or drop the context menu.
-- **The next conversation picks up here, Peleg's call**: batch 3, then the write-up, then step 9. The
-  comment pass covers the nine files batch 3 rewrites - `PlayerJump`, `PlayerMovement`, `PlayerReset`,
-  `PlayerGround`, `PlayerAnimator`, `PlayerMountAnimator`, `PlayerAttack`, `PlayerMountAttack` and
-  `GameInstaller` - so finishing step 8 first means those files are commented once.
+- **Open**: a level without a start marker now prints three warnings per reset instead of two, since
+  `LevelDefinition.PlayerStart` warns on every read while the marker is missing and `PlayerMovement` is a
+  second reader. Neither authored level can reach it. Peleg asked whether it is a small fix; not yet decided.
+- **The next conversation picks up here, Peleg's call**: the `MountStrike` test, then the write-up, then
+  step 9. The comment pass covers the files batch 3 rewrote - `PlayerJump`, `PlayerMovement`,
+  `PlayerReset`, `PlayerGround`, `PlayerAnimator`, `PlayerMountAnimator`, `PlayerAttack`,
+  `PlayerMountAttack`, `MountStrike`, `GameInstaller` and the four new interfaces - so finishing step 8 first
+  means those files are commented once.
 
 ### Stage 21 — Two video scripts `[ ]`
 
@@ -3057,3 +3061,28 @@ _(append entries here as we make design decisions.)_
   and `IMountAttack`, injected the way `IPlayerShove`, `IPlayerGuard` and `IPlayerFairy` already are.
   Nothing changes in play; the cost is twelve files and slightly more code, since two components gain a
   registration.
+- **Confirmed by the session of 18:34, with `Player` at `Verbose`.** No binding failed at startup. Jumps,
+  landings and a refused jump logged as before; the blue mount jumped, attacked four times and destroyed a
+  shooting נחש and two אבנים with `MountAttack`, and riding into an אבן cost the mount; rocks shoved and
+  charged 3 each, and the last one emptied the כוח into a game over. The session ends on the popup test:
+  after the second game over, `Game started` is followed by a landing and no `Jumped`. Facing at respawn,
+  and no axe thrown while riding, were checked on screen only, since `Projectile` was at Info. Not
+  exercised: the red mount's fire and a second press during a mount attack. The count in the entry above
+  was one short: ten `GetComponent` calls went, since `PlayerAttack`'s `GetComponent<Player>()` became an
+  injection too, and `PlayerReset` held two of them for its three clearing calls.
+- **`MountStrike` went behind `IMountStrike` as well, found after the batch was specified.**
+  `PlayerMountAttack` fetched it with `GetComponentInChildren<MountStrike>(true)`, which the nine couplings
+  had not counted, and which after the batch was the only place one of the player's parts fetched another
+  project class by type. It is also the literal shape lesson 4's walkthrough flags as a DIP spot,
+  `GetComponentInChildren<FireballWeapon>()`. The case for leaving it was real: one consumer, and the strike
+  is the attack's own hit on its own child. Peleg's call to move it, since otherwise the DI section has to
+  make an exception for it, and the reason for the exception is weaker than the change: one interface with
+  `Begin` and `End`, one binding, one injection.
+- **`IMountAttack` stays one interface, although its two consumers read different halves of it.**
+  `PlayerAttack` calls only `TryAttack`, and `PlayerMountAnimator` reads only `IsAttacking` and
+  `AttackProgress`. The course's ISP example is an implementer forced to write a method it has no use for,
+  `FullTimeWorker.UploadInvoice`, and lesson 4 splits its weapon interfaces by kind of weapon rather than by
+  caller; `PlayerMountAttack` is the only implementer and needs all three members. `IMountSlot` already has
+  consumers reading different parts of it. `PlayerMovement` does implement two interfaces for two consumers,
+  and the difference is that being shoved and walking are two things he does, where starting an attack and
+  how far through it he is are one. Peleg's call.
