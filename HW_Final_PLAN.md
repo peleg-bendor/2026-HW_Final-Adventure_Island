@@ -990,7 +990,7 @@ own discussion:
 1. Factory. `[x]`
 1. Template, all four bases. `[x]`
 1. MVC, all three triads. `[x]`
-1. Async & Tasks, with the three coroutines beside the two Tasks. `[ ]`
+1. Async & Tasks, with the three coroutines beside the two Tasks. `[x]`
 1. SOLID: rank the worst-spot candidates and sweep whatever no technique covered, editor tooling
    included. Then Reflection and the rejected patterns. `[ ]`
 1. Comment pass. `[ ]`
@@ -2958,3 +2958,15 @@ _(append entries here as we make design decisions.)_
   coroutines "No Cancelation option within the function", and `try`/`catch` around the wait. The
   pairing is lesson 5's own - `EnemySpawner` on `Task.Delay` with a token beside `PlayerInvincible` on a
   coroutine - and `Enemy.WaitAndReturn` and `PlayerFairy.Hold` are those two, in this game.
+- **The respawn's cancellation had a one-frame gap, closed at stage 20.** When `Task.Delay` finishes,
+  the rest of `WaitAndReturn` is queued to run later in the frame, not at once. A full reset landing
+  in that gap found a countdown already complete, cancelled nothing, and the queued remainder then
+  spawned the enemy a second time - harmless, one spurious `back after` line. Writing the guard found
+  a worse case behind the same gap: a reset, then the enemy killed again, all inside it, and the old
+  remainder would bring the freshly killed enemy straight back past its new countdown. The countdown
+  now keeps its own token source in a local, and after the delay it returns unless `respawn` still
+  holds that source, so a reset and a new death both stop it. Verified by reading rather than by play,
+  since neither case can be produced on purpose. **Confirmed by one session** that the ordinary paths
+  are unchanged: a jumping נחש came back after 15.8, 10.3 and 14.6 seconds, twice across a strike that
+  rightly left its countdown running, and its next countdown was cancelled by the level change and
+  never logged a return.

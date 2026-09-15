@@ -514,7 +514,104 @@ Nothing from these files goes on the worst-spot list.
 
 ## Async & Tasks
 
-Not started.
+### What the course means
+
+The lecture slides, `Course/Lesson 05 - Async/Async & Tasks.pdf`:
+
+- Coroutines are "ideal for tasks that need to be spread out over several frames, such as animations,
+  timed events, AI behaviors", and, on a line of its own, "No Cancelation option within the function".
+- Tasks "represent asynchronous operations that can run concurrently and independently of the main
+  program flow", and "Shines with requests".
+- The examples: `async void Start()` with the `await` inside `try`/`catch`; a `CancellationTokenSource`
+  with `catch (TaskCanceledException)`; and a coroutine cancelling itself through a bool and `yield
+  break`, because it has no token.
+- "When to use Coroutines": Unity game-loop work - animations, UI updates, timed events - waiting with
+  `WaitForSeconds` and the other yield instructions, and simpler logic without threading.
+- "When to use Tasks": non-Unity work, CPU-bound and parallel work, file and network I/O, and "Error
+  Handling and Task Composition: Task provides more robust error handling capabilities through try-catch
+  blocks".
+
+The lesson project (`Lesson 5.md`) pairs them on purpose: `EnemySpawner` loops on `await Task.Delay(ms,
+token)` inside an `async void` with `try`/`catch`, cancelled by a key, and `PlayerInvincible`, beside it,
+runs a timed invincibility on a coroutine with `WaitForSeconds`.
+
+The transcript (00:57:58): "אם אתה משתמש בטאסקס, אני רוצה להבין למה השתמשת בטאסקס ולא בקורנטינה
+וגם להפך".
+
+### Where it lives
+
+| | Where | What waits | Why this tool |
+|---|---|---|---|
+| Task | `Enemies/Enemy.cs:260`, `WaitAndReturn` | a killed enemy's countdown | the enemy is switched off before the wait begins, and Unity stops coroutines on a deactivated GameObject |
+| Task | `State/GameFlow.cs:130`, `EndGame`, with `UI/Popup.cs:15`, `ShowAsync` | the player clicking a popup's button | `GameFlow` is a plain C# class, so there is nothing to run a coroutine on |
+| Coroutine | `Player/PlayerFairy.cs:64`, `Hold` | the פייה's ten seconds | the player is never switched off, and the wait should freeze under a popup |
+| Coroutine | `Collectibles/Egg.cs:72`, `Hatch` | the crack before the drop | the egg stays alive for the whole wait |
+| Coroutine | `Animation/OneShotAnimator.cs:16`, `Start` | a puff's frames | the object lives exactly as long as its frames |
+
+- Open `Assets/Scripts/Enemies/Enemy.cs:260`: lesson 5's `EnemySpawner`, in this game. Beside it,
+  `PlayerFairy.cs:64` is its `PlayerInvincible`.
+
+### What the code shows
+
+- Both Tasks follow the slides' own examples: `async void`, started from code that cannot `await`, the
+  whole wait inside `try`/`catch`. The respawn catches cancellation apart from faults, so an abandoned
+  countdown returns quietly and a real failure is logged as an error; the ending logs a fault, unfreezes
+  time and clears its guard, so an error cannot leave the game locked.
+- The respawn's token source is the enemy's own and new at every death. It is cancelled by a full reset,
+  since a level start brings every enemy back itself; in `OnDestroy`, so nothing touches a destroyed
+  object when Play stops; and not by a strike, since a killed enemy stays dead and its countdown carries
+  on. After the delay, the countdown returns unless it is still the enemy's current one, which covers a
+  reset or a new death landing between the delay ending and the rest of the method running.
+- The popup bridges a click to an `await` with a `TaskCompletionSource` its button completes.
+- The three coroutines wait with `WaitForSeconds`, the slides' example, and each stops with
+  `StopAllCoroutines` when its owner resets.
+- Two differences between the tools decide every choice. Lifetime: a coroutine lives and dies with an
+  active GameObject, and a Task belongs to no object. Clock: `WaitForSeconds` follows `Time.timeScale` and
+  freezes under a popup, and `Task.Delay` counts real time.
+
+Verdict: the code matches the slides line for line. The two Tasks sit on the side of the slides' "when
+to use" lists the slides would not pick, and the answer for each is structural rather than preference.
+The review closed a one-frame gap in the respawn's cancellation; the plan's Decisions Log has it.
+
+### What could be challenged
+
+1. "Your slides say timed events are for coroutines. Why is the respawn a Task?" A coroutine runs on an
+   active GameObject, and the enemy is switched off before its countdown begins. Switching it off is
+   what makes it gone in one line - its collider, its picture, its animation and its `Update` at once -
+   and a coroutine would need a manager holding a timer for every enemy, or an enemy kept on with each
+   part disabled by hand. The Task also brings what your slides credit Tasks with: a token that cancels
+   it when a level starts, and `try`/`catch` around the wait.
+2. "And the popup? Your slides put UI under coroutines." The code that waits is `GameFlow`, a plain C#
+   class, where `StartCoroutine` does not exist. The wait is for a click, not for time, and the Task keeps
+   end, wait and start again in one method beside the rules that decided the game had ended.
+3. "Then why is the fairy a coroutine?" It is your `PlayerInvincible`: a timed event on an object that is
+   always on, returning nothing. Its ten seconds should freeze under a popup, which `WaitForSeconds` does;
+   a Task would count through the frozen screen and need a token to stop.
+4. "`async void` is bad practice." Usually. Nothing that starts these waits can `await` - a trigger
+   callback cannot, nor can a Unity message - and an unawaited `Task` swallows its exception where `async
+   void` rethrows it. Both methods catch explicitly, which is your slides' `async void Start` example.
+5. "Your respawn ignores `Time.timeScale`." It does. The only freeze in this game is under a popup, and
+   both popups end in a full reset that cancels every countdown, so a respawn under a frozen screen only
+   reaches the state the restart was about to produce.
+6. "What if a countdown ends in the same frame as a restart?" The rest of the method checks that its
+   countdown is still the enemy's current one, and stops if a reset or a new death replaced it.
+7. "Unity 6 has `Awaitable`. Why `Task`?" The course and the requirement name Tasks, and `Task` is what
+   lesson 5 taught.
+
+Rejected along the way, all in the Decisions Log: building the level from its file at Play, which would
+have given Async a file I/O home; a MonoBehaviour listening for game over, which a coroutine would have
+done just as well; and one token shared by every enemy, replaced by one per enemy.
+
+Nothing from these files goes on the worst-spot list.
+
+### The defense sentence
+
+> A coroutine lives on an active GameObject and runs on Unity's clock, and a Task belongs to no object and
+> runs on real time. A killed enemy is switched off before its countdown starts, and the flow that waits
+> for the popup is not a MonoBehaviour at all, so both of those are Tasks, with a token that cancels a
+> respawn when a level starts. The fairy, the egg and the puff are timed events on objects that stay alive
+> and should freeze under a popup, which is your own slide's case for a coroutine and exactly what
+> `WaitForSeconds` does.
 
 ## SOLID
 
