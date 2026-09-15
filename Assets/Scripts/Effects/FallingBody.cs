@@ -18,7 +18,7 @@ public class FallingBody : MonoBehaviour
 
         if (picture == null || rigid == null)
         {
-            GameLog.Warning(LogCategory.Game, "No SpriteRenderer or Rigidbody2D on " + name + ", the enemy vanishes without falling");
+            GameLog.Warning(LogCategory.Game, "No SpriteRenderer or Rigidbody2D found on " + name + ", the enemy vanishes without falling");
             Destroy(gameObject);
             return;
         }

@@ -46,11 +46,12 @@ public class Levels : ILevels
         if (index < 0 || index >= levels.Length)
             return false;
 
+        GameLog.Info(LogCategory.Game, "Level started: " + levels[index].name);
+
         for (int i = 0; i < levels.Length; i++)
             levels[i].gameObject.SetActive(i == index);
 
         currentIndex = index;
-        GameLog.Info(LogCategory.Game, "Level started: " + levels[index].name);
         return true;
     }
 }

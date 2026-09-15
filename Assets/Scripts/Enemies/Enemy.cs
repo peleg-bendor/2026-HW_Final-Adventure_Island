@@ -267,8 +267,8 @@ public abstract class Enemy : MonoBehaviour, IDestructible, IResettable
     private void ComeBack(float seconds)
     {
         destroyed = false;
-        Spawn();
         GameLog.Info(LogCategory.Enemy, name + " back after " + seconds.ToString("0.0") + "s");
+        Spawn();
     }
 
     // Coming back is one thing that happens two ways, rather than two that have to agree: the

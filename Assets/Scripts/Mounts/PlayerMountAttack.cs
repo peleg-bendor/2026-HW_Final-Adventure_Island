@@ -54,6 +54,7 @@ public class PlayerMountAttack : MonoBehaviour, IMountAttack
 
         attackSeconds = mount.AttackSeconds;
         attackUntil = Time.time + attackSeconds;
+        GameLog.Verbose(LogCategory.Mount, "Mount attacked: " + mount.name);
 
         if (strike != null)
             strike.Begin(mount.StrikeSprite, mount.StrikeOffset, mount.StrikeSize);
@@ -61,7 +62,6 @@ public class PlayerMountAttack : MonoBehaviour, IMountAttack
         if (mount.SpitsFire)
             SpitFire(mount);
 
-        GameLog.Verbose(LogCategory.Mount, "Mount attacked: " + mount.name);
         return true;
     }
 

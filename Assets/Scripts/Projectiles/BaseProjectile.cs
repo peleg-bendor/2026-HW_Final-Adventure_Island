@@ -94,8 +94,13 @@ public abstract class BaseProjectile : MonoBehaviour
     {
     }
 
+    // Unity still delivers the rest of a physics step's contacts after a despawn, so one that is already
+    // gone ignores them rather than hitting a second thing.
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (gameObject.activeSelf == false)
+            return;
+
         OnHit(other);
     }
 

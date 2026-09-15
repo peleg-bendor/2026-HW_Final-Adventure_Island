@@ -65,7 +65,9 @@ using it at all (00:53:19).
   `Scene_Game.unity`. The installer's own serialized numbers and prefabs do, which is configuration
   entering at the composition root.
 - The order is guaranteed, not lucky. `SceneContext` runs at execution order -9999, so every scene object
-  is injected before any `Awake`. `SceneKernel` runs `Initialize` from its `Start` at -9997, before
+  that receives anything is injected before its `Awake`. `LogSettings` and `LogFileWriter` wake earlier,
+  at -10000, so the log file is already open while the container builds, and neither has anything
+  injected. `SceneKernel` runs `Initialize` from its `Start` at -9997, before
   `GameStarter.Start`. `InstantiatePrefab` instantiates inactive, injects, then activates
   (`DiContainer.cs:1703`, `2044`, `2052`). A base class's `Construct` runs before its subclass's
   (`CallInjectMethodsTopDown`, `DiContainer.cs:1471`).
@@ -368,7 +370,7 @@ Four bases, each with its fixed sequence in the base and its varying steps in th
 | `Collectible` | `OnTriggerEnter2D` (`:50`): the player? then switch off, then `PickUp` | `PickUp` | 4 classes on 8 prefabs |
 | `Hazard` | `Touch` (`:61`): once a frame, the player, the guard, then `Hurt`. `TryDestroy` (`:78`): `DestroyedBy`, then off and a puff | `Hurt`, `DestroyedBy` | `Fire`, `Rock` |
 | `Enemy` | `Update` (`:146`): near or mid-action, then `Behave`. `TryDestroy` (`:202`): `DestroyedBy`, then `Die`. `Spawn` (`:276`): home, on, then `OnSpawned`. `Awake` (`:106`): register, then `OnAwake` | `Behave`, `DestroyedBy`; optionally `IsMidAction`, `OnSpawned`, `OnAwake` | 6 classes on 7 prefabs |
-| `BaseProjectile` | `Launch` (`:55`): on, placed, velocity and clock cleared, then `OnLaunched`. `Update` (`:81`): `Fly`, then the timeout. `OnTriggerEnter2D` (`:97`): `OnHit` | `OnHit`; optionally `OnLaunched`, `Fly`, `OnAwake` | 4 |
+| `BaseProjectile` | `Launch` (`:55`): on, placed, velocity and clock cleared, then `OnLaunched`. `Update` (`:81`): `Fly`, then the timeout. `OnTriggerEnter2D` (`:99`): still in flight? then `OnHit` | `OnHit`; optionally `OnLaunched`, `Fly`, `OnAwake` | 4 |
 
 - Open `Assets/Scripts/Enemies/Enemy.cs:146`, `Update`: the shape of the note's `ExecuteBehavior`, a
   check the base owns and then the step the subclass writes. The strongest of the four.
@@ -394,7 +396,9 @@ Four bases, each with its fixed sequence in the base and its varying steps in th
 
 Verdict: matches both definitions, the note's and Exercise 3's. The review made the four bases own their
 Unity messages the same way, since `BaseProjectile.Awake` had been `protected virtual`, and moved the
-enemies' shared pose code into `Enemy`; the plan's Decisions Log has both.
+enemies' shared pose code into `Enemy`. The log pass then gave `BaseProjectile.OnTriggerEnter2D` its
+check, once an axe landing on two tiles showed that a despawned projectile still receives the rest of
+its physics step. The plan's Decisions Log has all three.
 
 ### What could be challenged
 
@@ -465,7 +469,7 @@ rule.
 
 - Open `Assets/Scripts/MVC/Power/PowerController.cs:62`, `Spend`: input arrives, the model changes, the
   view is told, and at zero the one consequence the controller owns, a strike.
-- The session's changes, for the two counters: `State/GameFlow.cs:72` and `:90`.
+- The session's changes, for the two counters: `State/GameFlow.cs:72` and `:97`.
 
 ### What the code shows
 
@@ -555,7 +559,7 @@ The transcript (00:57:58): "אם אתה משתמש בטאסקס, אני רוצה
 | | Where | What waits | Why this tool |
 |---|---|---|---|
 | Task | `Enemies/RespawnCountdown.cs:19`, `Begin`, started by `Enemy.WaitAndReturn` | a killed enemy's countdown | the enemy is switched off before the wait begins, and Unity stops coroutines on a deactivated GameObject |
-| Task | `State/GameFlow.cs:124`, `EndGame`, with `UI/Popup.cs:15`, `ShowAsync` | the player clicking a popup's button | `GameFlow` is a plain C# class, so there is nothing to run a coroutine on |
+| Task | `State/GameFlow.cs:131`, `EndGame`, with `UI/Popup.cs:15`, `ShowAsync` | the player clicking a popup's button | `GameFlow` is a plain C# class, so there is nothing to run a coroutine on |
 | Coroutine | `Player/PlayerFairy.cs:63`, `Hold` | the פייה's ten seconds | the player is never switched off, and the wait should freeze under a popup |
 | Coroutine | `Collectibles/Egg.cs:72`, `Hatch` | the crack before the drop | the egg stays alive for the whole wait |
 | Coroutine | `Animation/OneShotAnimator.cs:16`, `Start` | a puff's frames | the object lives exactly as long as its frames |
@@ -685,9 +689,10 @@ Measured over the 110 game scripts and 10 editor scripts:
 - Four abstract bases with 16 subclasses between them, and not one subclass declares a Unity message of
   its own.
 - Two static classes in game code: `GameLog`, called 146 times from 61 files, and `Ground`, the physics
-  query four classes share.
-- The largest class in game code is `Enemy` at 308 lines, 148 of them code, then `Frog` at 223 and
-  `GameFlow` at 142. In the editor tooling it is `TilePlacerWindow`, at 235.
+  query four classes share. One static field: `Spikes`' last touched frame, shared by a pit's tiles so
+  that one fall is logged once, which is logging rule 9 and Exercise 3's way of meeting it.
+- The largest class in game code is `Enemy` at 308 lines, 148 of them code, then `Frog` at 219 and
+  `SnakeJumper` at 165. In the editor tooling it is `TilePlacerWindow`, at 235.
 
 Principle by principle:
 
@@ -887,6 +892,8 @@ Template and class hierarchies:
 - A `protected virtual Awake` calling `base.Awake()`: a subclass that forgets the call loses its
   registration. Rejected for `Enemy`, and removed from `BaseProjectile` in this review.
 - A projectile subclass owning `Update`: it would hide the base's timeout.
+- The axe alone ignoring contacts after it is gone: the red mount's flame could kill twice the same way,
+  so the base checks before `OnHit`.
 - A default `OnHit`, or a default `DestroyedBy`: a new destroyer would be granted to five enemies by
   silence.
 - An intermediate `DestroyingProjectile`: the two fires fly alike and are opposites in what they hit.
@@ -968,6 +975,12 @@ State, flow and the reset:
 - An immunity kept on each rock: three rocks in a row cost nine power for one contact.
 - The fairy as a field on `PlayerGuard`: its own component, like the mount slot the guard consults.
 - `Physics2D.SyncTransforms()` in `PlayerReset`: a global physics call for one reader.
+- `Enemy.ResetTo` skipping enemies whose level is switched off: their countdowns still need cancelling,
+  and a strike's reset reaches them too. The spider measures its drop only inside its own level.
+- Every spike tile in a pit logging its own touch, with the flow's refusal after the second: one fall is
+  one line, so the first tile touched in a frame speaks for the pit. The strike guard stays in `GameFlow`.
+- Dropping the installer's log line because it never reached the file: the writer opens ahead of
+  `SceneContext`, so a binding that fails is in the file too.
 - The Input System's action asset: no rebinding, no second device, no options screen.
 
 Tooling:

@@ -72,6 +72,8 @@ next exercise leaves it, `README.md` and `.gitignore` behind. Copy all four by h
     call and everything inside it disappears from a release build.
 13. `Assets/Scripts/Editor/` keeps plain `Debug` and reports results rather than events. Tool
     feedback is not game logging, and it never reaches a build.
+14. Log an event before calling anything that reacts to it, so the file reads in the order things
+    happened: `Strike lost` comes before the `Weapon lost` its listener writes.
 
 ## Naming and hierarchy
 

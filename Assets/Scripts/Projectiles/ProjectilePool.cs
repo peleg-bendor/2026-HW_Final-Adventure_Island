@@ -44,7 +44,7 @@ public class ProjectilePool : IProjectilePool, IResettable, IInitializable
     {
         if (prefab == null)
         {
-            GameLog.Warning(LogCategory.Projectile, "A projectile prefab is unassigned on GameInstaller, none of that kind was built");
+            GameLog.Warning(LogCategory.Projectile, "No prefab assigned on GameInstaller for one kind of projectile, none of that kind was built");
             return;
         }
 

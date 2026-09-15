@@ -46,8 +46,8 @@ public class Rock : Hazard
             return;
         }
 
-        shove.Shove(shoveSpeed, shoveSeconds);
         GameLog.Info(LogCategory.Hazard, "Rock touched - costs " + powerCost + " power");
+        shove.Shove(shoveSpeed, shoveSeconds);
         power.Spend(powerCost);
     }
 }

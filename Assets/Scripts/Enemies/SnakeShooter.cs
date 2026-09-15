@@ -71,7 +71,7 @@ public class SnakeShooter : Enemy
 
         if (pool == null || prefabs == null || prefabs.snakeFireball == null)
         {
-            GameLog.Warning(LogCategory.Enemy, "No IProjectilePool or no snake fireball prefab, " + name + " cannot shoot");
+            GameLog.Warning(LogCategory.Enemy, "No IProjectilePool injected or no snake fireball prefab assigned, " + name + " cannot shoot");
             return;
         }
 

@@ -27,10 +27,13 @@ public class FruitCollectible : Collectible
         }
 
         int gained = power.Gain(powerGiven);
-        flow.TakeFruit();
 
+        // Said before the flow counts it, since the fruit that fills a strike's worth costs the strike
+        // inside that call.
         GameLog.Info(LogCategory.Collectible, gained > 0
             ? "Fruit taken - " + gained + " power"
             : "Fruit taken - power already full");
+
+        flow.TakeFruit();
     }
 }

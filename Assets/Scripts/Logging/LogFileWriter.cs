@@ -3,7 +3,7 @@ using UnityEngine;
 
 // Writes a Play session's log to a file beside the project, so reading a run stops meaning
 // copying the Console out by hand.
-[DefaultExecutionOrder(-100)]
+[DefaultExecutionOrder(-10000)]
 public class LogFileWriter : MonoBehaviour
 {
     [SerializeField] private string fileName = "GameLog.txt";
@@ -23,6 +23,8 @@ public class LogFileWriter : MonoBehaviour
         fileStarted = false;
     }
 
+    // Opened before SceneContext builds the container, by way of this class's own execution order, so
+    // what is logged during the build reaches the file.
     private void OnEnable()
     {
         string path = Path.Combine(Directory.GetParent(Application.dataPath).FullName, fileName);
@@ -39,7 +41,7 @@ public class LogFileWriter : MonoBehaviour
         catch (System.Exception ex)
         {
             writer = null;
-            GameLog.Warning(LogCategory.Game, "Could not open " + fileName + ", this session will not be written to a file (" + ex.Message + ")");
+            GameLog.Warning(LogCategory.Game, "Could not open " + fileName + ", this session will not be written to a file - " + ex.Message);
             return;
         }
 

@@ -70,16 +70,23 @@ public class GameFlow : IGameFlow
 
         lastStrikeFrame = Time.frameCount;
         session.LoseStrike();
+        bool gameOver = session.StrikesRemaining == 0;
+
+        // Said before the event is raised, so what its listeners lose is logged after the strike that
+        // cost it.
+        if (gameOver)
+            GameLog.Info(LogCategory.Game, "Game over - no strikes left");
+        else
+            GameLog.Info(LogCategory.Game, "Strike lost - " + session.StrikesRemaining + " remaining");
+
         StrikeLost?.Invoke();
 
-        if (session.StrikesRemaining == 0)
+        if (gameOver)
         {
-            GameLog.Info(LogCategory.Game, "Game over - no strikes left");
             EndGame(popups.ShowGameOverAsync);
             return;
         }
 
-        GameLog.Info(LogCategory.Game, "Strike lost - " + session.StrikesRemaining + " remaining");
         resets.ResetAll(ResetScope.AfterStrike);
     }
 

@@ -994,7 +994,7 @@ own discussion:
 1. SOLID: rank the worst-spot candidates and sweep whatever no technique covered, editor tooling
    included. Then Reflection and the rejected patterns. `[x]`, see "Where step 8 stands" below.
 1. Comment pass. `[x]`, see "How step 9 runs" below.
-1. Log pass. `[ ]`
+1. Log pass. `[x]`, see "How step 10 runs" below.
 1. Loose ends: whether `DebugFlowKeys` ships, and whether the twelve template references are chased. `[ ]`
 1. Risk session: level 2's final save climbed to the congratulation popup, and a פייה against the
    ציפור, the צפרדע, both spiders and the jumping נחש. `[ ]`
@@ -1124,6 +1124,47 @@ reasoning is in the Decisions Log entries of this date. Kept below as the record
   included. Seven were wrong and are corrected: five moved by step 8 and this pass, and two
   (`BaseProjectile.cs:47` for `Launch`, `Enemy.cs:243` for the drop) already wrong before either.
 - **Step 9 closed.** 44 comments in 34 files, two scripts moved, no code changed.
+- **The next conversation picks up at step 10**, the log pass, which opens with its own design discussion.
+  Its known findings are in the list under "Carried into the review" above, and it changes the assembly,
+  so it is confirmed by a Play session rather than by a hash.
+
+**How step 10 runs, agreed 15.9.2026.** Proposed at the design discussion, and Peleg left the decisions to
+Claude ("I trust you to make the right decisions for the logs. Edit directly").
+
+- **Scope**: the 61 game files that log, and the logging files themselves. `Editor/` stays out by logging
+  rule 13. Read against rules 1 to 12 anyway, it has a full stop at `LevelWindow.cs:103`, "skipped" at
+  `:72` and `:134`, and "object(s)" at `TilePlacerWindow.cs:168`, all left as they are.
+- **Standard**: step 9's. Fix what breaks a rule or leaves the log misleading. No new lines for behaviour
+  that logs nothing today, such as the spider's drop or the jumping snake's hop; step 13 marks those as
+  seen on screen.
+- **Delivery**: one batch, edited directly, compiled here with Unity's compiler before Unity opens it, and
+  reviewed with `git diff`.
+- **Confirmation**: one Play session read from `GameLog.txt`, with `Projectile` raised to `Verbose` beside
+  `Player` and `Mount`, which the saved `LogSettings` still has at `Verbose` from step 8. It needs the
+  start, a few axes thrown at open ground, a pit fall while riding, a strike while holding a weapon, the
+  fruit that fills a strike's worth, a level change and a game over. The five warning texts cannot fire
+  in a working scene and are checked by compiling only.
+- **The batch, done and confirmed**: 15 scripts, `CONVENTIONS.md` and `Techniques.md`.
+  The reasons are in the Decisions Log entries of this date.
+  1. `LogFileWriter` and `LogSettings` run at -10000, ahead of `SceneContext`.
+  2. `BaseProjectile.OnTriggerEnter2D` ignores contacts once the projectile is switched off.
+  3. `Spider.OnSpawned` measures its drop only while its own level is active.
+  4. `FruitCollectible` logs before `flow.TakeFruit()`, and `GameFlow.LoseStrike` logs `Strike lost` or
+     `Game over` before raising `StrikeLost`.
+  5. Logging rule 14, and four more lines moved to meet it: in `Rock`, `Enemy.ComeBack`, `Levels.Enter`
+     and `PlayerMountAttack.TryAttack`.
+  6. `Spikes` shares one last-touched frame across its tiles.
+  7. Five warning texts: `MountStrike`, `FallingBody`, `SnakeShooter`, `ProjectilePool`, `LogFileWriter`.
+- **`Techniques.md`**: the DI section's execution-order sentence, the `BaseProjectile` row and the
+  Template verdict, the static field in the SOLID section, and three rejected patterns. Every `file:line`
+  was checked by script against the method it names, 43 into the project's scripts and five into Zenject's:
+  `GameFlow.cs:90` moved to `:97`, `:124` to `:131`, and the `BaseProjectile` row's `:97` to `:99`. The
+  class-size sentence was already wrong and is corrected: `Frog` is 219 lines, not 223, and `SnakeJumper`
+  at 165 is third, not `GameFlow`. `GameLog` is still called 146 times from 61 files.
+- **Confirmed by the session of 20:49**, 421 lines with no warning. The evidence is in the Decisions Log
+  entry of that name.
+- **Step 10 closed.** The next conversation picks up at step 11, the loose ends, which opens with its own
+  design discussion.
 
 ### Stage 21 — Two video scripts `[ ]`
 
@@ -3181,3 +3222,82 @@ _(append entries here as we make design decisions.)_
   Comments that already passed were left alone, including the five identical `-9997` comments, since each
   file is read on its own and the number is Zenject's. The proof held for all ten batches: one hash
   before and after every batch, identical throughout.
+- **The log file opens ahead of the container.** `SceneContext` builds the container in its `Awake` at
+  -9999, and `LogFileWriter` subscribed in `OnEnable` at -100, so what was logged during the build reached
+  the Console and never the file: `Zenject container built`, `Levels`' duplicate-number warning, and
+  `DeathEffects`' missing-prefab warning, whose constructor runs when the first enemy or hazard is injected.
+  Worse than those, a binding that fails to resolve throws in the same window, which would have left
+  `GameLog.txt` showing a clean start for a scene that never built. `LogFileWriter` and `LogSettings` now
+  run at -10000, one ahead of Zenject, the second so the Inspector's levels already apply during the build.
+  Deleting the installer's line was the alternative; it would have left the other three out, and taken
+  away the line `Techniques.md`'s `GameLog` answer points at. The DI section said every scene object is
+  injected before any `Awake`, and now names the two logging components, which wake first and have
+  nothing injected.
+- **A projectile ignores contacts once it is switched off, which also closed a double kill.** A landing
+  axe logged `Axe hit the ground` twice: it touches two tiles in one physics step, and Unity delivers the
+  second callback after the first has switched it off. `ProjectileAxe` and `ProjectileMountFire` both
+  despawn after a kill, so by the same mechanism one axe or one flame reaching two enemies in a step killed
+  both. That was inferred, not seen. The check went into `BaseProjectile.OnTriggerEnter2D` rather than the
+  axe, so all four have it and the base's third template method has a step of its own. One shot now kills
+  at most one thing, and a boomerang caught in the step it touches an enemy no longer kills that enemy,
+  which had depended on the order of the callbacks.
+- **A spider measures its drop only inside its own level.** `Enemy` stays registered while its level is
+  off, so a level change's full reset spawned level 1's moving spiders under an inactive root, and their
+  cast down found only level 2's colliders. The stage 19 entry said the two warnings came at every
+  transition; `warnedNoFloor` is per spider and never cleared, so only a session's first level change
+  printed them, and the flag then hid a real missing floor for the rest of the session. `Spider.OnSpawned`
+  now skips the cast while `activeInHierarchy` is false. Every level entry runs a full reset after the
+  switch, so a spider is spawned again in its own level before it can be seen, and a strike's reset
+  reaching the other level's spiders is covered as well. Skipping switched-off enemies in `Enemy.ResetTo`
+  was rejected: their countdowns still need cancelling, it changes all six enemies, and a strike's reset
+  would still reach them.
+- **Logging rule 14: an event is logged before whatever reacts to it.** The fruit that fills a strike's
+  worth logged `Fruit taken` after the game over it caused, and every strike had the same shape:
+  `GameFlow.LoseStrike` raised `StrikeLost` before logging, so `Weapon lost` and `Mount lost` preceded the
+  `Strike lost` or `Game over` behind them. Found by reading; `PlayerGuard`'s comment already argued the
+  principle for the mount. Written down, the rule found four more lines logged after their own effects:
+  `Rock` after the shove, `Enemy.ComeBack` after `Spawn`, `Levels.Enter` after the level's objects woke,
+  and `PlayerMountAttack` after the red mount's flame had logged its launch, the only one of the four a
+  working game shows. One order is kept: at `Verbose`, `Power 12 of 16` from `power.Gain` still comes
+  before `Fruit taken`, since logging first would leave the line unable to say how much was gained.
+- **A pit's spike tiles share one frame guard, and stage 15's strike guard stays in `GameFlow`.** A fall
+  touches two or three `Sprite_Spikes` tiles in one frame, and each logged `Spikes touched`, with `Strike
+  ignored - one was already lost this frame` after the second: four lines for one fall, which is the case
+  logging rule 9 is written for. `Spikes` now keeps a `private static int` last-touched frame, Exercise 3's
+  way of meeting that rule in `MovingFloor` and `DisappearingFloor`, and a tile touched in a frame another
+  tile has taken returns before it logs or calls the flow. Play is unchanged, since the flow refused that
+  second call anyway, and the flow's guard is still what stops a fire and an enemy touched together.
+  Guarding only the log line would have left `Strike ignored` with no touch above it. The cost worth
+  knowing: a static can outlast a Play with domain reload off, and would then swallow a touch only by
+  matching the new session's frame number exactly.
+- **Five warning texts brought into the rules' shapes**, none of which can fire in a working scene.
+  `MountStrike` named the one strike object (rule 6). `FallingBody` lacked "found" and `SnakeShooter`
+  "injected" and "assigned" (rule 10). `ProjectilePool`'s unassigned prefab was the one missing-reference
+  warning not shaped `No X` (rule 10). `LogFileWriter` wrapped the exception message in parentheses where
+  the rest put it after `" - "` (rule 3).
+- **Read in the log pass and left as they are.** A mount absorbing a hit can log three lines,
+  `destroyed - Riding`, `Hit absorbed` and `Mount lost`, each from the class that owns that fact, and for
+  the ghost the guard's line is the only cause `Mount lost` has. `Attack ignored - no weapon held` stays
+  `Info` beside the `Verbose` refusals, since rule 11 is about timers and contacts and a key press is
+  neither. `back after` and `Fairy gone` end timers at `Info` but fire once each. Both moving spiders log
+  as `Sprite_Enemy_Spider_Moving`, which meets rule 6. `Pooled`, `Recalled` and `Dropped` lead with the
+  verb, and the bracketed category names the subject. No log argument has a side effect. `DebugFlowKeys`'
+  two keys are the only strike and completion sources with no cause line, which step 11 settles.
+- **Step 10 confirmed by the session of 20:49**, with `Player`, `Mount` and `Projectile` at `Verbose`: 421
+  lines and not one warning. `Zenject container built` is line 1. Seventeen axes were thrown, and each has
+  exactly one outcome line: eleven `Axe hit the ground` and six kills. Counting those lines, the fourth axe
+  was refused (line 42) with exactly three in the air. A pit fall while riding with an axe (287-290) reads
+  `Spikes touched`, `Strike lost - 2 remaining`, `Weapon lost`, `Mount lost`, and `Strike ignored` appears
+  nowhere in the session. Three more strikes, from a bird, a fire and the ghost, log `Strike lost` before
+  `Weapon lost`. The twentieth fruit (217-220) reads `Fruit taken`, `Fruit reached 20`, `Game over`,
+  `Weapon lost`. The red mount logs `Mount attacked` before its flame's `launched`, twice. The level change
+  (293-295), the session's first and so the one that used to print the spider warnings, printed none.
+  The boomerang was thrown five times: four were caught, the fifth was recalled by a strike (420), and it
+  still destroyed what it flew through, so the new check leaves a projectile that stays in flight alone.
+  Line 221, a jumping נחש back after 14.3 seconds under the game-over popup, is the real-time respawn
+  recorded above as accepted. **What the log cannot show**: whether a moving spider still drops inside
+  its own level, which reading says is unchanged, since the new condition is true there, and which steps
+  12 and 13 will see; one shot meeting two enemies in a step; a second spike tile being touched, which
+  the guard now keeps silent, though a mount always spans two; the reorders in `Rock`, `Enemy.ComeBack`
+  and `Levels.Enter`, where nothing logs in between in a working game; and the five warning texts, checked
+  by compiling only.

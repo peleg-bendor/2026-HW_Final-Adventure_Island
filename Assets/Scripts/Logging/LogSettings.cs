@@ -2,7 +2,7 @@ using UnityEngine;
 
 // Holds one log level per category and pushes them into GameLog. A MonoBehaviour rather than a
 // ScriptableObject, since GameLog is static and this project has no Resources folder to reach.
-[DefaultExecutionOrder(-100)]
+[DefaultExecutionOrder(-10000)]
 public class LogSettings : MonoBehaviour
 {
     // Named rows rather than a bare LogLevel array, so the Inspector says which category is which.
@@ -17,7 +17,8 @@ public class LogSettings : MonoBehaviour
 
     public CategoryLevel[] Levels { get { return levels; } }
 
-    // Beats the Awake calls that log, by way of this class's own execution order.
+    // Beats every Awake that logs, SceneContext's building of the container included, by way of this
+    // class's own execution order.
     private void Awake()
     {
         Apply();

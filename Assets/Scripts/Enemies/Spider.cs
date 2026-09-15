@@ -27,7 +27,9 @@ public class Spider : Enemy
     // Measured at every spawn rather than once, so the drop matches the floor beneath it at the time.
     protected override void OnSpawned()
     {
-        travel = moves ? MeasureDrop() : 0f;
+        // Not while its level is switched off, where the only ground a cast can find is the other
+        // level's. Entering its level spawns it again before it can be seen.
+        travel = moves && gameObject.activeInHierarchy ? MeasureDrop() : 0f;
         spawnedAt = Time.time;
     }
 

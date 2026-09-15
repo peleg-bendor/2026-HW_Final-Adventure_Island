@@ -14,7 +14,7 @@ public class MountStrike : MonoBehaviour, IMountStrike
 
         if (shape == null || art == null)
         {
-            GameLog.Warning(LogCategory.Mount, "No CapsuleCollider2D or SpriteRenderer found on " + name + ", a mount attack will hit nothing");
+            GameLog.Warning(LogCategory.Mount, "No CapsuleCollider2D or SpriteRenderer found, a mount attack will hit nothing");
             return;
         }
 
