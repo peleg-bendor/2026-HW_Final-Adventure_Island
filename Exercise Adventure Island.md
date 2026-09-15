@@ -184,9 +184,6 @@ objects and enemies.
    "או שיש רנדום, היא מפילה משהו או לא, או שיש אפשרות שאתם מזינים מה היא מפילה" (00:46:52) -- and called
    configured the better of the two, "עדיף אולי אפילו לא לעשות את זה רנדום, למה שתוכל לשלוט בכל הדברים
    שיוצאים" (00:37:46). The original game has no randomness in it at all.
-1. One drop per enemy rather than a list. 00:47:03 reads literally as loading every drop type onto a
-   single enemy, and what that line asks for -- every type seen early -- is 10.4's job for whoever
-   authors the level rather than one enemy's.
 1. A destroyed enemy comes back after a countdown, **at the place it was authored**. **This delay is
    random**, suggested `10` to `20` seconds (00:44:49). One of the two things he asked to be random,
    the other being the צפרדע's jump timing in 8.18. Nothing else in the game is rolled. He calls it
@@ -245,6 +242,12 @@ objects and enemies.
 24. Its sprite is not in the sheets he provided; he could not extract one (00:21:34).
 25. Level 2 has a second one, Peleg's call. 8.23 is how many are enough, not a limit, and the one in each
     level is killed only by that level's פייה.
+
+### Drops
+
+26. One drop per enemy rather than a list, which is what 8.3 configures. 00:47:03 reads literally as
+    loading every drop type onto a single enemy, and what that line asks for -- every type seen early --
+    is 10.4's job for whoever authors the level rather than one enemy's.
 
 ## 9. פייה
 
@@ -337,11 +340,12 @@ objects and enemies.
    (00:55:25): "תדאגו שהלינק יהיה חי... לינק אבל שהוא לא ימות".
 6. Oral defense on 28, 29 or 30 September, between 18:00 and 21:00, booked by email.
 7. Three files, which are 14.2's two recordings with the gameplay one split under 14.4.
-   `1-Gameplay-Playthrough` is one run of both levels showing every enemy, up to 5 minutes.
-   `2-Gameplay-Features` is what a single run cannot hold, 5 to 10 minutes: every drop type, the
-   20-fruit פסילה, an אבן surviving an axe and breaking to a boomerang (00:18:44), and the Inspector
-   on a bird's dip and an enemy's drop, which is what proves 8.3, 8.7 and 8.9 are authored per
-   instance. `3-Code` walks the code, up to 15 minutes.
+   `1-Gameplay-Playthrough` is one run of both levels to the congratulation popup, which passes every
+   enemy, up to 5 minutes. `2-Gameplay-Features` shows the features one at a time, in separate cuts
+   on a level edited beforehand for each, 5 to 10 minutes: among them every drop type, the 20-fruit
+   פסילה, an אבן surviving an axe and breaking to a boomerang (00:18:44), and the Inspector on a bird's
+   dip and an enemy's drop, which is what proves 8.3, 8.7 and 8.9 are authored per instance. `3-Code`
+   walks the code, up to 15 minutes. Neither source sets any of the three lengths; they are Peleg's.
 8. `2-Gameplay-Features` ships with a text file listing what it shows and at what time, so a feature
    he wants to check can be found without watching the whole recording.
 

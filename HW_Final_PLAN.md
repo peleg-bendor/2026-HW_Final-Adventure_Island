@@ -50,7 +50,7 @@ Builder, Factory, MVC, Async & Tasks, Template**, with SOLID throughout.
 | 5          | Re-read the plan before any game code                       |
 | 6 to 19    | Game development. One section each; the reasoning is Stage 1, Step 3 |
 | 20         | Final testing, comments and log check                        |
-| 21         | Two video scripts                                            |
+| 21         | Three recordings and their scripts                           |
 
 ### Stage 0 — The exercise, restated `[x]`
 
@@ -1205,7 +1205,7 @@ by script after the last code change that moved any of them. What the stage chan
 Decisions Log entries of this date. Three things have not appeared in a log since those changes: כוכב, an
 אבן surviving an axe, and the congratulation popup on the final level 2.
 
-### Stage 21 — Two video scripts `[ ]`
+### Stage 21 — Three recordings `[~]`
 
 **Two separate recordings this time**, which is new. The instructor watches the gameplay one first,
 writes down the problems he sees, then watches the code one, and builds the defense questions from
@@ -1217,39 +1217,62 @@ both.
 - If the files are too large for Moodle, a download or YouTube link is acceptable, and it has to stay
   live.
 
-Modeled on `2026-HW_3-Mario/HW_3-Script.md`: spoken lines in block quotes, stage directions outside
-them, every requirement called out in Hebrew, one take per part, and every part written to a measured
-word count. The rates from three recorded videos: about 160 spoken words a minute where the camera is
-on a file, about 90 where it is on the game.
+The two scripted recordings are modeled on `2026-HW_3-Mario/HW_3-Script.md`: spoken lines in block
+quotes, stage directions outside them, every requirement called out in Hebrew, one take per part, and
+every part written to a measured word count. The rates from three recorded videos: about 160 spoken
+words a minute where the camera is on a file, about 90 where it is on the game.
 
-**Carried from Stage 20, 15.9.2026.** Stage 21 opens with its own design discussion, in a fresh
-conversation; nothing below marked as proposed has been agreed.
+**Settled in the design discussion, 15.9.2026.** The reasons, and what was proposed and declined, are in
+the Decisions Log entries of this date.
 
-- **Three files, per 14.7**: `1-Gameplay-Playthrough`, one run of both levels showing every enemy, up to
-  5 minutes; `2-Gameplay-Features`, what one run cannot hold, 5 to 10 minutes, with 14.8's text file of
-  what it shows and when; `3-Code`, up to 15 minutes, walking `Techniques.md`, whose defense sentences are
-  in English while the recordings' Hebrew is this stage's.
-- **The playthrough take is also the final check that Stage 20's step 13 was.** Proposed: before the take, a
-  checklist from `Exercise Adventure Island.md` marks every requirement as shown in the playthrough, by the
-  log or on screen only, as left to the features recording, or as code only; after the take, its log copy
-  is read against the list. Proposed home: `Recordings/1-Gameplay-Playthrough.md`.
-- **Proposed: the playthrough is silent and unscripted**, as Exercise 3's full-playthrough part was, at five
-  spoken words; a spoken intro could be its own short take under 14.4.
-- **Every gameplay take's log is copied before Play is pressed again**, since the next Play overwrites
-  `GameLog.txt`. Proposed destination: `Recordings/` at the project root, committed, rather than `Logs/`,
-  which `.gitignore` excludes, or anywhere under `Assets/`, which Unity would import. The video files stay
-  out of git.
-- **Proposed: `LogFileWriter` stamps each file line with the time since Play started**, unscaled so a popup
-  does not stop it, so one offset lines a log copy up with its video and 14.8's text file can be read off
-  the log. About three lines, file only, the Console untouched.
+- **Three files, per 14.7, at lengths Peleg set**, since neither source sets any: `1-Gameplay-Playthrough`
+  up to 5 minutes, `2-Gameplay-Features` 5 to 10, `3-Code` up to 15. The code script is written to its 15
+  with a ladder of cuts, as HW_3's was.
+- **Spoken in English**, as Exercises 1 to 3 were, with the greeting, the `דרישה N.M` callouts and the
+  object and enemy names in Hebrew.
+- **`2-Gameplay-Features` is recorded first**: a script, then separate cuts, each showing one feature on a
+  level edited beforehand so it is quick to show, and spoken. Its 14.8 text file is written from the
+  edited video.
+- **`1-Gameplay-Playthrough` comes after it**: both levels played to the congratulation popup, on the
+  authored levels, silent for now. Whether anything is worth saying over it is decided once its log is read.
+- **`3-Code` is last**, scripted as Exercises 1 to 3 were, so any code a gameplay take forces to change is
+  settled before its `file:line` references are cited.
+- **A coverage list, `Recordings/Coverage.md`**, like Exercise 1's notes for the video: every numbered
+  requirement, where it is shown, the evidence expected, and after the take where it was seen.
+- **No timestamps in `GameLog.txt`.**
+- **Every gameplay take's log is copied into `Recordings/` before Play is pressed again**, flat, named by
+  recording and take, and committed. Not into a `Recordings/Logs/`, which `.gitignore`'s `[Ll]ogs/` would
+  exclude. The video files stay out of git.
+
+Steps, one at a time, each opening with its own discussion:
+
+1. Design discussion. `[x]`
+1. `Recordings/Coverage.md`. `[ ]`
+1. `Recordings/2-Gameplay-Features.md`: the cuts, what each one stages in the level, and how the staging
+   comes back out. `[ ]`
+1. The features cuts, each followed by a log copy and a reading, then 14.8's text file. `[ ]`
+1. The staging taken out, with both level files and the scene checked against the last commit before it
+   went in. `[ ]`
+1. The playthrough take, its log copy and reading, and whether anything is said over it. `[ ]`
+1. `Recordings/3-Code.md`. `[ ]`
+1. The code takes. `[ ]`
+1. The three files edited, and uploaded with 14.8's text file or linked under 14.5. `[ ]`
+
+**Carried from Stage 20, still true:**
+
 - **Before any gameplay take**: the Game view at 16:9, since the camera's framing and level 2's minimum
   width assume it; the Console off screen; a 20-second test recording. `LogSettings` is saved with `Enemy`
   and `Projectile` at `Verbose` and the rest at `Info`.
 - **No debug keys**: every take is played, and a game over sends the run back to level 1. Taking all 32
   fruit makes the 20th cost a פסילה at level 2's start.
-- **Not seen in a log since Stage 20's code changes**: כוכב, an אבן surviving an axe, and the congratulation
-  popup on the final level 2, whose climb Peleg has seen work. A break found during a take is a re-take, and
-  a fix may reopen a section of `Techniques.md`.
+- **Not seen in a log since Stage 20's code changes**: כוכב and the green mount it gives, whose spin no
+  Stage 20 session records; an אבן surviving an axe; and the congratulation popup on the final level 2.
+  Peleg has seen the second and third work in play. A break found during a take is a re-take, and a fix
+  may reopen a section of `Techniques.md`.
+- **A killed enemy's respawn runs on real time**, so one can come back under a popup. Accepted, and
+  answered in `Techniques.md`'s Async section.
+- **`Techniques.md`'s `file:line` references are current** as of Stage 20's close, and are checked again if
+  any code changes.
 
 ## Notes / Decisions Log
 
@@ -3416,3 +3439,51 @@ _(append entries here as we make design decisions.)_
   settle, with the proposals carried in that stage's section. The cost: כוכב, an אבן surviving an axe and
   the congratulation popup on the final level 2 have not appeared in a log since the stage's code changes,
   so a break in one of them would surface during a take.
+
+- **Stage 21's three lengths are Peleg's targets.** Neither source sets a length: the exercise text asks
+  for a video explaining every part and showing the whole game, and 00:54:46 asks for one recording of the
+  game and one inside the code. 14.7's 5, 5 to 10 and 15 minutes were written at Stage 20 with no reason
+  recorded, and Peleg confirmed them as his. The playthrough's 5 cannot bind: כוח drains a unit every 3
+  seconds, so level 1 lasts at most (11 + 24 from its fruit) × 3 = 105 seconds and level 2 (9 + 22) × 3 = 93,
+  less for every rock and every fruit taken at a full bar. The code recording's 15 is the one that binds,
+  at 2,400 words for eight sections of `Techniques.md`, so its script carries a ladder of cuts as HW_3's did.
+- **The recordings are spoken in English, like Exercises 1 to 3.** Hebrew for the greeting, the `דרישה N.M`
+  callouts and the object and enemy names. The other reading of "Hebrew is Stage 21's" was recordings
+  spoken in Hebrew, which would have left the 160 and 90 words a minute to be measured again, over code,
+  comments and a `Techniques.md` that are all in English. Peleg's call.
+- **The features recording is separate cuts on a staged level, scripted, spoken, and recorded before the
+  playthrough.** Proposed instead: route the playthrough through everything one run can hold, and give the
+  features recording only what needs a death, a game over, a wait or the editor. A run could have held a
+  lot: level 1 alone has all six enemy types, the six eggs and the bird at x141 give every drop type, the
+  axe's egg at x14 is three cells from the rock at x17, and the boomerang's at level 2's x10 is twelve from
+  the rock at x22. Peleg's call to keep the playthrough to finishing the game, and to give each feature its
+  own cut on a level edited beforehand, which makes a feature quick to reach and repeatable across re-takes.
+  The script comes first because it decides what to stage. Recording the features first means a fix that a
+  cut forces lands before the playthrough, which then runs once, on final code and the authored levels. The
+  cost is that staging edits level data, which has to come back out, checked, before the playthrough.
+- **The playthrough is silent for now.** Peleg plays it, and its log decides whether anything is worth
+  saying over it. Proposed instead: about a dozen short callouts, spoken live, since the instructor watches
+  this recording first and writes down problems, and several correct behaviours read as faults to someone
+  watching cold: a strike lost at the twentieth fruit with nothing touched, an axe hitting a rock and doing
+  nothing, riding into a fire and losing the mount but no strike, a killed enemy coming back, the ghost
+  ignoring the axe. That list is where the question reopens once the log is read.
+- **No timestamps in `GameLog.txt`.** Proposed as the time since Play started, unscaled, at the head of each
+  file line. It would have made 9.1's ten seconds, 4.2's drain and 8.18's uneven leaps readable from a log,
+  and found a line in the video without scrubbing; for 14.8's text file it would only have drafted the
+  times, since every edit shifts what follows it. Peleg's call to leave `LogFileWriter` as it is, so those
+  three are shown on screen and in the code.
+- **The coverage list is a file of its own.** `Recordings/Coverage.md`, like Exercise 1's notes for the
+  video, but per numbered requirement: where it is shown, the evidence as the exact log text or "screen",
+  and after the take where it was seen. It assigns rows to all three recordings, and both scripts are
+  written from it, so it sits inside neither.
+- **Gameplay log copies go flat into `Recordings/`.** `.gitignore`'s `[Ll]ogs/` matches a folder of that
+  name at any depth, so a `Recordings/Logs/` would never be committed. `Logs/` at the root is out for the
+  same reason, and anywhere under `Assets/` because Unity would import it.
+- **Section 8's opening list had lost a number, and the item that took it is now 8.26.** "One drop per
+  enemy rather than a list" was inserted fourth into that list on 10.9, with the drop factory. The list
+  numbers itself by position, so "comes back after a countdown" went from 8.4 to 8.5 and "should not be
+  difficult" from 8.5 to 8.6, where the spider's first item is written as an explicit `6.`: two
+  requirements read as 8.6, and three earlier entries in this log cite 8.4 and 8.5 by their old meanings.
+  Appended at the end of section 8 under its own heading, per the file's rule that a number once given
+  stays put, it restores both. Nothing cited it in fourth place. Found while counting the requirements for
+  the coverage list.
