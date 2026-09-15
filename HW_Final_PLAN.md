@@ -383,6 +383,10 @@ The fruit count and the פסילות count are a number and a label, and the ful
 consistency rather than necessity. That consistency is still worth defending, because the SOLID check
 grades the worst spot and two different HUD idioms in one project is exactly the kind of
 inconsistency it finds — but say it that way rather than claiming all three were equally needed.
+**Corrected at stage 20.** Only the כוח controller is ticked by Zenject. The strikes and fruit
+controllers subscribe to the flow's events in `Initialize` and never change their model, which is
+`SessionState` read through `ISessionState`; `GameFlow` makes those changes. The sentence is true of one
+triad, and the Decisions Log entry on the split controller role is the answer for the other two.
 
 **Async & Tasks — enemy respawn, and the popup flow.** *"A killed enemy is deactivated, and Unity
 stops coroutines on a disabled GameObject, so an enemy cannot run its own countdown as a coroutine at
@@ -980,7 +984,7 @@ own discussion:
 1. Builder and Pooling, as one step, since `ProjectileDirector` is part of both. `[x]`
 1. Factory. `[x]`
 1. Template, all four bases. `[x]`
-1. MVC, all three triads. `[ ]`
+1. MVC, all three triads. `[x]`
 1. Async & Tasks, with the three coroutines beside the two Tasks. `[ ]`
 1. SOLID: rank the worst-spot candidates and sweep whatever no technique covered, editor tooling
    included. Then Reflection and the rejected patterns. `[ ]`
@@ -2920,5 +2924,19 @@ _(append entries here as we make design decisions.)_
   missing-body warning at startup; the ghost switched between frozen and chasing dozens of times; the
   frog crouched, leapt and landed; the shooters fired; the boomerang, the snake's fireballs and the red
   mount's fire all flew; enemies killed by weapons and by the mount fell, and the ghost, a spider and
-  three fires went to the פייה. The axe was not thrown in that session; it launches through the same
-  `BaseProjectile.Awake` as the other three.
+  three fires went to the פייה. The axe, which that session never threw, was seen in a second one:
+  launched, refused a fourth three times, and killed a jumping נחש, a static spider and a shooting נחש.
+- **In the strikes and fruit triads the controller's role is split, and that is said rather than
+  hidden.** The lecture slides (`Course/Lesson 07 - Extensions & MVC/MVC.pdf`) define the controller as
+  what "listens to the input from the View, processes it (including any necessary changes to the
+  Model), and updates the View accordingly". `PowerController` is all of that sentence: time, fruit and
+  rocks are its input, it changes `PowerModel`, and it redraws. `StrikesController` and
+  `FruitController` are only its last clause. The changes to their model are made by `GameFlow`,
+  because losing a strike ends the game or resets the level and taking a twentieth fruit costs a
+  strike - game rules, and the flow is the class that decides what happens to the game. Moving the
+  writes into the two controllers was weighed again against the slides and refused for stage 11's
+  reason, which still holds: the twentieth fruit would run five hops through three classes. Stage 10
+  recorded the shared model and stage 11 the operation staying on the flow; neither measured the result
+  against the course's own definition, which is the question the defense will put. The answer leans on
+  the slide's "any necessary changes", and on the כוח triad being the full one. No code changed in this
+  step.

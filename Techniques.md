@@ -419,7 +419,98 @@ Nothing from these files goes on the worst-spot list. `Enemy`'s size is already 
 
 ## MVC
 
-Not started.
+### What the course means
+
+The lecture slides, `Course/Lesson 07 - Extensions & MVC/MVC.pdf`:
+
+- The model "manages the data and business logic of the application. It directly manages the data,
+  logic, and rules".
+- The view "represents the UI components and displays the data from the model to the user. It sends
+  user actions to the controller".
+- The controller "acts as an intermediary between the Model and View. It listens to the input from the
+  View, processes it (including any necessary changes to the Model), and updates the View accordingly".
+- Several triads in one project are encouraged: "Each MVC triad (Model-View-Controller) should be
+  responsible for a specific part of your application".
+
+Its example is an inventory: `InventoryModel` a plain class, `InventoryView` a MonoBehaviour, and
+`InventoryController` a MonoBehaviour that creates the model with `new`, holds the concrete view through
+`[SerializeField]`, and on a button changes the model and redraws. The slides' own SOLID page says that
+concrete view "could be improved", and that the controller "should depend on interfaces rather than
+concrete implementations".
+
+The lesson project (`Lesson 07.md`): the coin counter, the same shape. `CoinsModel` plain, `CoinsView` a
+MonoBehaviour, `CoinController` a MonoBehaviour subscribing to the coin event, adding a coin and
+redrawing. Exercise 2 then asked for health "עם MVC", with a maximum of three, which is a model owning a
+rule.
+
+### Where it lives
+
+| Triad | Model | View | Controller |
+|---|---|---|---|
+| כוח | `IPowerModel`, `PowerModel`: clamped between empty and the capacity | `IPowerView`, `PowerView`: one line per unit | `PowerController`: drains on `Tick`, takes `Gain` and `Spend` through `IPower`, costs a strike at zero, resets to the level's opening amount, redraws |
+| פסילות | `ISessionState`, which is `State/SessionState.cs` | `IStrikesView`, `StrikesView` | `StrikesController`: redraws on `GameStarted` and `StrikeLost` |
+| Fruit | the same `ISessionState` | `IFruitView`, `FruitView`: turns red close to a strike | `FruitController`: redraws on `GameStarted` and `FruitTaken`, with the count and the distance to the next strike |
+
+- Open `Assets/Scripts/MVC/Power/PowerController.cs:62`, `Spend`: input arrives, the model changes, the
+  view is told, and at zero the one consequence the controller owns, a strike.
+- The session's changes, for the two counters: `State/GameFlow.cs:75` and `:94`.
+
+### What the code shows
+
+- The כוח triad is the slides' definition: input from time, fruit and a rock, a change to the model, an
+  updated view.
+- It goes past the slides' example in the direction the slides point. The controller depends on
+  `IPowerModel` and `IPowerView`, as their DIP page asks; it is a plain C# class Zenject ticks rather than
+  a MonoBehaviour, which is lesson 11's Clean Architecture line; and its model is injected rather than
+  made with `new`.
+- In the strikes and fruit triads the controller's role is split. `GameFlow` makes the model's changes,
+  since losing a strike ends the game or resets the level and a twentieth fruit costs a strike, and those
+  are game rules; each counter's controller does the last clause of the slide's sentence, updating the
+  view when the model changes.
+- No view decides anything about the game. `FruitView` owns only when its number turns red, a display
+  choice; the controller hands it how far off the strike is.
+- The model owns its own rules. `PowerModel` never passes the capacity and never goes below zero. That
+  zero costs a strike reaches another system, so it lives in the controller.
+
+Verdict: the כוח triad matches the definition and improves on the slides' own example as the slides ask.
+The two counters are MVC over a shared model with the controller updating the view; defensible, and the
+weaker half, which is better said than hidden.
+
+### What could be challenged
+
+1. "Your strikes controller never changes the model. What is it controlling?" The slide says the
+   controller processes input "including any necessary changes to the Model". Here the change is a game
+   rule - losing a strike ends the game or resets the level - so it lives in `GameFlow`, the class that
+   decides what happens to the game. The counter's controller does the rest of the sentence and updates
+   the view. The full triad is כוח.
+2. "Why not a `StrikesModel` and a `FruitModel`?" The count would exist in two places, and the first
+   thing that changed one and not the other would make them disagree. `SessionState` also says what
+   neither would: these are the two numbers that survive a death and a level change.
+3. "Why doesn't the fruit controller take the fruit?" Then the twentieth fruit runs from the fruit through
+   the controller, an owed-strike event, the flow and the game over to the popup: five hops through three
+   classes, where it is two methods in one file now.
+4. "Your controller isn't a MonoBehaviour, like mine." It needs no Unity lifecycle beyond a tick, and
+   Zenject supplies the tick, which keeps the rule out of a MonoBehaviour.
+5. "Where is the strikes model?" `State/SessionState.cs`, read by the counters through `ISessionState`,
+   which has no way to change it.
+6. "`PowerController` implements four interfaces. Too much?" Each is one face of the same job: `ITickable`
+   the drain, `IPower` what the rest of the game does to power, `IResettable` the level start,
+   `IInitializable` registering for it. All of it is power, in 92 lines.
+
+Rejected along the way, all in the Decisions Log: a shared base for the two counter views, which would be
+three types doing the work of two; moving the session's writes into the two counter controllers; and a
+game state every input-reading component would have to consult.
+
+Nothing from these files goes on the worst-spot list.
+
+### The defense sentence
+
+> כוח is a full triad: time, fruit and rocks are the input, the controller changes the model, the model
+> keeps it between empty and full, and the view only draws, with the controller a plain class Zenject
+> ticks and every part behind an interface, which is what your slides' own DIP page asks for. The two
+> counters share one model, the session, because losing a strike and taking a twentieth fruit are game
+> rules the flow decides, so their controllers do the other half of the job: putting the model on screen
+> whenever it changes.
 
 ## Async & Tasks
 
