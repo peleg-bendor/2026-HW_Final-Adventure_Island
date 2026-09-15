@@ -48,11 +48,10 @@ public class PlayerReset : MonoBehaviour, IResettable
     {
         PlayerStart start = levels != null && levels.Current != null ? levels.Current.PlayerStart : null;
 
+        // No warning of its own without a start, since LevelDefinition reports a missing marker and
+        // GameFlow a scene with no level.
         if (start == null)
-        {
-            GameLog.Warning(LogCategory.Player, "No PlayerStart to return to, the player stays where he is");
             return;
-        }
 
         transform.position = start.transform.position;
 

@@ -322,8 +322,8 @@ Decisions Log has why.
    inject, it is placed beside whatever was destroyed, and it removes itself within about a second, so a
    reset has nothing to clear.
 6. "Why not reflection, like `EnemyCreator`?" It was planned for this factory and dropped, since there
-   was no switch for it to remove and one class serves several drop types. The Reflection part of the
-   SOLID section has the full reasoning.
+   was no switch for it to remove and one class serves several drop types. The Reflection section has
+   the full reasoning.
 
 Rejected along the way, all in the Decisions Log: Factory Method's creator-per-product shape, for the
 reason in question 1; a random drop, which the requirements refuse and the instructor called the weaker choice; and a list
@@ -628,21 +628,156 @@ Nothing from these files goes on the worst-spot list.
 
 ## SOLID
 
-Not started.
+### What the course means
 
-### Worst-spot candidates
+The lecture note, `Course/Lesson 02 - Git Jira SRP/Solid Principles.md`, gives each principle one example:
 
-Collected by every section above and ranked at the end. Found by reading the code before the review
-began, so none of these is verified as a problem yet:
+- Single responsibility: a class "should only have one reason to change". `Invoice` holds its data,
+  calculates, prints itself and saves itself; printing moves to `InvoicePrinter` and saving to
+  `InvoicePersistence`.
+- Open/closed: "add new functionality without touching the existing code for the class". Adding
+  `saveToDatabase` to `InvoicePersistence` is the violation, and an `IInvoicePersistence` with one class
+  per kind of storage is the fix.
+- Liskov: a subclass replaces its base "without altering the desirable properties of the program".
+  `FriendlyEnemy.AttackPlayer` waves at the player.
+- Interface segregation: "many client-specific interfaces are better than one general-purpose
+  interface. Clients should not be forced to implement a function they do no need". `FullTimeWorker`
+  has to implement `UploadInvoice`, and throws.
+- Dependency inversion: "classes should depend upon interfaces or abstract classes instead of concrete
+  classes". `NotificationService` makes its own `EmailService`; the fix receives an `IMessageService`
+  through its constructor.
 
-- `Enemy`: 308 lines and seven injected dependencies. What is left is the lifecycle a Template base
-  exists to own.
-- `GameFlow` and `IGameFlow`: four operations beside the ending sequence, and ten interface members. Kept,
-  and answered in the Decisions Log.
-- `GameLog` is static and used almost everywhere. Answered: cross-cutting logging, its calls stripped
-  from release builds.
-- A fifth projectile would touch `ProjectileDirector`, `ProjectilePool`, `ProjectilePrefabs` and
-  `ProjectileCounts`. Answered: the requirements fix four, and a fifth is out of scope.
+The lesson projects. Lesson 3 is open/closed: `WeaponsHandler` holds a `List<IWeapon>`, and its
+walkthrough calls `LaserWeapon` the proof, a third weapon added with no change to the handler, where a
+switch on the weapon type would have needed one. Lesson 4 is the other three: `IWeapon` split into
+`IUseableWeapon` and `IReloadWeapon` by what each kind of weapon needs, and `WeaponsHandler` again as the
+DIP example. Its walkthrough names the spots that fall short: `FireFlowerPowerUp` calling
+`GetComponentInChildren<FireballWeapon>()` rather than the interface, and concrete types in `TempInit`,
+accepted there because a composition root has to name them. Lesson 2's walkthrough of the starting
+project faults `SC_Player` for mixing input, movement, visuals and death in one class.
+
+The transcript (00:52:01 to 00:52:37): he runs a program he built over the submitted code, it tells him
+where something is not SOLID, "ואז אני הולך למקום היחידי שלא עשיתם אותו סוליד ועל זה אני שופט
+אתכם", even when the other 95 percent is.
+
+### Where it lives
+
+No one file holds it, so there is one place to open for each principle:
+
+| Principle | Open | What it shows |
+|---|---|---|
+| Single responsibility | the `Player` GameObject in `Scene_Game` | twelve scripts with one job each: moving, jumping, the ground check, the reset, the attack key, the guard, the fairy, the mount's body and attack, the two animators, and the marker |
+| Open/closed | `State/ResetRegistry.cs:22`, `ResetAll` | walks every `IResettable` and never learns which kinds exist |
+| Liskov | `Mounts/MountStrike.cs:57` | calls `TryDestroy` on whatever it touched; an enemy, a rock and a fire each answer by their own rule, and none refuses the contract |
+| Interface segregation | `State/ResetRegistry.cs:5` | one class behind `IResetRegistry` and `IResetRunner`, so an enemy can register itself and cannot reset the level |
+| Dependency inversion | `Installers/GameInstaller.cs:41` | 29 interfaces, and the one place that picks what answers each |
+
+### What the code shows
+
+Measured over the 110 game scripts and 10 editor scripts:
+
+- No `switch` anywhere, and no check of an object's type in game code. What varies by kind is a subclass,
+  an interface, or data authored per object: the `Destroyer` flags each target answers, the `DropType`
+  on each enemy and egg, the recipe for each projectile prefab.
+- No singleton and no search of the scene in game code.
+- 29 interfaces, 23 of them with one or two members. The largest is `IGameFlow`, with three events and
+  four operations.
+- Four abstract bases with 16 subclasses between them, and not one subclass declares a Unity message of
+  its own.
+- Two static classes in game code: `GameLog`, called 146 times from 61 files, and `Ground`, the physics
+  query four classes share.
+- The largest class in game code is `Enemy` at 308 lines, 148 of them code, then `Frog` at 223 and
+  `GameFlow` at 142. In the editor tooling it is `TilePlacerWindow`, at 235.
+
+Principle by principle:
+
+- Single responsibility. The first prediction in the plan's SOLID risk register was the player as the god
+  object, and the policy was to split him from the first stage rather than a 400-line class later. He is
+  twelve scripts, the largest `PlayerJump` at 129 lines. `GameFlow` gave up the reset registry and the
+  level list at stage 11, and this review split `ProjectileDirector` and `LevelWindow` and took the
+  respawn countdown out of `Enemy`.
+- Open/closed. A new enemy is a subclass of `Enemy` and a prefab. A new pickup of an existing kind is a
+  prefab listed on the installer, a new mount a `MountDefinition` asset, and anything a level start
+  restores implements `IResettable`. The edits that remain are named in the questions below: a new drop
+  type adds a `DropType` value, a new destroyer a `Destroyer` flag, and a fifth projectile touches four
+  files.
+- Liskov. Each subclass keeps its base's promises, which is the Template section's subject: none overrides
+  a fixed step, and every `IDestructible` answers every destroyer with a `bool`. The three places a
+  subclass would not have fitted were kept out of the hierarchy rather than bent into it: the egg is not
+  a `Collectible`, spikes are not a `Hazard`, and `Enemy` is not a `Hazard`.
+- Interface segregation. The splits follow who may do what: `IResetRegistry` and `IResetRunner` on one
+  class, so a collectible registers itself and cannot reset the level; `ISessionState` beside
+  `SessionState`, so a counter reads the numbers and cannot spend a strike; `ILevels` apart from
+  `IGameFlow`, so the camera asks where it is and cannot end the game; `IPlayerShove` and `IPlayerMotion`
+  on one component, so a rock pushes him and an animator reads him. No implementer anywhere is forced to
+  write a member it has no use for, which is the note's own test.
+- Dependency inversion. The DI section in full. Every service a class receives is behind an interface,
+  apart from `SessionState` inside `GameFlow`, the `Player` marker and the data holders, and lesson 4's
+  `GetComponentInChildren<FireballWeapon>()` shape is gone from the player.
+
+Verdict: the five hold where the course's own examples test them. The review resolved the five worst
+spots it found, and what is left is answered below rather than changed. The likeliest single spot for a
+checker to name is `Enemy` by size, then `IGameFlow` by member count.
+
+### What could be challenged
+
+Ranked, the likeliest first.
+
+1. "`Enemy` is 308 lines with seven dependencies. That's your `Invoice`." It has one reason to change,
+   the lifecycle every enemy shares, and each dependency serves one step of it: `IGameFlow` the strike on
+   contact, `IPlayerGuard` the absorb, `IResetRegistry` the level start, `IRespawnCountdown` the
+   countdown, `Player` the activation range and the ghost's rule, `IDropFactory` the drop, `IDeathEffects`
+   the picture of it going. 148 of the lines are code; the rest are comments, braces and blank lines. The
+   countdown's Task was a second job, and the review moved it out. Splitting further, into contact and
+   death components, would spread the fixed order of a death over components whose order nothing
+   guarantees, and that order is what a Template base exists to own.
+2. "`IGameFlow` has seven members. That's your `IEmployee`." No consumer uses more than two, and none uses
+   both an operation and an event: a fire calls `LoseStrike`, the door `CompleteLevel`, the weapon slot
+   listens to `GameStarted` and `StrikeLost`. Splitting it into `IGameFlow` and `IGameEvents` was weighed
+   at stage 11 and refused, because the two halves have one implementation and one lifetime and always
+   travel together, which is bookkeeping rather than segregation. By the note's own test nothing is
+   forced to implement a member it doesn't need: `GameFlow` is the only implementer and uses all of them.
+   It had ten until this review, which removed three events nothing listened to.
+3. "`GameLog` is static and used from 61 files. Where's your DIP?" Logging is cross-cutting: every class
+   has something to report and no class depends on what the log does with it, the same reason Unity's
+   `Debug.Log` is static. An injected logger would add a parameter to 61 classes for one implementation,
+   and it has to work before the container does, since the installer logs while it builds. What it
+   guarantees instead: `Info` and `Verbose` are `[Conditional]` on `UNITY_EDITOR` and `DEVELOPMENT_BUILD`,
+   so a release build does not compile those calls or their arguments, while `Warning` and `Error` ship,
+   because a shipped game should still report faults. The levels are set per category on `LogSettings`
+   in the scene.
+4. "And `Ground`, also static?" Four callers: `Frog`, `SnakeJumper`, `Spider` and `DropSettle`. It holds
+   no state and no configuration, and answers three questions about Unity's physics world with the one
+   rule of what counts as ground; `Physics2D`, which it wraps, is static itself. It left `Enemy` when a
+   falling drop became the second thing that needed the rule. An `IGround` would be an interface with one
+   implementation and nothing to substitute, which this project refused for input and for the clock.
+5. "Add a fifth projectile." A new `BaseProjectile` subclass and its prefab, and four files edited: a field
+   on `ProjectilePrefabs`, a count on `ProjectileCounts`, a recipe in `ProjectileDirector` and a fill line
+   in `ProjectilePool`. The shooters don't change, since `PlayerAttack` throws whatever the slot holds.
+   The requirements fix the four there are (6.7, 7.4, 8.14), and a third weapon is on the list of things
+   deliberately not built. The plan records where that changes: at around eight or ten recipes, one
+   asset per projectile beats a file that grows.
+6. "You still call `GetComponent<Player>()`." In eleven places, and each asks what a physics callback just
+   handed it: a collider arrives as the argument, so there is no dependency to inject. The marker is for
+   exactly this, chosen over a tag, which is a string that fails silently.
+7. "An editor API inside a runtime component?" `SpriteVariant` records its choice as a prefab override
+   inside `#if UNITY_EDITOR`, Unity's standard idiom, and none of it reaches a build. It stays there
+   because the component's own Pick One menu needs it; moving it into `LevelScene` would leave a re-roll
+   from that menu unsaved.
+8. "Twelve scripts on one player. Isn't that fragmentation?" Each has one reason to change, and the other
+   shape is lesson 2's `SC_Player`. What splitting costs is the parts reaching each other, which they do
+   through `IPlayerGround`, `IPlayerMotion`, `IMountAttack` and `IMountStrike`, injected.
+9. "Most of your interfaces have one implementation. Isn't that abstraction before a second use?" Your
+   note's DIP asks for the dependency on an abstraction and says nothing about a second implementation,
+   and lesson 12 binds `IFireballBuilder` to its only builder. The interface is the consumer's view of a
+   class: `IResetRegistry` cannot run a reset, `ISessionState` cannot spend a strike, and a
+   MonoBehaviour's interface hides its transform and its enabled flag from whoever holds it. What is
+   bound concrete is data, the `Player` marker, and `SessionState` inside `GameFlow`, the one class that
+   changes it. The rule against abstraction before a second use is what refused an `IInputService` and
+   an `IGround`, where there was nothing to narrow and nothing to substitute.
+10. "`Destroyer` and `DropType` are enums. Enums mean switches." Neither has one. Each target states its
+    `Destroyer` flags in `DestroyedBy` and its base tests them with a bitmask, and `DropFactory` looks
+    `DropType` up in a dictionary filled from the prefabs.
 
 Resolved during the review, so no longer candidates:
 
@@ -650,7 +785,7 @@ Resolved during the review, so no longer candidates:
   shooters injected concretely. Split in the Builder and Pooling step.
 - `LevelWindow` (314 lines), which held the window, the file format, the scene reconciliation and the
   JSON writing, and `TilePlacerWindow` (306), which repeated part of it. Split into `LevelFile` and
-  `LevelScene`, which both windows use; now 156 and 256 lines.
+  `LevelScene`, which both windows use; now 139 and 235 lines.
 - `Enemy`'s respawn Task, its token and its guard, about 45 lines. Moved into `RespawnCountdown`.
 - The player's components reaching each other's concrete classes: ten `GetComponent` calls across
   `PlayerJump`, `PlayerAnimator`, `PlayerMountAnimator`, `PlayerAttack` and `PlayerReset`, and
@@ -658,11 +793,187 @@ Resolved during the review, so no longer candidates:
   and `PlayerMovement` only to clear state they own, and went when those two became resettables of their
   own. The rest are injected: behind `IPlayerGround`, `IPlayerMotion`, `IMountAttack` and `IMountStrike`,
   and the `Player` marker into `PlayerAttack`.
+- `IGameFlow`'s `GameOver`, `LevelComplete` and `GameComplete`, raised and heard by nothing. Removed, which
+  took the interface from ten members to seven.
 
-### Reflection
+### The defense sentence
 
-Not started.
+> Everything that varies by kind in this game is a subclass, an interface or data authored on the object,
+> so there is no switch over types anywhere, and every class receives what it needs from the installer
+> instead of finding it. The two largest spots a checker can name are `Enemy` and `IGameFlow`, and each is
+> one job: the lifecycle every enemy shares, and the game's operations with the events they raise.
 
-### Patterns considered and rejected
+## Reflection
 
-Not started.
+Not on the required list, and the instructor said he would be glad to see it. It is answered here because
+the defense is likely to ask where it went.
+
+### What the course means
+
+The lecture note, `Course/Lesson 08 - Reflections & DLL/Reflections.md`: a program inspecting and
+manipulating itself at runtime, finding types, fields and methods and creating instances without knowing
+the type at compile time. Its three examples set a public field through `GetField`, reach a private one
+with `BindingFlags.NonPublic`, and create a component from a type name with `Type.GetType` and
+`Activator.CreateInstance`.
+
+The lesson project, `Lesson 08.md`: `EnemyCreator.CreateEnemy("Goomba", position)` turns a string into a
+component with `Type.GetType` and `AddComponent(type)`, then calls `GetMethod("Initilize").Invoke` beside a
+commented-out `enemy.Initilize()` that would have done the same. The walkthrough draws the line itself:
+reflection is "the escape hatch for when you don't have a compile-time type to work with", the
+`GetMethod` half is there only for the demo, and reflection is "strictly worse than a direct call in every
+situation where a direct call is actually possible", trading away compile-time checking and speed.
+
+The transcript (00:54:18): "משום מה לא שמתי לכם פה רפלקשן... הייתי שמח גם כן לראות רפלקשן".
+
+### Where it lives
+
+- In the project's own code, nowhere, by decision.
+- In Zenject: `Assets/Plugins/Zenject/Source/Util/ZenReflectionTypeAnalyzer.cs:76` finds every
+  `[Inject]` method through `GetCustomAttributes`, and the container calls it through its `MethodInfo`.
+  `Enemy.Construct` is private, and this is how it gets called at all.
+
+### What the code shows
+
+- It was placed in the drop factory from the first plan: a `[Drop(DropType.Heart)]` attribute on each
+  collectible class, scanned once, to remove the one switch over drop types the design expected.
+- At stage 16 neither half held. There was no switch to remove, since every drop is a prefab that declares
+  its own type and the factory is a dictionary. And the attribute could not work: `WeaponCollectible`
+  serves two drop types and `MountCollectible` three, so an attribute on a class cannot tell the blue
+  mount's token from the red's. Making it buildable meant five empty subclasses, and nothing would stop
+  one of them sitting on the wrong prefab and working.
+- Two other homes were measured and lost. An attribute audit of the drop prefabs would catch exactly one
+  mistake, a prefab whose drop type disagrees with its class. A scan for unassigned `[SerializeField]`
+  references would cover about 30 fields, where every class that owns one already warns when it is
+  missing and says what stops working.
+- Nothing in this game has a type unknown until runtime. A drop is a `DropType` the compiler checks, a
+  projectile a prefab reference, an enemy a prefab the level tool placed.
+
+Verdict: absent from the project's code on purpose, for the reason lesson 8's own walkthrough gives, and
+present in the container every class depends on.
+
+### What could be challenged
+
+1. "I said I'd be glad to see reflection. Where is it?" It was planned for the drop factory, to replace a
+   switch over drop types, and when the factory was built there was no switch, and the attribute could not
+   tell two mounts served by one class apart.
+2. "So there's none?" Every `Construct` in this project is found by Zenject through reflection, from its
+   `[Inject]` attribute, and called through its `MethodInfo`; a private `Construct` could not be called any
+   other way.
+3. "Why not add it somewhere anyway?" Your walkthrough of `EnemyCreator` says the `GetMethod` call is
+   worse than the direct call beside it. Reflection added where the type is already known would be that
+   half of the demo.
+
+### The defense sentence
+
+> Reflection was planned for the drop factory, to replace a switch over drop types, and when the factory
+> was built there was no switch to replace and the attribute could not tell two mounts of one class apart.
+> Nothing in this game has a type that isn't known until runtime, which is the one case your lesson says
+> reflection is for, and every `Construct` here is still found and called through reflection by Zenject.
+
+## Patterns considered and rejected
+
+The one complete list, including those already named in a technique's section. Each has its full reasoning
+in the plan's Decisions Log.
+
+Template and class hierarchies:
+
+- A base class and two subclasses for the full and partial reset: one flag of real difference. It became
+  `ResetTo(ResetScope)`, an enum rather than a bool so the call site says which.
+- The same for the camera's follow and whole-level modes: one bool for a testing aid.
+- `Enemy` deriving from `Hazard`: an enemy changes both of `Hazard`'s fixed steps.
+- `Spikes` as a `Hazard` answering `Destroyer.None`: nothing may destroy or absorb the pit, and saying so
+  needs a flag for one subclass.
+- The egg as a `Collectible`: its whole behaviour is the beat between the base's two fixed steps.
+- A `protected virtual Awake` calling `base.Awake()`: a subclass that forgets the call loses its
+  registration. Rejected for `Enemy`, and removed from `BaseProjectile` in this review.
+- A projectile subclass owning `Update`: it would hide the base's timeout.
+- A default `OnHit`, or a default `DestroyedBy`: a new destroyer would be granted to five enemies by
+  silence.
+- An intermediate `DestroyingProjectile`: the two fires fly alike and are opposites in what they hit.
+- Four projectile classes behind an `IPooledProjectile` with no base: the reset written four times.
+- One snake class with an `AttackType` enum, and a switch over the three mounts: the switch over kinds
+  the risk register predicted. Two snake subclasses, and two feature flags on `MountDefinition`, instead.
+- A Visitor for `IDestructible`, or a `DestroyedBy` property beside a `Destroy()` method: five classes and a
+  method per target, or the bitwise test repeated in every attacker.
+- A dying state inside `Enemy`: a throwaway effect object instead.
+- A `Leave` helper on `Enemy`, and an empty `Drop` stubbed early: code with no caller.
+- A `CountView` base for the two counters: three types doing the work of two.
+
+Builder, Pooling and Factory:
+
+- A Builder for the mounts: eleven fields of data, so a `MountDefinition` asset per mount.
+- The recipes as installer fields, as a ScriptableObject per projectile, or on the prefabs: each leaves
+  the builder copying numbers that already exist somewhere.
+- A pool class per projectile: Exercise 3's pool four times.
+- Instantiating the enemies' shots, and a singleton pool: Exercise 3's way. Counting the shooters at
+  startup to size their pool was rejected too.
+- A fixed size for the snake's fireball pool: the number was a cap pretending to be a rule.
+- `ProjectileDirector` as recipes, pool filler and `Throw` in one class: split into the course's roles.
+- A `WeaponType` enum in the weapon slot: mapping it back to a prefab is a switch, so the slot holds the
+  prefab.
+- The builder and the factory taking the whole `DiContainer`: a service locator, so `IInstantiator`.
+- Factory Method's creator subclass per drop: the product is chosen by data, so it would still need the
+  dictionary.
+- A prefab field and a plain `Instantiate` on each enemy and egg: uninjected, parented to what dropped it,
+  and handed back by a reset instead of destroyed.
+- A list of drops per enemy, and random drops or random egg contents.
+- Pooling the mount's hit, making it a projectile of speed zero, or an invisible `OverlapBox`: one object
+  switched on and off, with the trigger every other damage source uses.
+- Death effects through the container or a pool: nothing to inject, and a few a minute.
+
+MVC:
+
+- A `StrikesModel` and a `FruitModel`, or `SessionState` split in two: the count in two places.
+- The session's writes inside the counter controllers: the twentieth fruit would run five hops through
+  three classes.
+- The strikes controller as an `IResettable`, or polling the session in `Update`: a `GameStarted` event.
+- A controller folded into its view: the flow and the session inside a MonoBehaviour.
+
+Async & Tasks:
+
+- Building the level from its file at Play, which would have given Async a file-reading home: the less
+  steady of the two, and a rebuild on death would bring the dead back.
+- A MonoBehaviour listening for game over: a coroutine would do it identically.
+- "The await returns which button was pressed" as the popup's reason: both popups have one button.
+- An unawaited `async Task`: it swallows its exception.
+- One token for every enemy, or a manager holding every timer: a countdown per enemy.
+- The respawn following `Time.timeScale`: every freeze in this game ends in a full reset.
+
+DI and interfaces:
+
+- VContainer: the fallback had Zenject not compiled on Unity 6.
+- `IInputService` and an injected clock: one implementation each, and no tests.
+- An interface for `LevelDefinition`, and one for the `Player` marker.
+- Splitting `IGameFlow` into operations and events.
+- An interface per player component and nothing else changed: three of those couplings were state
+  other components own.
+- Splitting `IMountAttack` by consumer.
+- `FindObjectsByType` for the levels, a tag for the player, and a serialized `Transform` for the start
+  marker.
+- Rule numbers serialized on a prefab, and a `GameSettings` ScriptableObject: a number describing a rule
+  enters at the installer, and one describing an object sits on the object.
+
+State, flow and the reset:
+
+- `SceneManager.LoadScene` on death or game over: a reload hides static state that never gets reset.
+- `LevelState`: two copies of every fact.
+- A `Playing`, `GameOver`, `Won` state machine: every input reader would have to check it, and it would not
+  stop physics. `Time.timeScale` instead, with a private `ending` flag nothing outside `GameFlow` reads.
+- `GameFlow` moving the player: he resets himself.
+- An ordered reset registry: the camera flags a snap for its `LateUpdate` instead.
+- An operation anything could call to end the game: a game ends only by running out of strikes or
+  finishing the last level, so the ending is private to `GameFlow`.
+- `PlayerReset` clearing the jump's input and the movement's shove: each resets itself.
+- A separate `PlayerShove` component: two writers of one velocity.
+- An immunity kept on each rock: three rocks in a row cost nine power for one contact.
+- The fairy as a field on `PlayerGuard`: its own component, like the mount slot the guard consults.
+- `Physics2D.SyncTransforms()` in `PlayerReset`: a global physics call for one reader.
+- The Input System's action asset: no rebinding, no second device, no options screen.
+
+Tooling:
+
+- Tiled: the placer previews better, and the level files are still in Tiled's format.
+- A teardown build: a diff, so what was set by hand on a placed object survives.
+- `LevelWindow` as one class.
+- `Builder/`, `Factory/` and `Pooling/` folders: folders are domains, so "show me the Factory" names a file.
+- `SpriteVariant`'s editor call moved into `LevelScene`: the Pick One menu would stop saving.

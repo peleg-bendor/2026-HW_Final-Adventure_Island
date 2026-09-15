@@ -7,9 +7,6 @@ public interface IGameFlow
     event Action GameStarted;
     event Action StrikeLost;
     event Action FruitTaken;
-    event Action GameOver;
-    event Action LevelComplete;
-    event Action GameComplete;
 
     void StartGame();
     void LoseStrike();

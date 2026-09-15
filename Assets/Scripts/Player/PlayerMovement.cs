@@ -120,7 +120,7 @@ public class PlayerMovement : MonoBehaviour, IPlayerShove, IPlayerMotion, IReset
 
         PlayerStart start = levels != null && levels.Current != null ? levels.Current.PlayerStart : null;
 
-        // No warning of its own without a start, since PlayerReset reports the same missing marker.
+        // No warning of its own without a start, since LevelDefinition reports a missing marker.
         if (start != null)
             Face(start.FacesRight);
     }

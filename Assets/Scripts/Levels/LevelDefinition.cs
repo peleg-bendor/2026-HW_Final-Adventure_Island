@@ -16,6 +16,7 @@ public class LevelDefinition : MonoBehaviour
     [SerializeField] private int startingPower = 11;
 
     private PlayerStart playerStart;
+    private int warnedFrame = -1;
 
     public int LevelNumber { get { return levelNumber; } }
 
@@ -42,8 +43,12 @@ public class LevelDefinition : MonoBehaviour
             {
                 playerStart = GetComponentInChildren<PlayerStart>(true);
 
-                if (playerStart == null)
+                // Once a frame, since a reset asks from more than one component.
+                if (playerStart == null && warnedFrame != Time.frameCount)
+                {
+                    warnedFrame = Time.frameCount;
                     GameLog.Warning(LogCategory.Game, "No PlayerStart found under " + name + ", nothing knows where the player begins");
+                }
             }
 
             return playerStart;

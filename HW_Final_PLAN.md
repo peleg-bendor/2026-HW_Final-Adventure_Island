@@ -992,7 +992,7 @@ own discussion:
 1. MVC, all three triads. `[x]`
 1. Async & Tasks, with the three coroutines beside the two Tasks. `[x]`
 1. SOLID: rank the worst-spot candidates and sweep whatever no technique covered, editor tooling
-   included. Then Reflection and the rejected patterns. `[~]`, see "Where step 8 stands" below.
+   included. Then Reflection and the rejected patterns. `[x]`, see "Where step 8 stands" below.
 1. Comment pass. `[ ]`
 1. Log pass. `[ ]`
 1. Loose ends: whether `DebugFlowKeys` ships, and whether the twelve template references are chased. `[ ]`
@@ -1039,13 +1039,16 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
 - An axe logs `Axe hit the ground` twice when it lands: it touches two ground tiles in the same physics
   step, before its own `SetActive(false)` stops the second callback. Seen in step 3's session, eight
   lines for four axes. Step 10.
+- The twentieth fruit's `Fruit taken` line is logged after the game over it causes, because
+  `FruitCollectible.PickUp` logs after `flow.TakeFruit()`; `PlayerGuard` already logs before acting for
+  exactly this reason. Seen in the session of 19:14, lines 192-196. Step 10.
 
 **Temporary, and has to come out before step 12**: a פייה, extra shooting נחשים and a ביצה holding
 עלה at the start of level 1, added by Peleg on 15.9.2026 to test step 3's pool, and saved into
 `Level01.txt` as well as the scene. The risk session and the playthrough have to run on the authored level 1.
 
-**Where step 8 stands, 15.9.2026, written so a new conversation can pick it up.** The sweep measured all
-109 scripts and ranked seven candidates; the reasoning is in the Decisions Log entries of this date.
+**Step 8, closed 15.9.2026.** The sweep measured all 109 scripts and ranked seven candidates; the
+reasoning is in the Decisions Log entries of this date. Kept below as the record of how it ran.
 
 - **Batch 1, done and confirmed**: the respawn countdown moved out of `Enemy` into `RespawnCountdown`
   behind `IRespawnCountdown`, bound `AsTransient`.
@@ -1055,9 +1058,10 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
   `Face` is private now that nothing outside `PlayerMovement` calls it, `ClearInput` and `ClearShove` became
   the two `ResetTo`s, `PlayerMovement`'s two interfaces are one multi-type binding, and two comments this
   made stale were corrected (`IPlayerShove`'s header, `PlayerFairy`'s "other resettable"). Confirmed by the
-  session of 18:34. **Added after that session, by Peleg's call, compiling but not yet played**: `IMountStrike`
-  on `MountStrike`, injected into `PlayerMountAttack` in place of its `GetComponentInChildren`. Its test is
-  one mounted attack that destroys something. `IMountAttack` stays one interface, also Peleg's call.
+  session of 18:34. **Added after that session, by Peleg's call**: `IMountStrike` on `MountStrike`, injected
+  into `PlayerMountAttack` in place of its `GetComponentInChildren`, confirmed by the session of 19:14, where
+  the blue mount's attack destroyed a shooting נחש twice. `IMountAttack` stays one interface, also Peleg's
+  call.
   1. `PlayerJump` becomes an `IResettable` that clears its own buffered input, and `PlayerMovement` one
      that clears its own shove and restores its own facing from the current level's `PlayerStart`. Both
      register on enable, like `PlayerReset` and `PlayerFairy`. `PlayerReset` keeps only position and
@@ -1070,20 +1074,25 @@ files to a list of worst-spot candidates at the bottom of `Techniques.md`, and s
   3. `PlayerAttack` injects the `Player` marker instead of `GetComponent<Player>()`.
   4. The test: jump, walk, ride and attack mounted and on foot, take a rock's shove, die facing left and
      respawn facing the marker, and press Space under a popup and see no jump after the restart.
-- **Then, write-up only**: the answers for `GameFlow`, the static `GameLog` and a fifth projectile go in
-  `Techniques.md`'s SOLID section (agreed); the Reflection answer; the full list of rejected patterns;
-  and step 8 is marked done.
-- **Open**: candidate 7, `SpriteVariant`'s `#if UNITY_EDITOR` prefab-override call, was not moved into
-  `LevelScene`, because the component's own Pick One context menu needs it. Peleg has not yet said
-  whether to keep it or drop the context menu.
-- **Open**: a level without a start marker now prints three warnings per reset instead of two, since
-  `LevelDefinition.PlayerStart` warns on every read while the marker is missing and `PlayerMovement` is a
-  second reader. Neither authored level can reach it. Peleg asked whether it is a small fix; not yet decided.
-- **The next conversation picks up here, Peleg's call**: the `MountStrike` test, then the write-up, then
-  step 9. The comment pass covers the files batch 3 rewrote - `PlayerJump`, `PlayerMovement`,
-  `PlayerReset`, `PlayerGround`, `PlayerAnimator`, `PlayerMountAnimator`, `PlayerAttack`,
-  `PlayerMountAttack`, `MountStrike`, `GameInstaller` and the four new interfaces - so finishing step 8 first
-  means those files are commented once.
+- **The write-up, done and agreed by Peleg**: `Techniques.md` has the SOLID section in the same five parts
+  as the techniques, with ten ranked questions; Reflection as a section of its own; and the complete list of
+  rejected patterns, compiled from a full read of this plan and spot-checked.
+- **Found while writing the SOLID section, and removed by Peleg's call**: `IGameFlow`'s `GameOver`,
+  `LevelComplete` and `GameComplete`, raised and heard by nothing. The interface went from ten members to
+  seven. Compiles, and nothing referred to them; not yet seen in a Play session.
+- **Also found and written up as answered, not changed**: `Ground` is a second static class in game code,
+  beside `GameLog`, and was not on the ranked list. And the agreed `GameLog` answer is narrower than first
+  stated: only `Info` and `Verbose` are stripped from a release build, while `Warning` and `Error` ship.
+- **Settled**: candidate 7, `SpriteVariant`'s `#if UNITY_EDITOR` prefab-override call, stays, and so does
+  the component's Pick One context menu that needs it. Peleg's call.
+- **Done, compiling, not playable**: a level without a start marker printed three warnings per reset after
+  batch 3. It now prints one, `LevelDefinition`'s, guarded once a frame; `PlayerReset` no longer warns.
+  Neither authored level lacks a marker, so this was checked by reading only.
+- **The next conversation picks up at step 9**, the comment pass, which opens with its own design
+  discussion. It covers the files step 8 rewrote - `PlayerJump`, `PlayerMovement`, `PlayerReset`,
+  `PlayerGround`, `PlayerAnimator`, `PlayerMountAnimator`, `PlayerAttack`, `PlayerMountAttack`,
+  `MountStrike`, `LevelDefinition`, `GameFlow`, `GameInstaller` and the four new interfaces - along with
+  everything else, so those files are commented once.
 
 ### Stage 21 — Two video scripts `[ ]`
 
@@ -3039,7 +3048,8 @@ _(append entries here as we make design decisions.)_
   a cell. `LevelFile` now holds the format (`Read`, `Cells`, `Pack`, `Write`) and knows nothing about the
   scene or the prefabs; `LevelScene` holds the scene (finding, placing, clearing, reconciling, collecting,
   each with its undo); `PlacedTile` is what one produces and the other consumes. `LevelWindow` went from
-  314 lines to 156 and `TilePlacerWindow` from 306 to 256. The one message that changed is a failed
+  314 lines to 156 and `TilePlacerWindow` from 306 to 256 (measured again at step 8's write-up, both ways,
+  as 139 and 235; the earlier figures were wrong). The one message that changed is a failed
   instantiate during Build, which now reads `Could not place` like the placer's. **Confirmed**:
   `Level01.txt` saved with the new tools at 17:56 is byte-identical to a copy taken before the edit,
   and Build and the placer behaved as before by Peleg's check; `Level02.txt` was not re-saved.
@@ -3086,3 +3096,38 @@ _(append entries here as we make design decisions.)_
   consumers reading different parts of it. `PlayerMovement` does implement two interfaces for two consumers,
   and the difference is that being shoved and walking are two things he does, where starting an attack and
   how far through it he is are one. Peleg's call.
+- **A missing start marker is reported once, by the level.** Batch 3 gave `LevelDefinition.PlayerStart` a
+  second reader, and the getter warns on every read while the marker is missing, so a level built without
+  one printed three warnings per reset: two from the getter and `PlayerReset`'s own. Logging rule 8 says
+  the class that owns the fact logs it and the classes it passes through stay quiet, so the getter now
+  warns once a frame, the rule 9 guard, and `PlayerReset` returns silently. Its old line said "the player
+  stays where he is"; the level's says "nothing knows where the player begins", which covers it. A scene
+  with no level at all is `GameFlow`'s to report, and already is. Recommended for step 10's log pass;
+  Peleg's call to do it now.
+- **`MountStrike` confirmed by the session of 19:14**, which also ran after the start-marker change: no
+  warning of any kind in 361 lines, the blue mount's attack destroyed a shooting נחש twice, and two
+  mounted hits were absorbed. Not in that session: level 2, the popup test, the red mount.
+- **`IGameFlow` lost three events nothing listened to, found by writing the SOLID answer for it.**
+  `GameOver`, `LevelComplete` and `GameComplete` were raised by `GameFlow` and subscribed to nowhere.
+  `PowerController` had listened to the first two to stop its drain on a game over, and stage 10 deleted
+  those subscriptions when freezing time stopped the drain by itself; no listener for `LevelComplete` is
+  recorded anywhere. The interface went from ten members to seven, all of them used, and the `Game over`,
+  `Level complete` and `Game complete` log lines stay. Stage 11's reason for not splitting operations
+  from events still stands and is the answer to give; the point of removing the three is that dead
+  members cannot be defended at all, and a member-counting checker would have counted them. With it,
+  `Enemy` by size becomes the likeliest single spot, and the SOLID section ranks it first.
+- **Step 8's write-up is the SOLID section, a Reflection section and one list of rejected patterns.**
+  SOLID takes the same five parts as the techniques, so it reads like them at the defense; its fourth part
+  is the worst-spot ranking, ten questions with the likeliest first, followed by what the review resolved.
+  Reflection became a section of its own rather than a subsection, since it has its own course material
+  and its own question to expect. The rejected-patterns list gathers every structural alternative this
+  log records, including those already named in a technique's section, so there is one place to read
+  them all before the defense; the plan was read in full to compile it, and ten of its quotes were checked
+  against the lines. Writing it corrected three things: `LevelWindow` and `TilePlacerWindow` are 139 and
+  235 lines, not the 156 and 256 recorded at batch 2; the rule "a plain class with one consumer is bound
+  concrete", which stage 12's shove entry also implies, is not what the code does, since
+  `IProjectileDirector`, `IRespawnCountdown` and `IPowerModel` each have one consumer, and the answer now
+  says the interface is the consumer's narrowed view; and `GameLog`'s release build keeps `Warning` and
+  `Error`. `Ground`, a second static class, was added to the ranking and answered rather than changed.
+  Agreed by Peleg.
+- **`SpriteVariant` keeps its Pick One context menu**, and with it the editor-only call. Peleg's call.

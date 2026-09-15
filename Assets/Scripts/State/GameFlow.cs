@@ -32,9 +32,6 @@ public class GameFlow : IGameFlow
     public event Action GameStarted;
     public event Action StrikeLost;
     public event Action FruitTaken;
-    public event Action GameOver;
-    public event Action LevelComplete;
-    public event Action GameComplete;
 
     public void StartGame()
     {
@@ -78,7 +75,6 @@ public class GameFlow : IGameFlow
         if (session.StrikesRemaining == 0)
         {
             GameLog.Info(LogCategory.Game, "Game over - no strikes left");
-            GameOver?.Invoke();
             EndGame(popups.ShowGameOverAsync);
             return;
         }
@@ -112,7 +108,6 @@ public class GameFlow : IGameFlow
         }
 
         GameLog.Info(LogCategory.Game, "Level complete");
-        LevelComplete?.Invoke();
 
         if (levels.EnterNext())
         {
@@ -121,7 +116,6 @@ public class GameFlow : IGameFlow
         }
 
         GameLog.Info(LogCategory.Game, "Game complete - every level finished");
-        GameComplete?.Invoke();
         EndGame(popups.ShowCongratulationAsync);
     }
 
