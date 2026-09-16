@@ -678,7 +678,7 @@ No one file holds it, so there is one place to open for each principle:
 
 ### What the code shows
 
-Measured over the 110 game scripts and 10 editor scripts:
+Measured over the 109 game scripts and 10 editor scripts:
 
 - No `switch` anywhere, and no check of an object's type in game code. What varies by kind is a subclass,
   an interface, or data authored per object: the `Destroyer` flags each target answers, the `DropType`

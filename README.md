@@ -1,88 +1,77 @@
 # 2026-HW_Final-Adventure_Island
 
-The final project for the "Methods in Game Development" Unity course — a 2D platformer inspired by
-Adventure Island 2 and 3, with two levels, a draining power meter, rideable animals, six enemy types
-and no scene reloads anywhere.
+The final project for the "Methods in Game Development" Unity course: a 2D platformer inspired by
+Adventure Island 2 and 3. Two levels, three strikes, a power bar that drains as you play, fruit that
+refills it, two throwable weapons, three rideable animals, six enemy types, eggs that hatch into
+what they were authored to hold, and a fairy that destroys whatever the player touches.
 
-**In progress.** This README describes what the project is and how it is put together; what is built
-so far and what is next is in [`HW_Final_PLAN.md`](HW_Final_PLAN.md).
+## Running it
 
-## Starting point
+Open the project in Unity 6, then open `Assets/Scenes/Scene_Game.unity` and press Play.
 
-A fresh Unity 6 project, not a copy of an earlier exercise. The three Mario exercises before it are
-finished and graded, and this is a different game, so nothing about their scenes, prefabs, hierarchy
-or gameplay code carries over.
+Arrows move, Space jumps and holding it jumps higher, Z throws the weapon being carried or attacks
+with the animal being ridden.
 
-Eleven files did travel from `2026-HW_3-Mario`, all of them infrastructure this project would
-otherwise rebuild from scratch:
+## How it is put together
 
-- The editor tooling — `LevelWindow`, `TilePlacerWindow`, `TilePrefabMap`, `TiledMap` and
-  `SceneObjectMemory`, plus `LogsWindow`.
-- The logging system — `GameLog` and its four supporting files.
+Zenject (Extenject 9.2.0) is under `Assets/Plugins/Zenject/`, with its sample and test folders
+removed. `Assets/Scripts/Installers/GameInstaller.cs` is the composition root: the one place that
+decides which implementation satisfies which interface, and where the game's rule numbers enter.
+The rules live in plain C# classes with their dependencies injected, and the MonoBehaviours are thin
+adapters that forward Unity's messages into them.
 
-None of them needed a line changed for a different game: `LevelWindow` holds no tile ids of its own
-and the logging is generic, so only `LogCategory`'s values were rewritten to name this game's
-systems.
+Scripts are grouped under `Assets/Scripts/` by domain and never by pattern, so a pattern's
+implementation sits with the part of the game it serves:
 
-## What it has to do
-
-[`Exercise Adventure Island.md`](Exercise%20Adventure%20Island.md), at the project root. That
-document is the requirements in one decided piece, built by reading the exercise text and the lesson
-12 transcript together — the instructor corrected and extended the written text on camera in about a
-dozen places without the document ever being updated, so where the two disagree the transcript wins.
-Requirements are numbered `section.item` and every stage in the plan is written against those
-numbers.
-
-The seven techniques the exercise names, with SOLID throughout: **DI, Pooling, Builder, Factory,
-MVC, Async & Tasks, Template**. Where each of them lives, and why there rather than somewhere else,
-is argued in the plan's Stage 1.
-
-## Dependency injection
-
-Zenject — Extenject 9.2.0, the same build lesson 12 used, under `Assets/Plugins/Zenject/` with its
-sample and test folders removed. `Assets/Scripts/Installers/GameInstaller.cs` is the composition
-root: the one place that decides which implementation satisfies which interface. Logic lives in
-plain C# classes with their dependencies injected, and MonoBehaviours are thin adapters that forward
-Unity's events into them.
-
-Two `CS0618` deprecation warnings come out of Zenject's own source on Unity 6, from
-`Object.FindObjectsOfType<T>()`. The API is deprecated rather than removed, and the copy is left
-unmodified on purpose.
+- **Dependency injection** — `Installers/GameInstaller.cs`, with 31 bindings.
+- **Builder and Object Pooling** — `Projectiles/`: the director holds a recipe per projectile kind,
+  the builder turns one into a configured instance, and the pool builds every kind at startup and
+  hands out an inactive copy.
+- **Factory** — `Collectibles/DropFactory.cs`: an enemy or an egg asks for a drop type and gets back
+  a finished pickup.
+- **Template Method** — four bases own a fixed sequence each and leave the varying steps to their
+  subclasses: `Enemies/Enemy.cs`, `Hazards/Hazard.cs`, `Collectibles/Collectible.cs` and
+  `Projectiles/BaseProjectile.cs`.
+- **MVC** — `MVC/`, one folder per triad: the power bar, the strikes and the fruit count.
+- **Async and Tasks** — `Enemies/RespawnCountdown.cs` for an enemy's countdown, and `State/GameFlow.cs`
+  with `UI/Popup.cs` for the wait on a popup's button. The fairy, the egg's crack and the death puff
+  are coroutines instead, since those wait on objects that stay alive and should freeze under a popup.
+- **SOLID** throughout: nothing in the game code switches over a type or checks one, and what varies
+  by kind is a subclass, an interface, or data authored on the object.
 
 ## Logging
 
-No requirement asks for it. Game code writes through `GameLog` rather than calling `Debug.Log`
-directly: one static class, one category per line, and the informational levels compiled out of a
-release build entirely. `Tools > Logs` sets a level per category while the game runs, and every Play
-session is written to `GameLog.txt` beside the project.
+Game code writes through `GameLog` rather than calling `Debug.Log`, one
+category per line, with the informational levels compiled out of a release build entirely.
+`Tools > Logs` sets a level per category while the game runs, `LogSettings` in the scene holds the
+levels a session starts with, and every Play session is written to `GameLog.txt` beside the project.
 
 ## The levels
 
 `Assets/Levels/Level01.txt` and `Level02.txt` hold each level as a grid of tile ids, and
 `TilePrefabMap.asset` says which prefab each id means. `Tools > Level` builds a file into the scene
-and writes the scene back out; `Tools > Tile Placer` stamps and erases single tiles. The data file
-is the source and the scene is the output, so building deletes and recreates every child of the
-level root it was pointed at.
+and writes the scene back out to the file, and `Tools > Tile Placer` paints and erases single tiles.
 
-Tiled authors the first draft of a level, because that is easier there. Every edit after that
-happens through the tools in Unity, because re-exporting from Tiled is not.
+Building is a diff rather than a teardown: a cell already holding the right prefab is left alone, a
+cell holding the wrong thing is replaced, and anything the file doesn't name is removed. That is
+what lets configuration set by hand survive a rebuild, such as an egg's contents, a bird's dip or an
+enemy's drop, since the file records what is where and the scene instance records which one it is.
 
-Both levels live in the one scene, one active at a time. Nothing in this project calls
-`SceneManager.LoadScene` — not on death, not on game over, not on the level transition. Starting a
-level resets that level's own variables instead.
+The file format is Tiled's map JSON, kept to that shape so going back to Tiled stays possible,
+although both levels here were painted with the Tile Placer. Level 1 runs 200 cells by 18 and level 2
+is 30 by 57. Both live in the one scene with one active at a time.
 
-## Running it
+Nothing in this project calls `SceneManager.LoadScene`: not on death, not on game over, not on the
+level transition. Losing a strike resets the current level's own objects through `IResettable` and the
+reset registry, and moving to level 2 switches which level root is active.
 
-Open the project in Unity, then open `Assets/Scenes/Scene_Game.unity`.
+## The recordings
 
-## Conventions
+- **Game Playthrough** — one run of both levels through to the congratulation popup.
 
-The comment, logging, naming, hierarchy and code-quality rules the code follows are in
-[`CONVENTIONS.md`](CONVENTIONS.md). They came across from the Mario projects; the naming and
-hierarchy section was rewritten for this game.
+  <https://youtu.be/UegTktSMyG4>
+- **Game Features** — the features one at a time, each on a level arranged to show it.
 
-## Submission
-
-Two recordings rather than one: the game being played, and a walk through the code. The instructor
-watches the gameplay first, writes down what he sees, then watches the code, and builds the oral
-defense questions out of both. Anything not shown counts as not done.
+  <https://youtu.be/l6sZotT-q1g>
+- **Code, part 1** — <https://youtu.be/FDfgf3rh2Ko>
+- **Code, part 2** — <https://youtu.be/PnLBzyyOXrc>

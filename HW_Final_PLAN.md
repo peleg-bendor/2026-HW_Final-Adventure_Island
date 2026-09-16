@@ -1280,8 +1280,11 @@ Steps, one at a time, each opening with its own discussion:
    three-rung ladder and each part's own time in its heading. Rewritten in Peleg's tone pass, 16.9.2026. Any code a take forces to change still reopens whatever section of `Techniques.md` it
    touches, and the script's `file:line` references are checked again before recording.
 1. The code takes. `[ ]`
-1. The three files edited, `Recordings/0-Contents.txt` written from them, and all four uploaded, or linked
-   under 14.5. `[ ]`
+1. The three recordings edited, uploaded under 14.5, and 14.8's contents written from them. `[~]`,
+   16.9.2026: all three are edited and on YouTube as four videos, the code one split in two, with their
+   links and the repository's in `HW Final-Adventure_Island-HandIn/Video_and_GitRepo_Link.txt` outside the
+   repo, in the shape Exercises 1 to 3 used. `README.md` carries the four links as well. 14.8's contents is
+   still owed, and the titles number the code before the features.
 
 **Carried from Stage 20, still true:**
 
