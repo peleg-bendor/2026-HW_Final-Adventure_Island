@@ -9,7 +9,9 @@ in `Coverage.md`; the numbers are never said, and the cut titles are what `0-Con
 - Lines in `>` blocks are said out loud. Everything else is a stage direction and is never spoken.
 - One sentence per line inside a `>` block. Each line is one breath.
 - `### **SHOW**` is a major beat inside a cut. Plain `**SHOW**` is a small move inside that beat.
-- Every cut is its own Play session and its own take, edited together afterwards. Cut 8 is six of them.
+- The time in a cut's heading is its spoken words at its rate, so a take that runs much longer than it is
+  either waiting for something or over-explaining.
+- Every cut is its own Play session and its own take, edited together afterwards. Cut 8 is five of them.
 - "Rows" under a cut title are `Coverage.md`'s numbers, for us. What each cut needs in the level is under
   Staging.
 - Spoken in English. The greeting is the only Hebrew, and the game's terms are said in English.
@@ -28,31 +30,30 @@ cut in editing.
 | 4   | The fruit count       | 56    | 90   | 0:37 |
 | 5   | Weapons               | 83    | 90   | 0:55 |
 | 6   | Rocks                 | 52    | 90   | 0:35 |
-| 7   | Animals               | 96    | 90   | 1:04 |
+| 7   | Mounts                | 96    | 90   | 1:04 |
 | 8a  | Spider                | 38    | 90   | 0:25 |
-| 8b  | Bird                  | 65    | 90   | 0:43 |
-| 8c  | Jumping snake         | 28    | 90   | 0:19 |
-| 8d  | Shooting snake        | 34    | 90   | 0:23 |
-| 8e  | Frog                  | 25    | 90   | 0:17 |
-| 8f  | Ghost                 | 48    | 90   | 0:32 |
+| 8b  | Bird                  | 53    | 90   | 0:35 |
+| 8c  | Snakes                | 63    | 90   | 0:42 |
+| 8d  | Frog                  | 25    | 90   | 0:17 |
+| 8e  | Ghost                 | 48    | 90   | 0:32 |
 | 9   | Fairy                 | 41    | 90   | 0:27 |
 | 10  | Level 2's start       | 33    | 90   | 0:22 |
 | 11  | Inspector             | 91    | 160  | 0:34 |
 
-**856 words, about 9:04**, measured from this file by script. The remaining minute is for what the words
-don't cover: the seven-second stand in cut 2, cut 8c's respawn, the walk in cut 8f, the two level changes
-in cut 4, and the two Game Over popups. If the edited recording still comes out over 10 minutes, cut in this
-order:
+**869 words, about 9:12**, measured from this file by script. The remaining forty seconds are for what the
+words don't cover: the seven-second stand in cut 2, the walk in cut 8e, the two level changes in cut 4, and
+the two Game Over popups. If the edited recording still comes out over 10 minutes, cut in this order:
 
-1. **Cut 8c's respawn wait** (the wait, not words). The snake still hops and dies; what goes is seeing it
-   come back, which cut 11 states as a number.
-1. **Cut 8f's walk away from the ghost** (−12 seconds, and the walk). It still hangs still, chases, and
-   survives the axe and the animal; what goes is seeing it give up.
+1. **Cut 8e's walk away from the ghost** (−12 seconds, and the walk). It still hangs still, chases, and
+   survives the axe and the mount; what goes is seeing it give up.
 1. **Cut 4's third strike** (−14 seconds). The count still crosses into level 2 and costs a strike at 40;
    what goes is the same fruit taken again to 60.
+1. **Cut 2's stand** (−7 seconds of waiting, and its first line). The bar still drains through the whole
+   cut, and cut 11 states the rate as a number.
 
 What not to cut, at any length: cut 3's "the level wasn't rebuilt" beat, cut 6's axe flying through the
-rock, cut 9's fairy at the pit I built into level 1, and cut 8b's per-bird fields. Each is a place the
+rock, cut 9's fairy at the pit I built into level 1, and cut 8b's per-bird fields, and cut 8c's fireball
+through the other snake. Each is a place the
 instructor said he would look.
 
 ## Before you record
@@ -66,7 +67,7 @@ instructor said he would look.
 - **Cut 11 is recorded on the authored scene**, which is any moment just after the scene has been reopened.
 - The Game view at 16:9, the Console off screen, and a 20-second test recording first. `LogSettings` as
   saved.
-- **Cut 8's six sub-cuts show the Inspector**, so those are recorded with the Editor on screen: the
+- **Cut 8's five sub-cuts show the Inspector**, so those are recorded with the Editor on screen: the
   Hierarchy, the Inspector docked at the right, the Console closed, and the Game view still 16:9. Every
   other cut is the Game view alone.
 - Stop Play between cuts. There are no log copies for this recording: if a cut looks wrong, say so before
@@ -101,16 +102,15 @@ each cut needs is below: the objects, the order he meets them, and the spacing t
 | 7   | An egg with the axe; an egg with a heart; a jumping snake; an egg with a leaf; a moving spider with 3 cells of floor in front of it; an egg with a star; a frog; a fire; open floor. |
 | 8a  | A moving spider and a static one, 14 cells apart.                                                    |
 | 8b  | A bird perched high with its Drop set to a star, over a block two tiles high that he can stand on, as under the authored bird at x141, since an axe rises less than a unit above where it is thrown and cannot reach the bird's dip from the floor; an egg with the axe before it. |
-| 8c  | An egg with the axe; a jumping snake with a wall a few cells in front of it.                         |
-| 8d  | A shooting snake, with a jumping snake between it and the approach, penned between two tiles 3 cells apart so its hops stay in the fireballs' line. |
-| 8e  | A frog on flat floor with room either side.                                                          |
-| 8f  | An egg with the axe; a ghost; an egg with a heart beside it; at least 20 cells of open floor to the right. |
+| 8c  | An egg with the axe; a jumping snake penned between two tiles 3 cells apart, so its hops stay in the fireballs' line; a shooting snake beyond it. |
+| 8d  | A frog on flat floor with room either side.                                                          |
+| 8e  | An egg with the axe; a ghost; an egg with a heart beside it; at least 20 cells of open floor to the right. |
 | 9   | Before x96: an egg with a fairy and a shooting snake. The rest is the authored stretch to the pit at x122. |
 | 10  | An egg with the axe; an egg with a heart; three fruit on the floor; a door.                          |
 
 ---
 
-## Cut 1 — Intro and controls
+## Cut 1 — Intro and controls `0:40`
 
 Rows: 1.1 to 1.4. Staging: none; any station's marker.
 
@@ -130,7 +130,7 @@ Rows: 1.1 to 1.4. Staging: none; any station's marker.
 
 ---
 
-## Cut 2 — Power
+## Cut 2 — Power `0:36`
 
 Rows: 4.1 to 4.5.
 
@@ -153,7 +153,7 @@ Rows: 4.1 to 4.5.
 
 ---
 
-## Cut 3 — Strikes and Game Over
+## Cut 3 — Strikes and Game Over `0:51`
 
 Rows: 2.4, 2.5, 3.1 to 3.7, 5.6, 5.9.
 
@@ -162,12 +162,12 @@ Rows: 2.4, 2.5, 3.1 to 3.7, 5.6, 5.9.
 **SAY:**
 
 > Three strikes at the start.
-> I have an axe and an animal, a fruit taken, and a snake killed.
+> I have an axe and a mount, a fruit taken, and a snake killed.
 > A pit costs a strike.
 
-### **SHOW** — Back on the marker: no axe, no animal, the bar at 11. Walk back over the station: both eggs and the fruit are there, and the snake is not.
+### **SHOW** — Back on the marker: no axe, no mount, the bar at 11. Walk back over the station: both eggs and the fruit are there, and the snake is not.
 
-> I'm back at this level's start, without the axe or the animal.
+> I'm back at this level's start, without the axe or the mount.
 > The level wasn't rebuilt: the eggs and the fruit are back, and the snake I killed stays dead.
 
 ### **SHOW** — Walk into the fire. Back on the marker, walk into the static spider. The Game Over popup.
@@ -180,7 +180,7 @@ Rows: 2.4, 2.5, 3.1 to 3.7, 5.6, 5.9.
 
 ---
 
-## Cut 4 — The fruit count
+## Cut 4 — The fruit count `0:37`
 
 Rows: 4.7, 4.8, 3.5.
 
@@ -203,7 +203,7 @@ Rows: 4.7, 4.8, 3.5.
 
 ---
 
-## Cut 5 — Weapons
+## Cut 5 — Weapons `0:55`
 
 Rows: 6.1, 6.2, 6.6, 6.7, 6.9, 6.11 to 6.13, 10.2, 10.7.
 
@@ -211,14 +211,14 @@ Rows: 6.1, 6.2, 6.6, 6.7, 6.9, 6.11 to 6.13, 10.2, 10.7.
 
 **SAY:**
 
-> Z does nothing without a weapon or an animal.
+> Z does nothing without a weapon or a mount.
 
-### **SHOW** — Walk into the axe egg: its cracked frame, then the axe. Throw one at open floor. Then press Z four times fast: three axes fly and the fourth press throws nothing. Throw one at the jumping snake.
+### **SHOW** — Walk into the axe egg: its cracked frame, then the axe. Throw one at open floor. Then press Z four times fast: three axes fly and the fourth press throws nothing. Throw one at the jumping snake. Throw one at a rock.
 
 > An egg cracks, and then reveals its drop.
 > The axe flies in an arc.
 > Three can be in the air, so a fourth press throws nothing: that's the pooling.
-> One that lands is gone; one that hits an enemy kills it.
+> One that lands is gone; one that hits an enemy kills it. It cannot destroy a rock.
 
 ### **SHOW** — Open the boomerang egg. Throw it at the two spiders. While it's out, press Z again, then step up onto the tile and back. It comes back to him wherever he stands.
 
@@ -228,7 +228,7 @@ Rows: 6.1, 6.2, 6.6, 6.7, 6.9, 6.11 to 6.13, 10.2, 10.7.
 
 ---
 
-## Cut 6 — Rocks
+## Cut 6 — Rocks `0:35`
 
 Rows: 5.1 to 5.5, 6.10.
 
@@ -239,10 +239,10 @@ Rows: 5.1 to 5.5, 6.10.
 > An axe flies straight through a rock.
 > Touching one costs three power and pushes me forward.
 
-### **SHOW** — Open the boomerang egg and throw it at rock B, which breaks. Open the heart egg, ride, and attack rock C, which breaks. Ride into rock D: the rock and the animal are gone, and the bar has not moved.
+### **SHOW** — Open the boomerang egg and throw it at rock B, which breaks. Open the heart egg, ride, and attack rock C, which breaks. Ride into rock D: the rock and the mount are gone, and the bar has not moved.
 
-> The boomerang breaks it, and so does an animal's attack.
-> Riding into one costs the animal and no power, and the rock goes too.
+> The boomerang breaks it, and so does a mount's attack.
+> Riding into one costs the mount and no power, and the rock goes too.
 
 ### **SHOW** — Walk into rock E. The push carries him into the fire. A strike.
 
@@ -250,7 +250,7 @@ Rows: 5.1 to 5.5, 6.10.
 
 ---
 
-## Cut 7 — Animals
+## Cut 7 — Mounts `1:04`
 
 Rows: 5.8, 6.4, 7.1 to 7.10.
 
@@ -258,32 +258,32 @@ Rows: 5.8, 6.4, 7.1 to 7.10.
 
 **SAY:**
 
-> Three animals, each from its own token.
-> The heart gives the blue one, which hits low with its tail.
-> While I ride, Z is the animal's attack.
+> Three mounts, each from its own token.
+> The heart gives the blue one, which hits with its tail.
+> While I ride, Z is the mount's attack.
 
 ### **SHOW** — Open the leaf egg while riding. From 3 cells away, press Z at the moving spider. The flame travels a few tiles and kills it.
 
-> Another token swaps it, and the leaf gives the red one, whose fire hits higher and reaches a few tiles.
+> Another token swaps it, and the leaf gives the red one, who shoots fireballs.
 
 ### **SHOW** — Open the star egg. Press Z beside the frog: the spin kills it.
 
 > The star gives the green one, which spins and hits whatever it touches.
 
-### **SHOW** — Press Z at the fire: it stays. Ride into it: the fire and the animal are gone, and no strike is lost. Press Z: an axe flies.
+### **SHOW** — Press Z at the fire: it stays. Ride into it: the fire and the mount are gone, and no strike is lost. Press Z: an axe flies. Open the heart egg, ride into a rock.
 
-> It kills every enemy except the ghost, and leaves a fire standing.
-> Riding into one, the animal takes the hit and the fire goes with it.
-> With the animal gone, the axe is in use again.
+> It kills every enemy except the ghost, and does not destroy a fire.
+> Riding into one, the mount takes the hit and the fire goes with it.
+> With the mount gone, the axe is in use again. Riding with a mount into a rock has the same effect. 
 
 ---
 
-## Cut 8 — Enemies
+## Cut 8 — Enemies `2:31`
 
 Six sub-cuts, one per enemy, each its own take. The Editor is on screen for all six: the enemy is selected
 in the Hierarchy and its fields are in the Inspector while it behaves in the Game view.
 
-### Cut 8a — Spider
+### Cut 8a — Spider `0:25`
 
 Rows: 8.1, 8.6, 8.7.
 
@@ -295,7 +295,7 @@ Rows: 8.1, 8.6, 8.7.
 > This spider's is twelve units.
 > A spider only moves up and down, and this box is what decides whether it moves or is static.
 
-### Cut 8b — Bird
+### Cut 8b — Bird `0:35`
 
 Rows: 7.3, 8.3, 8.8, 8.9, 8.10, 8.11, 10.5, 10.6.
 
@@ -311,30 +311,25 @@ Rows: 7.3, 8.3, 8.8, 8.9, 8.10, 8.11, 10.5, 10.6.
 
 > Every enemy can carry a drop, set the same way, with nothing as one of the choices.
 
-### Cut 8c — Jumping snake
+### Cut 8c — Snakes `0:42`
 
-Rows: 8.4, 8.12, 8.13.
+Rows: 8.2, 8.4, 8.12 to 8.16. The shooting snake fills the other one's respawn, so nothing here waits.
 
-### **SHOW** — The snake selected: Hop Distance and Stand Seconds. Press Play. It stands, hops forward, stands again, and turns at the wall. Take the axe and kill it. Wait for it to come back, and cut the wait in editing.
+### **SHOW** — The jumping snake selected: Hop Distance and Stand Seconds. Press Play and walk in from the left: it stands, hops, and turns at its wall. Come closer, and the shooting snake beyond it turns to face him and fires; the fireballs pass through the jumping snake.
 
 **SAY:**
 
 > The jumping snake stands, hops forward, and stands again, turning at a wall.
-> True to all enemies - Once killed, it comes back where it stood, after ten to twenty seconds, rolled each time.
-
-### Cut 8d — Shooting snake
-
-Rows: 8.2, 8.14, 8.15, 8.16.
-
-### **SHOW** — The snake selected: Seconds Between Shots. Press Play and walk in from its left: it turns to face him and fires. Let the fireballs pass through the jumping snake in front of it. Dodge them, then walk back out of range: the firing stops.
-
-**SAY:**
-
 > The shooting snake turns to face me, and fires while I'm in its range.
-> Out of range, it stops.
 > Its fireballs fly through the other snake, because an enemy's shot never harms an enemy.
 
-### Cut 8e — Frog
+### **SHOW** — Take the axe and kill the jumping snake. Dodge the fireballs, then walk back out of the shooter's range: the firing stops. Step in and out once more while the countdown runs.
+
+> True to all enemies, once killed it comes back at its origin point, after ten to twenty seconds, rolled each time.
+
+**SHOW** — The jumping snake is standing in its pen again.
+
+### Cut 8d — Frog `0:17`
 
 Rows: 8.17, 8.18.
 
@@ -343,27 +338,27 @@ Rows: 8.17, 8.18.
 **SAY:**
 
 > The frog turns to face me and leaps at me, further than the snake hops.
-> The wait between leaps is rolled between these two numbers.
+> The wait between leaps is rolled between these two numbers, Min and Max Wait Seconds.
 
-### Cut 8f — Ghost
+### Cut 8e — Ghost `0:32`
 
 Rows: 8.20, 8.21, 8.22.
 
-### **SHOW** — The ghost selected: Activation Range and Chase Speed. Press Play, take the axe, and face it: it hangs still. Turn away: it comes. Turn back: it stops. Throw two axes through it. Take the heart and ride into it: the animal is gone and the ghost stays. Walk off at once.
+### **SHOW** — The ghost selected: Activation Range and Chase Speed. Press Play, take the axe, and face it: it hangs still. Turn away: it comes. Turn back: it stops. Throw two axes through it. Take the heart and ride into it: the mount is gone and the ghost stays. Walk off at once.
 
 **SAY:**
 
 > The ghost watches which way I face.
 > It hangs still while I look at it, and comes after me when my back is turned.
-> An axe goes through it, and an animal can't kill it either.
+> A weapon goes through it, and a mount can't kill it either.
 
 ### **SHOW** — Turn your back and walk right. It follows, then stops.
 
-> Outside its range it gives up, and only a fairy destroys it.
+> Outside its range it gives up. Only a fairy can destroy it.
 
 ---
 
-## Cut 9 — Fairy
+## Cut 9 — Fairy `0:27`
 
 Rows: 5.7, 9.1 to 9.4.
 
@@ -371,7 +366,7 @@ Rows: 5.7, 9.1 to 9.4.
 
 **SAY:**
 
-> A fairy lasts ten seconds, shown beside me.
+> A fairy lasts ten seconds, shown flying beside the player.
 > While it lasts nothing hurts me, and whatever I touch is destroyed, even a fire and the ghost.
 
 **SHOW** — Stand still until the fairy disappears.
@@ -384,7 +379,7 @@ Rows: 5.7, 9.1 to 9.4.
 
 ---
 
-## Cut 10 — Level 2's start
+## Cut 10 — Level 2's start `0:22`
 
 Rows: 4.6, 4.8, 6.3, 7.11.
 
@@ -394,16 +389,16 @@ Rows: 4.6, 4.8, 6.3, 7.11.
 
 > I'm riding, holding an axe, with three fruit taken.
 > Level 1 leads straight into level 2.
-> The animal, the axe and the fruit count come with me, and the power restarts at 9.
+> The mount, the axe and the fruit count come with me, and the power restarts at 9.
 
 ---
 
-## Cut 11 — Inspector
+## Cut 11 — Inspector `0:34`
 
 Rows: 8.26, 10.3, 10.4, and the numbers of 3.1, 4.1, 4.2, 4.7, 6.7, 8.4, 9.1. Recorded on the authored
 scene, in Edit mode, with the Hierarchy and the Inspector on screen.
 
-### **SHOW** — Select `SceneContext > GameInstaller`. Then `Level_1` and `Level_2`: Starting Power 11 and 9. Then the player's `PlayerFairy`: Seconds 10.
+### **SHOW** — Select `SceneContext > GameInstaller`. Then `Level_1` and `Level_2`: Starting Power 11 and 9. Then `Player`, with the Inspector scrolled to its last component, **Player Fairy**: Seconds 10, and Marker pointing at its child `Fairy`.
 
 **SAY:**
 

@@ -1265,13 +1265,20 @@ Steps, one at a time, each opening with its own discussion:
 1. Design discussion. `[x]`
 1. `Recordings/Coverage.md`. `[x]`, 16.9.2026: 126 rows, checked by script against the requirements file's
    numbering, and agreed by Peleg.
-1. `Recordings/2-Gameplay-Features.md`: what each station needs, and the cuts. `[~]`: written and revised
-   with Peleg 16.9.2026, eleven cuts in sixteen takes, 880 spoken words, about 9:20.
-1. The features cuts. `[ ]`
-1. The staging gone, by the scene never having been saved: `git status` shows `Scene_Game.unity`,
-   `Level01.txt` and `Level02.txt` unchanged. `[ ]`
+1. `Recordings/2-Gameplay-Features.md`: what each station needs, and the cuts. `[x]`, 16.9.2026: eleven cuts
+   in fifteen takes, 869 spoken words, about 9:12, each cut's own time in its heading. Agreed by Peleg after
+   his own edits and one merge.
+1. The features cuts. `[x]`, filmed by Peleg 16.9.2026. Editing and the contents file are step 9.
+1. The staging gone: `git status` shows `Scene_Game.unity`, `Level01.txt` and `Level02.txt` unchanged.
+   `[~]`, 16.9.2026: both level files are untouched, so the level tool's save was never pressed, but the
+   scene was saved during the filming, so it is restored from the last commit rather than rebuilt from the
+   files, which would give the re-placed objects their prefab defaults. One real fix came out of the
+   filming and is kept, in the Decisions Log below.
 1. The playthrough take, its log copy and reading, and whether anything is said over it. `[ ]`
-1. `Recordings/3-Code.md`. `[ ]`
+1. `Recordings/3-Code.md`. `[~]`, discussed and written 16.9.2026, out of order and in parallel with the
+   filming, by Peleg's call: twelve parts, 2218 spoken words, about 13:53 against the 15-minute cap, with a
+   three-rung ladder and each part's own time in its heading. Rewritten in Peleg's tone pass, 16.9.2026. Any code a take forces to change still reopens whatever section of `Techniques.md` it
+   touches, and the script's `file:line` references are checked again before recording.
 1. The code takes. `[ ]`
 1. The three files edited, `Recordings/0-Contents.txt` written from them, and all four uploaded, or linked
    under 14.5. `[ ]`
@@ -3581,4 +3588,40 @@ _(append entries here as we make design decisions.)_
   stand, the respawn wait, the walk away from the ghost, two level changes and two popups are all time the
   words do not pay for. The pass took wording out of every cut and no beat out of any. Cut 1's line saying
   the levels are rearranged for these cuts went out in Peleg's own edit and came back at his call, since the
-  playthrough shows the authored levels and the difference would be visible: 880 words, about 9:20.
+  playthrough shows the authored levels and the difference would be visible. The two snake sub-cuts then
+  became one, Peleg's call: the shooting snake fills the other one's ten to twenty second respawn, so the
+  only cut that waited for nothing now waits for nothing. Eleven cuts in fifteen takes, 877 words, about
+  9:17.
+- **The code script follows `Techniques.md`'s order, with the reset as a part of its own.** Agreed at step
+  7's discussion, 16.9.2026, as was all of the rest of it: intro, DI, the flow and the reset, Builder and
+  Pooling, Factory, Template, MVC, Async, SOLID, Reflection, the level pipeline, sign-off. The instructor's
+  own order from 13.1 was the alternative and loses the DI-first build-up and splits Builder from Pooling.
+  Four things settled with it. The recording is VS Code throughout apart from two beats: one Play with the
+  Console visible at the end of the DI part, where the container, the six drops and the four pools are the
+  first lines of the session, and the Tile Placer in the pipeline part. Reflection and the pipeline each get
+  about 80 words, since one is `[good]` and the other answers "how are your levels made". Every part keeps
+  the same four beats, so it reads like the document: what the lesson built, where it lives, what differs
+  and why, and the question answered before it is asked. And **the SOLID part names `Enemy` and `IGameFlow`
+  as the two worst spots**, with their answers, rather than staying quiet about them: he grades the single
+  worst place his checker finds, so a prepared answer reads as a decision instead of an oversight. Peleg's
+  call on that one.
+- **The super fruit was on the `Default` sorting layer, and the features filming found it.** Peleg's fix,
+  16.9.2026: `Sprite_Fruit_Super` now sits on `Pickups`, which `Sprite_Fruit_Common` and `Sprite_Egg`
+  already had. `CONVENTIONS.md` leaves `Default` first and unused exactly so that a prefab whose layer was
+  forgotten shows itself, and this one had been rendering behind the ground since stage 11. The prefab's
+  diff also gained a `drop: 0`, which is Unity writing out the `Collectible` default it had been leaving
+  implicit. Kept out of the staging revert, which touches only `Scene_Game.unity`.
+- **The code script's first draft argued with a grader, and was rewritten to explain the code.** Peleg's
+  call: the tone addressed the instructor's own lessons directly ("your lesson had a `MonoInstaller`"),
+  opened part 3 with "you said three times that a reload is something you mark down", and announced its own
+  pre-emptions ("one thing worth saying, because it's the obvious challenge"), which reads as defending
+  marks rather than explaining a codebase. The rewrite says what each piece does, where it is and why it is
+  shaped that way, and names a lesson only where the code departs from one, which is twice: the builder's
+  setters taking values, and the factory's simpler shape. The honest limits stay, since they are part of the
+  explanation rather than a defense: what C# cannot guarantee about a base class owning `Awake`, and the
+  respawn counting real time under a frozen screen. It came out at 2417 words and 15:07, over the cap, and
+  was trimmed to 2218 and about 13:53.
+- **The code script's first measurement, before the rewrite: 2302 words, 14:24, trimmed to 2207 and 13:48.** The target was
+  13:00 against a 15:00 cap, so the pass took wording out of the six longest parts and no beat out of any.
+  Its `file:line` references were re-checked first, all 30 of them plus the Template table's bare numbers:
+  every one still lands on the member it names.
