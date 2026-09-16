@@ -1285,6 +1285,12 @@ Steps, one at a time, each opening with its own discussion:
    links and the repository's in `HW Final-Adventure_Island-HandIn/Video_and_GitRepo_Link.txt` outside the
    repo, in the shape Exercises 1 to 3 used. `README.md` carries the four links as well. 14.8's contents is
    still owed, and the titles number the code before the features.
+   **The hand-in zip is built**, 1.8MB: `Assets/`, `ProjectSettings/`, `README.md` and the link file, and
+   nothing else. `Packages/` is left out to match what the instructor expects and what Exercises 1 to 3
+   sent, against the risk that a regenerated manifest restores neither the Input System, which three
+   scripts import with `activeInputHandler: 1`, nor URP, which `GraphicsSettings` points at. Peleg's call.
+   `README.md` was rewritten for the hand-in and names none of this project's own documents, so the zip
+   carries nothing that needs explaining. The repository is clean and pushed at `474061e`.
 
 **Carried from Stage 20, still true:**
 
