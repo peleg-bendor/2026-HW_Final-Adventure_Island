@@ -21,7 +21,8 @@ Not printed under the saved settings, so a row that would need one says "screen"
 and landings, `Mount attacked`, the mount's refused second press, `Rock contact ignored`, and a drop
 finding no ground below it.
 
-Seen: filled in after a take, as the log copy's file name and line number, or "screen".
+Seen: filled in after a take. For a features cut, the cut, since those have no log copies; for the
+playthrough, the log copy's line number, or "screen".
 
 ## 1. Controls
 
@@ -180,8 +181,8 @@ Seen: filled in after a take, as the log copy's file name and line number, or "s
 |---|---|---|---|---|
 | 11.1 | Level 1 runs left to right | P | screen | |
 | 11.2 | Level 2 climbs from the bottom, then goes right at the top into the exit | P | screen; `Level complete`, `Game complete - every level finished` | |
-| 11.3 | A fall in level 2 takes him back down toward its start | P, F | screen | |
-| 11.4 | He can climb back down, the camera never leaves the level, and only a תהום or spikes kill on a fall | P, F | screen; code: `LevelCamera.ClampAxis` | |
+| 11.3 | A fall in level 2 takes him back down toward its start | P | screen | |
+| 11.4 | He can climb back down, the camera never leaves the level, and only a תהום or spikes kill on a fall | P, C | screen; code: `LevelCamera.ClampAxis` | |
 | 11.5 | The reference videos | none, a note on the sources | | |
 | 11.6 | One level gives the axe and the other the boomerang; one animal early, a different one late | P | `Weapon taken: Projectile_Axe` in level 1 and `Weapon taken: Projectile_Boomerang` in level 2; `Mounted: Mount_Blue` early in level 1 and `Mounted: Mount_Green` late | |
 | 11.7 | `[out]` A third level | none, out | | |
@@ -219,4 +220,4 @@ Shown in is "submission" for what has to be done rather than recorded.
 | 14.5 | A live download or YouTube link if Moodle refuses the size | submission | step 9 | |
 | 14.6 | Defense on 28, 29 or 30 September, booked by email | submission | an email once the files are in | |
 | 14.7 | `1-Gameplay-Playthrough`, `2-Gameplay-Features`, `3-Code` | submission | the three files, at their lengths | |
-| 14.8 | A text file of what the features recording shows and when | submission | written from the edited video, step 4 | |
+| 14.8 | One contents file of what each recording shows and when | submission | `0-Contents.txt`, written from the edited videos, step 9 | |

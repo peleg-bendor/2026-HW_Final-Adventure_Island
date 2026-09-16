@@ -9,8 +9,8 @@ Written in Stage 0, 31.8.2026. Every later stage is written against this file.
 
 ## How to read this
 
-- Requirements are numbered `section.item`, so `5.3` is section 5, requirement 3. The videos call
-  each one out in Hebrew as `דרישה 5.3`, the way Exercises 1 to 3 did.
+- Requirements are numbered `section.item`, so `5.3` is section 5, requirement 3. The numbers are this
+  project's own: the instructor's text numbers nothing, so the recordings name features instead.
 - New requirements get appended inside their own section, so a number, once given, stays put.
 - **Everything here is required unless it carries a tag.** The tags are `[good]` (not required, worth
   doing), `[nice]` (optional, only if there is time) and `[out]` (deliberately not doing it).
@@ -19,8 +19,8 @@ Written in Stage 0, 31.8.2026. Every later stage is written against this file.
 - Numbers written as `3` or `11` are starting values that belong in serialized fields, not constants
   in code. Every one of them is a number the instructor may want changed in front of you.
 
-Hebrew is kept for the words that have to survive into the video: כוח, פסילה, and the names of the
-objects and enemies.
+Hebrew is kept here for the words the instructor used: כוח, פסילה, and the names of the objects and
+enemies. The recordings say all of them in English, and only the greeting is in Hebrew.
 
 ## 1. Controls
 
@@ -346,8 +346,9 @@ objects and enemies.
    פסילה, an אבן surviving an axe and breaking to a boomerang (00:18:44), and the Inspector on a bird's
    dip and an enemy's drop, which is what proves 8.3, 8.7 and 8.9 are authored per instance. `3-Code`
    walks the code, up to 15 minutes. Neither source sets any of the three lengths; they are Peleg's.
-8. `2-Gameplay-Features` ships with a text file listing what it shows and at what time, so a feature
-   he wants to check can be found without watching the whole recording.
+8. The three recordings ship with one contents file, `0-Contents.txt`, listing what each shows and at
+   what time, by feature name, so anything he wants to check can be found without watching the whole
+   recording.
 
 ## 15. Deliberately not doing
 

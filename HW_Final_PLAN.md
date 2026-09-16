@@ -1218,9 +1218,9 @@ both.
   live.
 
 The two scripted recordings are modeled on `2026-HW_3-Mario/HW_3-Script.md`: spoken lines in block
-quotes, stage directions outside them, every requirement called out in Hebrew, one take per part, and
-every part written to a measured word count. The rates from three recorded videos: about 160 spoken
-words a minute where the camera is on a file, about 90 where it is on the game.
+quotes, stage directions outside them, one take per part, and every part written to a measured word
+count. The rates from three recorded videos: about 160 spoken words a minute where the camera is on a
+file, about 90 where it is on the game. Unlike HW_3, no requirement numbers are said: see 16.9.2026 below.
 
 **Settled in the design discussion, 15.9.2026.** The reasons, and what was proposed and declined, are in
 the Decisions Log entries of this date.
@@ -1228,11 +1228,11 @@ the Decisions Log entries of this date.
 - **Three files, per 14.7, at lengths Peleg set**, since neither source sets any: `1-Gameplay-Playthrough`
   up to 5 minutes, `2-Gameplay-Features` 5 to 10, `3-Code` up to 15. The code script is written to its 15
   with a ladder of cuts, as HW_3's was.
-- **Spoken in English**, as Exercises 1 to 3 were, with the greeting, the `דרישה N.M` callouts and the
-  object and enemy names in Hebrew.
+- **Spoken in English**, as Exercises 1 to 3 were. The greeting is the only Hebrew: from 16.9.2026 the
+  game's terms are said in English too, Peleg's call, so power, strike, rock, fire, pit, fairy, egg,
+  animal, heart, leaf and star rather than their Hebrew names.
 - **`2-Gameplay-Features` is recorded first**: a script, then separate cuts, each showing one feature on a
-  level edited beforehand so it is quick to show, and spoken. Its 14.8 text file is written from the
-  edited video.
+  level edited beforehand so it is quick to show, and spoken.
 - **`1-Gameplay-Playthrough` comes after it**: both levels played to the congratulation popup, on the
   authored levels, silent for now. Whether anything is worth saying over it is decided once its log is read.
 - **`3-Code` is last**, scripted as Exercises 1 to 3 were, so any code a gameplay take forces to change is
@@ -1240,24 +1240,41 @@ the Decisions Log entries of this date.
 - **A coverage list, `Recordings/Coverage.md`**, like Exercise 1's notes for the video: every numbered
   requirement, where it is shown, the evidence expected, and after the take where it was seen.
 - **No timestamps in `GameLog.txt`.**
-- **Every gameplay take's log is copied into `Recordings/` before Play is pressed again**, flat, named by
-  recording and take, and committed. Not into a `Recordings/Logs/`, which `.gitignore`'s `[Ll]ogs/` would
-  exclude. The video files stay out of git.
+- **The playthrough take's log is copied into `Recordings/` before Play is pressed again**, flat, named by
+  take, and committed. Not into a `Recordings/Logs/`, which `.gitignore`'s `[Ll]ogs/` would exclude. The
+  video files stay out of git.
+
+**Settled at step 3's discussion, 16.9.2026:**
+
+- **The staging is painted into level 1 and level 2 themselves and never saved**, so Play runs on it and
+  the project keeps the authored levels. Peleg lays out one station at a time, films its cut, then reopens
+  the scene without saving and paints the next. Nothing has to be restored, and step 5 is the check that
+  nothing was saved.
+- **Eleven cuts and sixteen takes**, the Inspector last, recorded on the authored scene; the enemies are
+  six sub-cuts of one cut. See the Decisions Log for how the count moved from thirteen.
+- **No requirement numbers are said** in any recording, and the cuts are named by feature.
+- **One contents file for all three recordings**, `Recordings/0-Contents.txt`, listing what each shows and
+  when, by feature name. Uploaded beside the videos.
+- **`2-Gameplay-Features` is capped at 10 minutes**, spoken live, with a voice-over only for a cut that keeps
+  failing.
+- **No log copies for the features cuts.** `GameLog.txt` is read only when a cut looks wrong, before the next
+  Play.
 
 Steps, one at a time, each opening with its own discussion:
 
 1. Design discussion. `[x]`
-1. `Recordings/Coverage.md`. `[~]`, written 16.9.2026: 126 rows, checked by script against the requirements
-   file's numbering, awaiting Peleg's review.
-1. `Recordings/2-Gameplay-Features.md`: the cuts, what each one stages in the level, and how the staging
-   comes back out. `[ ]`
-1. The features cuts, each followed by a log copy and a reading, then 14.8's text file. `[ ]`
-1. The staging taken out, with both level files and the scene checked against the last commit before it
-   went in. `[ ]`
+1. `Recordings/Coverage.md`. `[x]`, 16.9.2026: 126 rows, checked by script against the requirements file's
+   numbering, and agreed by Peleg.
+1. `Recordings/2-Gameplay-Features.md`: what each station needs, and the cuts. `[~]`: written and revised
+   with Peleg 16.9.2026, eleven cuts in sixteen takes, 880 spoken words, about 9:20.
+1. The features cuts. `[ ]`
+1. The staging gone, by the scene never having been saved: `git status` shows `Scene_Game.unity`,
+   `Level01.txt` and `Level02.txt` unchanged. `[ ]`
 1. The playthrough take, its log copy and reading, and whether anything is said over it. `[ ]`
 1. `Recordings/3-Code.md`. `[ ]`
 1. The code takes. `[ ]`
-1. The three files edited, and uploaded with 14.8's text file or linked under 14.5. `[ ]`
+1. The three files edited, `Recordings/0-Contents.txt` written from them, and all four uploaded, or linked
+   under 14.5. `[ ]`
 
 **Carried from Stage 20, still true:**
 
@@ -3502,3 +3519,66 @@ _(append entries here as we make design decisions.)_
   the first `Game started`, and never after a restart, is the log's proof that a game over reloads nothing.
   The code half is that `Assets/Scripts` holds no `LoadScene`: the one editor tool naming `SceneManager` only
   reads the active scene's roots.
+- **The features cuts are staged in the real levels, not in a copy of the scene.** Proposed at step 3: a
+  `Scene_Features.unity` duplicate, so the authored scene is never touched. Peleg's call to keep a copy of
+  `Level01.txt` aside and edit level 1 directly, which is simpler to work in. What the copy of the file
+  cannot hold is found in the same discussion: `Scene_Game.unity` carries per-instance overrides no level
+  file records, six drop settings (an egg's עלה, the x141 bird's כוכב, the axe, the boomerang and two
+  פיות) and two birds' dips and a swoop distance, while the egg holding לב is the egg's default. A staged
+  edit that erases one of those cells and a rebuild from the saved file would bring back a default egg or
+  bird. So the Inspector cut is recorded on the unstaged scene, and how the staging comes out at step 5 is
+  left open, with restoring both files from git proposed.
+- **No requirement numbers are said in any recording.** Peleg's call: the instructor's text numbers nothing,
+  so `דרישה 5.3` names a scheme he has never seen. The cuts are named by feature, and `Coverage.md` keeps
+  the numbers as this project's own bookkeeping. The first proposal said each cut's range aloud and put the
+  full mapping in 14.8's text file.
+- **One contents file for all three recordings.** Peleg's extension of 14.8: `Recordings/0-Contents.txt`,
+  what each recording shows and when, by feature name, uploaded beside the videos, so anything can be found
+  without watching. Written at step 9 from the edited files, since every edit shifts the times.
+- **No log copies for the features cuts.** Peleg's call. Each cut is staged to show its feature on screen,
+  and the playthrough is where a log is read against the whole game. `GameLog.txt` still holds the last cut,
+  so one that looks wrong is read before Play is pressed again.
+- **The features recording is capped at 10 minutes.** Thirteen cuts at about 45 seconds come to about 9:45
+  at 90 words a minute, so the script carries a ladder of merges.
+- **The script came out at 1069 words and 11:17, and was cut to twelve cuts and 905 words, about 9:26.**
+  Measured by script at the agreed rates, 90 a minute on the game and 160 on the Editor. With a hard cap,
+  a ladder hung off an over-long script was the wrong shape, so the wording was tightened throughout and
+  the eggs-and-drops cut was folded into three others: the cracked frame into the weapons cut, where the
+  axe egg is opened on camera; the high bird and its falling כוכב into the enemies cut, which already has a
+  bird and an axe; and the six drop types into the Inspector cut, read off an egg's Drop list. Putting the
+  bird into the mounts cut was tried first and fails on arithmetic: red's fire leaves 0.8 above his feet and
+  flies flat, and a high bird's dip does not come down to it. An axe does not reach it from the floor either,
+  rising about 0.9 units above where it is thrown, so the station stands him on a block two tiles high, as
+  under the authored bird at x141. The ladder that remains is for takes that run longer than their words.
+- **The staging is specified per station, and laid out by Peleg by hand, one station at a time.** The script
+  lists what each cut's station needs, in order and with the spacing that matters, and he paints it as he
+  likes, so no map is drawn here. The start marker moves to the station, since every cut, פסילה and restart
+  begins at the marker, so a station can sit anywhere with no walk to it. Building one station per cut and
+  reopening the scene between cuts replaces the rule that stations stand 14 cells apart: only one exists at
+  a time, and what has to be clear of it is whatever the authored level holds within about 14 cells, which
+  can be erased in the unsaved scene.
+- **Nothing is saved, so nothing has to be restored.** Peleg's call, which replaces both the scene copy and
+  the git restore: the staging is painted into the scene, Play runs on the unsaved scene, and the project
+  keeps the authored levels. What it costs is that the staging is lost whenever the scene is reloaded, so
+  the cuts are recorded in one sitting or a station is painted again, and an accidental Ctrl+S or a saved
+  level file is the one thing to watch for. Step 5 is now the check that `git status` shows the scene and
+  both level files unchanged, rather than a restore.
+- **The recordings say the game's terms in English.** Peleg's call, so power, strike, rock, fire, pit,
+  fairy, egg, animal, heart, leaf and star. Only the greeting stays Hebrew. `Exercise Adventure Island.md`
+  keeps the Hebrew words, since they are the instructor's own.
+- **Peleg's revisions to the features script, 16.9.2026.** The fruit cut now runs to 60: twenty in level 1
+  for the first strike, into level 2 with the count kept for the fortieth, and, because a strike puts the
+  fruit back, the same twenty again for the sixtieth, which is also the third strike and the game over.
+  Reaching 60 back in level 1 was asked for first and cannot happen: the only ways back to level 1 are a
+  restart and finishing level 2, and both clear the count. The enemies became six sub-cuts, one per enemy,
+  each with its own small station and its own Inspector beat, and what they say is what is not obvious on
+  screen: the activation range, which enemies turn to face him, the rolled waits, and that any enemy can
+  carry a drop. Those Inspector beats are recorded with the Editor on screen, and they shortened the
+  Inspector cut to the installer's rule numbers, the levels' starting power, the fairy's seconds and an
+  egg's Drop list. Level 2's cut lost the climb back down, so 11.3 and 11.4 are the playthrough's alone.
+- **The script measured 943 words, exactly 10:00, and was tightened to 856 and about 9:04.** The cap is
+  hard and the word rates cover only speech, so a script measuring the cap overruns it: the seven-second
+  stand, the respawn wait, the walk away from the ghost, two level changes and two popups are all time the
+  words do not pay for. The pass took wording out of every cut and no beat out of any. Cut 1's line saying
+  the levels are rearranged for these cuts went out in Peleg's own edit and came back at his call, since the
+  playthrough shows the authored levels and the difference would be visible: 880 words, about 9:20.
